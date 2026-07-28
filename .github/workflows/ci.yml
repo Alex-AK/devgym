@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PNPM_VERSION: 11.5.0
+  NODE_VERSION: 22
+
+jobs:
+  # Typecheck, lint, format and the unit suite — the same gate `pnpm verify` runs
+  # locally on pre-push. CI=1 makes it skip the auto-fix pass, since a clean
+  # checkout has no changed files to fix.
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify (typecheck + lint + format + tests)
+        run: pnpm verify
+
+  # Proves the seeder produces a database the app can actually boot against, and
+  # that both apps build. `pnpm test` covers seed *content*; this covers the
+  # SQLite write path, which only runs for real here.
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build every package
+        run: pnpm build
+
+      - name: Seed a database from scratch
+        run: pnpm seed
+
+      - name: Verify the seeded databases exist
+        run: test -s apps/server/data/app.db && test -s apps/server/data/practice.db

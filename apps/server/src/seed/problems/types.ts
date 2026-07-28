@@ -1,0 +1,110 @@
+import type { Category, Difficulty, ProblemType } from '@devgym/shared';
+
+import type {
+  CodeGraderConfig,
+  ExplainGraderConfig,
+  ShortTextGraderConfig,
+  SqlGraderConfig,
+} from '../../grading/types';
+
+export interface ProblemSeed {
+  slug: string;
+  title: string;
+  category: Category;
+  difficulty: Difficulty;
+  type: ProblemType;
+  /** Assigned automatically in problems.seed.ts. Authors don't set it. */
+  position: number;
+  /** Markdown. */
+  prompt: string;
+  graderConfig: SqlGraderConfig | ShortTextGraderConfig | ExplainGraderConfig | CodeGraderConfig;
+  /**
+   * A model answer in the form a user would actually type. Not persisted. The
+   * smoke tests submit it to prove every seeded problem is solvable.
+   */
+  canonicalAnswer: string;
+  /** Markdown. The canonical answer, shown once solved. */
+  solution: string;
+  /** Markdown. Why the answer is what it is. */
+  explanation: string;
+}
+
+/** Authoring shape: same as ProblemSeed minus the generated position. */
+export type ProblemDraft = Omit<ProblemSeed, 'position'>;
+
+/** Join lines into a markdown block. Keeps ``` fences readable in source. */
+export const md = (...lines: string[]): string => lines.join('\n');
+
+/** Wrap code in a fenced block. */
+export const code = (language: string, ...lines: string[]): string =>
+  md(`\`\`\`${language}`, ...lines, '```');
+
+/** A SQL problem. Solution SQL doubles as the canonical answer. */
+export function sqlProblem(draft: {
+  slug: string;
+  title: string;
+  difficulty: Difficulty;
+  prompt: string;
+  solutionSql: string;
+  orderMatters: boolean;
+  hints: string[];
+  /** Pretty-printed solution; falls back to the one-line solutionSql. */
+  solutionSource?: string[];
+  explanation: string;
+}): ProblemDraft {
+  return {
+    slug: draft.slug,
+    title: draft.title,
+    category: 'sql',
+    difficulty: draft.difficulty,
+    type: 'sql',
+    prompt: draft.prompt,
+    graderConfig: {
+      solutionSql: draft.solutionSql,
+      orderMatters: draft.orderMatters,
+      hints: draft.hints,
+    },
+    canonicalAnswer: draft.solutionSql,
+    solution: code('sql', ...(draft.solutionSource ?? [draft.solutionSql])),
+    explanation: draft.explanation,
+  };
+}
+
+/**
+ * A "write the function" problem. The reference implementation doubles as the
+ * canonical answer and the displayed solution, so they can never drift apart.
+ */
+export function codeProblem(draft: {
+  slug: string;
+  title: string;
+  category?: Category;
+  difficulty: Difficulty;
+  prompt: string;
+  /** Prefilled into the editor: the signature, so the name matches the tests. */
+  starter: string;
+  /** Runs before the submission — fixtures the tests and the user can both see. */
+  setup?: string;
+  tests: CodeGraderConfig['tests'];
+  /** The reference implementation. Must pass its own tests (asserted in the specs). */
+  reference: string;
+  hints: string[];
+  explanation: string;
+}): ProblemDraft {
+  return {
+    slug: draft.slug,
+    title: draft.title,
+    category: draft.category ?? 'coding',
+    difficulty: draft.difficulty,
+    type: 'js-code',
+    prompt: draft.prompt,
+    graderConfig: {
+      ...(draft.setup ? { setup: draft.setup } : {}),
+      starter: draft.starter,
+      tests: draft.tests,
+      hints: draft.hints,
+    },
+    canonicalAnswer: draft.reference,
+    solution: code('js', draft.reference),
+    explanation: draft.explanation,
+  };
+}

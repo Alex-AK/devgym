@@ -1,0 +1,35 @@
+name: Grading bug
+description: A grader marked a correct answer wrong, or a wrong answer correct
+labels: [grading]
+body:
+  - type: input
+    id: slug
+    attributes:
+      label: Problem slug
+      description: The slug from the URL, e.g. `sql-anti-join`
+      placeholder: sql-anti-join
+    validations:
+      required: true
+
+  - type: textarea
+    id: answer
+    attributes:
+      label: The answer you typed
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: grade_output
+    attributes:
+      label: Output of `pnpm grade <slug> "<answer>"`
+      description: This prints the verdict alongside the exact config it was measured against.
+      render: text
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      placeholder: Graded correct, but came back as close.
+    validations:
+      required: true

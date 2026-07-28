@@ -1,0 +1,105 @@
+import type {
+  AttemptResponse,
+  CreateSessionRequest,
+  NextProblem,
+  PracticeSchemaResponse,
+  ProblemDetail,
+  ProblemSummary,
+  ProgressResponse,
+  QueueMoveResponse,
+  QueueScope,
+  ResetAllResponse,
+  RevealSolutionResponse,
+  SessionResponse,
+} from '@devgym/shared';
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    headers: { 'content-type': 'application/json' },
+    ...init,
+  });
+
+  if (!response.ok) {
+    let message = `${response.status} ${response.statusText}`;
+    try {
+      const body: unknown = await response.json();
+      const raw = (body as { message?: string | string[] }).message;
+      if (Array.isArray(raw)) message = raw.join(', ');
+      else if (typeof raw === 'string') message = raw;
+    } catch {
+      // Non-JSON error body — keep the status line.
+    }
+    throw new ApiError(message, response.status);
+  }
+
+  return (await response.json()) as T;
+}
+
+const post = <T>(path: string, body?: unknown): Promise<T> =>
+  request<T>(path, { method: 'POST', body: JSON.stringify(body ?? {}) });
+
+export const api = {
+  progress: (): Promise<ProgressResponse> => request('/progress'),
+  problems: (): Promise<ProblemSummary[]> => request('/problems'),
+  problem: (slug: string): Promise<ProblemDetail> => request(`/problems/${slug}`),
+  practiceSchema: (): Promise<PracticeSchemaResponse> => request('/practice-schema'),
+
+  next: (
+    after?: string,
+    dir: 'next' | 'prev' = 'next',
+    scope: QueueScope = {}
+  ): Promise<{ next: NextProblem | null }> => {
+    const params = scopeToParams(scope);
+    if (after) params.set('after', after);
+    if (dir !== 'next') params.set('dir', dir);
+    return request(`/problems/next${suffix(params)}`);
+  },
+
+  attempt: (slug: string, answer: string): Promise<AttemptResponse> =>
+    post(`/problems/${slug}/attempts`, { answer }),
+  skip: (slug: string, scope: QueueScope = {}): Promise<QueueMoveResponse> =>
+    post(`/problems/${slug}/skip${suffix(scopeToParams(scope))}`),
+  resetAll: (clearHistory: boolean): Promise<ResetAllResponse> =>
+    post('/progress/reset', { clearHistory }),
+
+  createSession: (body: CreateSessionRequest): Promise<SessionResponse> => post('/sessions', body),
+  activeSession: (): Promise<{ session: SessionResponse | null }> => request('/sessions/active'),
+  latestSession: (): Promise<{ session: SessionResponse | null }> => request('/sessions/latest'),
+  finishSession: (id: number): Promise<SessionResponse> => post(`/sessions/${id}/finish`),
+  revealSolution: (slug: string): Promise<RevealSolutionResponse> =>
+    post(`/problems/${slug}/reveal-solution`),
+  reset: (slug: string): Promise<QueueMoveResponse> => post(`/problems/${slug}/reset`),
+};
+
+export function scopeToParams(scope: QueueScope): URLSearchParams {
+  const params = new URLSearchParams();
+  if (scope.category) params.set('category', scope.category);
+  if (scope.difficulty) params.set('difficulty', scope.difficulty);
+  if (scope.mode && scope.mode !== 'all') params.set('mode', scope.mode);
+  return params;
+}
+
+function suffix(params: URLSearchParams): string {
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
+export const queryKeys = {
+  progress: ['progress'] as const,
+  problems: ['problems'] as const,
+  problem: (slug: string) => ['problem', slug] as const,
+  next: (scope: QueueScope) => ['next-problem', scope] as const,
+  practiceSchema: ['practice-schema'] as const,
+  activeSession: ['session', 'active'] as const,
+  latestSession: ['session', 'latest'] as const,
+};

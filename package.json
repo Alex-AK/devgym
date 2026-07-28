@@ -1,0 +1,48 @@
+{
+  "name": "devgym",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A local-first practice gym for staying sharp on web-dev fundamentals, with deterministic offline grading",
+  "author": "Alex King",
+  "license": "MIT",
+  "packageManager": "pnpm@11.5.0",
+  "scripts": {
+    "dev": "pnpm --filter @devgym/shared build && concurrently -n server,web -c blue,magenta \"pnpm --filter @devgym/server dev\" \"pnpm --filter @devgym/web dev\"",
+    "build": "pnpm --filter @devgym/shared build && pnpm --filter @devgym/server build && pnpm --filter @devgym/web build",
+    "test": "pnpm --filter @devgym/shared build && pnpm --filter @devgym/server test",
+    "seed": "pnpm --filter @devgym/server seed",
+    "grade": "pnpm --filter @devgym/server grade",
+    "verify": "bash scripts/verify.sh",
+    "typecheck": "pnpm --filter @devgym/shared build && pnpm -r typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.1.2",
+    "eslint": "^10.8.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-perfectionist": "^5.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.2.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.65.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write --log-level warn",
+      "eslint --fix"
+    ],
+    "*.{js,mjs,json,css,md}": "prettier --write --log-level warn"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

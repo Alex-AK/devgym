@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+pnpm-workspace.yaml
+**/dist/
+**/build/
+**/node_modules/
+**/.turbo/
+apps/server/data/
+apps/server/drizzle/
+docs/

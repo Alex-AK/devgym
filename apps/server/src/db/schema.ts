@@ -1,0 +1,135 @@
+import {
+  CATEGORIES,
+  DIFFICULTIES,
+  PROBLEM_STATUSES,
+  PROBLEM_TYPES,
+  QUEUE_MODES,
+  VERDICTS,
+} from '@devgym/shared';
+import { sql } from 'drizzle-orm';
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const problems = sqliteTable('problems', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  category: text('category', { enum: CATEGORIES }).notNull(),
+  difficulty: text('difficulty', { enum: DIFFICULTIES }).notNull(),
+  type: text('type', { enum: PROBLEM_TYPES }).notNull(),
+  position: integer('position').notNull(),
+  /** Markdown. */
+  prompt: text('prompt').notNull(),
+  /** JSON, discriminated by `type` — see grading/. */
+  graderConfig: text('grader_config').notNull(),
+  /** Markdown. */
+  solution: text('solution').notNull(),
+  /** Markdown. */
+  explanation: text('explanation').notNull(),
+});
+
+export const attempts = sqliteTable(
+  'attempts',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    problemId: integer('problem_id')
+      .notNull()
+      .references(() => problems.id),
+    answer: text('answer').notNull(),
+    verdict: text('verdict', { enum: VERDICTS }).notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  },
+  (table) => [
+    index('attempts_user_problem_idx').on(table.userId, table.problemId),
+    index('attempts_created_at_idx').on(table.createdAt),
+  ]
+);
+
+export const problemProgress = sqliteTable(
+  'problem_progress',
+  {
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    problemId: integer('problem_id')
+      .notNull()
+      .references(() => problems.id),
+    status: text('status', { enum: PROBLEM_STATUSES }).notNull().default('unseen'),
+    attemptsCount: integer('attempts_count').notNull().default(0),
+    hintsRevealed: integer('hints_revealed').notNull().default(0),
+    solutionViewed: integer('solution_viewed').notNull().default(0),
+    lastSkippedAt: text('last_skipped_at'),
+    /** Most recent correct answer, refreshed on every review. */
+    solvedAt: text('solved_at'),
+    lastSeenAt: text('last_seen_at'),
+    /** Spaced repetition: when this solved problem comes round again. */
+    dueAt: text('due_at'),
+    /** Index into REVIEW_INTERVALS_DAYS, so the gap widens with each success. */
+    reviewStep: integer('review_step').notNull().default(0),
+    reviewCount: integer('review_count').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.problemId] })]
+);
+
+export type ProblemRow = typeof problems.$inferSelect;
+export type ProgressRow = typeof problemProgress.$inferSelect;
+export type AttemptRow = typeof attempts.$inferSelect;
+
+/**
+ * A practice session: a fixed set of problems pinned at the moment you start,
+ * so the list does not drift underneath you as you solve them.
+ *
+ * Per-item outcome is derived, not written during practice, so a session can
+ * never desynchronise from the real progress table. Each item snapshots the
+ * problem's solved_at / last_skipped_at at pin time; the outcome is simply
+ * "has that value changed since?". A snapshot rather than a timestamp
+ * comparison, because a skip and a session start can land in the same
+ * millisecond and `>=` cannot tell "just before" from "during".
+ */
+export const sessions = sqliteTable(
+  'sessions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    category: text('category', { enum: CATEGORIES }),
+    difficulty: text('difficulty', { enum: DIFFICULTIES }),
+    mode: text('mode', { enum: QUEUE_MODES }),
+    createdAt: text('created_at').notNull(),
+    finishedAt: text('finished_at'),
+  },
+  (table) => [index('sessions_user_idx').on(table.userId, table.createdAt)]
+);
+
+export const sessionItems = sqliteTable(
+  'session_items',
+  {
+    sessionId: integer('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    problemId: integer('problem_id')
+      .notNull()
+      .references(() => problems.id),
+    position: integer('position').notNull(),
+    /** `problem_progress` values at the moment the session was pinned. */
+    baselineSolvedAt: text('baseline_solved_at'),
+    baselineSkippedAt: text('baseline_skipped_at'),
+  },
+  (table) => [primaryKey({ columns: [table.sessionId, table.problemId] })]
+);
+
+export type SessionRow = typeof sessions.$inferSelect;
+export type SessionItemRow = typeof sessionItems.$inferSelect;

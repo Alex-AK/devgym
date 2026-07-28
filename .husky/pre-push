@@ -1,0 +1,5 @@
+# The full gate: typecheck, lint, format and the whole test suite.
+# Skip with SKIP_VERIFY=1 when pushing a work-in-progress branch.
+if [ -z "$SKIP_VERIFY" ]; then
+  pnpm verify
+fi

@@ -1,0 +1,29 @@
+{
+  "name": "@devgym/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ./scripts/clean.mjs && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node ./scripts/stamp-esm.mjs",
+    "dev": "tsc -p tsconfig.cjs.json --watch",
+    "clean": "node ./scripts/clean.mjs",
+    "typecheck": "tsc -p tsconfig.cjs.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "module": "./dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "description": "Shared API types for devgym",
+  "license": "MIT"
+}

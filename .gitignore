@@ -1,0 +1,21 @@
+node_modules/
+dist/
+build/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+apps/server/data/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.turbo/
+coverage/
+*.tsbuildinfo
+.idea/
+.vscode/
+
+# Claude Code local settings — CLAUDE.md itself is committed as agent context
+.claude/
