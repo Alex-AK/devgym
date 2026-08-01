@@ -98,8 +98,23 @@ an expiry; bad credentials get 401 with no token and answer identically whether 
 exists; the protected route refuses a forged, expired, malformed or unknown-subject token with a 401
 rather than a 500; and it answers with the token holder, password hash left out.
 
+**Workout 3: `slow-list-endpoint-kysely`** (25 min, Kysely + PGlite). A bug-hunt: the orders list
+reads all 40,000 rows, pages them in JavaScript, and fetches the customer name once per row, with no
+index to help it. Checkpoints: the page it answers with is unchanged; no statement returns more rows
+than the page holds; a page costs the same number of round trips whatever its size; and `EXPLAIN` of
+the query actually sent shows an index scan with no sort step.
+
 The second workout is what proved the format: it added Express, jose and supertest to
-`packages/workouts/package.json` and touched no application source at all.
+`packages/workouts/package.json` and touched no application source at all. The third is what proved
+the format can carry a whole database engine.
+
+**Judging perf without a stopwatch.** A timed assertion would be flaky, so the slow-endpoint workout
+asserts on what the code asked the database for instead. The PGlite dialect logs every statement and
+its row count, and the checkpoint runs `EXPLAIN` on the query the endpoint actually sent. That makes
+the failure messages the teaching: "one query came back with 40000 rows for a page of 20", "a page of
+20 took 21 round trips". It also distinguishes an index that exists from an index the planner
+chooses, which is the distinction the exercise is about. Any workout about performance should be
+built this way.
 
 ---
 
@@ -108,19 +123,18 @@ The second workout is what proved the format: it added Express, jose and superte
 ### Phase 2 — the workout library
 
 Port the accumulated briefs. Each is full stack, because that is the level being practised. JWT login
-is done; the rest are still to write.
+and the slow list endpoint are done; the rest are still to write.
 
-| Workout                             | Stack                          | Shape    |
-| ----------------------------------- | ------------------------------ | -------- |
-| Search with pagination              | Drizzle + PGlite               | feature  |
-| Search with pagination              | Prisma + PGlite                | feature  |
-| Rate limiting middleware            | Express + fake Redis           | feature  |
-| Infinite scroll with retry          | React + local fixture API      | feature  |
-| Drag-and-drop ordering, persisted   | React + Zustand + API          | feature  |
-| Autocomplete: debounce, abort, a11y | React + API                    | feature  |
-| The list endpoint is slow           | Kysely + PGlite, index missing | bug-hunt |
-| N+1 in the orders report            | TypeORM                        | bug-hunt |
-| Auth check on the wrong layer       | NestJS guards                  | bug-hunt |
+| Workout                             | Stack                     | Shape    |
+| ----------------------------------- | ------------------------- | -------- |
+| Search with pagination              | Drizzle + PGlite          | feature  |
+| Search with pagination              | Prisma + PGlite           | feature  |
+| Rate limiting middleware            | Express + fake Redis      | feature  |
+| Infinite scroll with retry          | React + local fixture API | feature  |
+| Drag-and-drop ordering, persisted   | React + Zustand + API     | feature  |
+| Autocomplete: debounce, abort, a11y | React + API               | feature  |
+| N+1 in the orders report            | TypeORM                   | bug-hunt |
+| Auth check on the wrong layer       | NestJS guards             | bug-hunt |
 
 Three adaptations the offline constraint forces, all of which improve the exercise:
 
@@ -129,7 +143,10 @@ Three adaptations the offline constraint forces, all of which improve the exerci
 - **Redis → a small in-repo fake** with the real `ioredis` surface (`incr`, `expire`, `ttl`), so the
   code written is real Redis code.
 - **Postgres → PGlite**, a WASM Postgres running in-process. Real `ILIKE`, real `EXPLAIN`, no server.
-  This is also what makes a genuine query-optimisation workout possible.
+  This is also what makes a genuine query-optimisation workout possible. Done, in workout 3: it ships
+  its own 25MB of WASM, boots in about a second and seeds 40,000 rows in well under one, so a
+  checkpoint suite can afford a fresh database per file. Kysely needs a small hand-written dialect to
+  talk to it, which lives in the workout's read-only files.
 
 ### Phase 3 — workout depth
 

@@ -1,0 +1,41 @@
+{
+  "slug": "slow-list-endpoint-kysely",
+  "title": "The orders list got slow",
+  "kind": "bug-hunt",
+  "minutes": 25,
+  "difficulty": "hard",
+  "relevance": "occasional",
+  "stack": {
+    "orm": "kysely",
+    "database": "postgres via pglite"
+  },
+  "summary": "One endpoint, three reasons it is slow: it reads the whole table, it pages in JavaScript, and it fetches the customer name one order at a time. The index it needs is missing too.",
+  "focus": ["query plans", "indexes", "n+1", "pagination"],
+  "editable": ["src/server/orders.ts", "src/server/schema.ts"],
+  "checkpoints": [
+    {
+      "id": "page-is-still-right",
+      "title": "The endpoint still answers with the same page it used to",
+      "testFile": "tests/checkpoints/01-the-page-is-still-right.test.ts",
+      "hint": "Speeding it up is only worth anything if the answer stays the same: same rows, same order, and a total that counts every match rather than the twenty on the page."
+    },
+    {
+      "id": "database-does-the-paging",
+      "title": "Postgres does the filtering and the paging",
+      "testFile": "tests/checkpoints/02-the-database-does-the-paging.test.ts",
+      "hint": "Every WHERE, ORDER BY, LIMIT and OFFSET belongs in the query. Once they are, no statement should come back with more rows than the page holds, and the total wants its own count query."
+    },
+    {
+      "id": "one-query-not-one-per-row",
+      "title": "The customer name comes back with the order",
+      "testFile": "tests/checkpoints/03-one-query-not-one-per-row.test.ts",
+      "hint": "A loop that queries once per row is an N+1: twenty rows, twenty-one round trips. Join customers into the same query and the count stops depending on the page size."
+    },
+    {
+      "id": "filter-uses-an-index",
+      "title": "The planner uses an index instead of reading the table",
+      "testFile": "tests/checkpoints/04-the-filter-uses-an-index.test.ts",
+      "hint": "The checkpoint runs EXPLAIN on the query you actually sent. An index on status alone stops the scan but leaves a sort behind; putting created_at in the index after it hands the rows over already ordered. A filter done in JavaScript can use no index at all."
+    }
+  ]
+}
