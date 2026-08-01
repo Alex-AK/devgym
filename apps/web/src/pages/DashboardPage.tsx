@@ -125,8 +125,15 @@ function Headline({ progress }: { progress: ProgressResponse }): React.ReactElem
   const { data: workouts } = useQuery({ queryKey: queryKeys.workouts, queryFn: api.workouts });
 
   const cleared =
-    workouts?.filter((w) => w.bestCheckpointsPassed === w.checkpointCount).length ?? null;
+    workouts?.filter((w) => w.bestCheckpointsPassed === w.checkpointCount).length ?? 0;
   const started = workouts?.filter((w) => w.bestCheckpointsPassed !== null).length ?? 0;
+
+  const workoutFootnote = (): string | undefined => {
+    if (!workouts) return undefined;
+    if (started === 0) return 'none attempted yet';
+    if (started > cleared) return `${started - cleared} started, not finished`;
+    return 'every checkpoint green';
+  };
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
@@ -138,13 +145,9 @@ function Headline({ progress }: { progress: ProgressResponse }): React.ReactElem
       />
       <StatTile
         label="Workouts cleared"
-        value={workouts ? `${cleared ?? 0}/${workouts.length}` : '–'}
-        meter={workouts ? percent(cleared ?? 0, workouts.length) : 0}
-        footnote={
-          workouts && started > (cleared ?? 0)
-            ? `${started - (cleared ?? 0)} started, not finished`
-            : 'every checkpoint green'
-        }
+        value={workouts ? `${cleared}/${workouts.length}` : '–'}
+        meter={workouts ? percent(cleared, workouts.length) : 0}
+        footnote={workoutFootnote()}
       />
       <StatTile
         label="Due today"
