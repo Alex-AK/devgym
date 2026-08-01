@@ -102,6 +102,36 @@ A brief:
 > After: "Clients are hammering the export endpoint. Add a fixed-window limiter as middleware:
 > 10 requests a minute per client, honest headers, and a window that actually turns over."
 
+## Briefs don't give away the diagnosis
+
+A workout is practice at working out what's wrong, not at typing a fix somebody already
+described. So a brief states the **symptom and the requirement**, never the cause.
+
+Write what the person reporting it would actually say. They can see the page is slow; they
+cannot see that it runs a query per row. Naming the cause in the brief deletes the part of the
+exercise worth doing, and it is the easiest mistake to make, because by the time you write the
+brief you know the answer.
+
+> Before: "The orders list reads all 40,000 rows, pages them in JavaScript, and fetches the
+> customer name once per row. There's no index on `status` either."
+>
+> After: "The orders list took 40ms in staging and takes 9 seconds in production. Same code, same
+> query, a hundred times the data. Get it under control without changing what the endpoint
+> returns."
+
+This applies to `brief.md` and to the manifest's `summary`, which is the first thing read and the
+easiest place to leak the answer. It applies hardest to `bug-hunt` workouts, where the whole
+exercise is the finding.
+
+Three things stay explicit, because they're the task rather than the answer:
+
+- **What must still be true when you're done.** Unchanged output, no new dependencies, the same
+  API. Constraints are the brief's job.
+- **Anything unguessable about the environment.** A fake's odd semantics, where the query log is,
+  what `advanceTime` does. Withholding local trivia isn't difficulty, it's a scavenger hunt.
+- **Checkpoint hints**, which are shown only after that checkpoint fails. That's the right moment
+  to be specific, and they should be: name the one thing that's wrong.
+
 ## The test
 
 Two questions, applied to every sentence. Would you say it out loud to the person sitting next

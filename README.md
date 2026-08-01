@@ -1,18 +1,22 @@
 # devgym
 
-A local-first practice gym for staying sharp on web-dev fundamentals: SQL, JavaScript, TypeScript,
-React, HTTP and the DOM. Two modes. **Problems** are short reps: type an answer, get tiered
-feedback (correct / close / not close), come back to it on a spaced-repetition schedule.
-**Workouts** are 20-minute builds against a real toolchain: read a brief, edit real files, run
-checkpoints, see how far you got. You write every answer yourself and a deterministic grader marks
-it, so the reps stay yours. No AI in the loop, fully offline, single user, no accounts.
+A local-first practice gym for staying sharp on web-dev fundamentals. Three ways in:
 
-**Status:** built and in daily use. 229 problems across 15 categories, and 8 workouts spanning
-Express, NestJS, Drizzle, Kysely, TypeORM and React. Deterministic grading, executable code
-problems, spaced repetition, pinned daily sessions.
-[PRD-v2.md](./PRD-v2.md) is the live spec; [PRD.md](./PRD.md) is the original v1 one, kept for
-provenance. Code execution and spaced repetition were v1 non-goals and were pulled forward
-deliberately.
+- **Problems** are short reps: type an answer, get tiered feedback (correct / close / not close),
+  come back to it on a spaced-repetition schedule.
+- **Workouts** are 20-minute builds against a real toolchain: read a brief, edit real files, run
+  checkpoints, see how far you got.
+- **The handbook** is what you read beside a workout: one concept a page, sources on every one, and
+  links to the problems and workouts that make you prove you absorbed it.
+
+You write every answer yourself and a deterministic grader marks it, so the reps stay yours. No AI
+in the loop at runtime, fully offline, single user, no accounts.
+
+**Status:** built and in daily use. Content grows continuously and is never finished, so this README
+describes the shape rather than counting it; the app and the seed files are the live inventory.
+[PRD-v2.md](./PRD-v2.md) is the live spec, extended by the three `PRD-v3-*.md` documents.
+[PRD.md](./PRD.md) is the original v1 one, kept for provenance: code execution and spaced repetition
+were non-goals there and were pulled forward deliberately.
 
 ## Quickstart
 
@@ -28,7 +32,7 @@ keys, no accounts, no network calls at runtime.
 
 ```sh
 pnpm verify     # the gate: typecheck, lint, format and the full test suite, in parallel
-pnpm test       # 417 unit tests: graders, seed data, workout content, queue, sessions, scheduling
+pnpm test       # graders, seed data, workout and handbook content, queue, sessions, scheduling
 pnpm build      # typecheck and build every package
 pnpm seed       # rebuild practice.db and upsert problems by slug
 pnpm grade      # check a grader from the terminal (see below)
@@ -67,42 +71,41 @@ where today stopped. Only one session runs at a time; starting a new one closes 
 
 ## Problem library
 
-| Category           | Problems | Covers                                                                                       |
-| ------------------ | -------: | -------------------------------------------------------------------------------------------- |
-| SQL                |       29 | joins, aggregates, `HAVING`, anti-joins, self-joins, CTEs, window functions, recursive trees |
-| React              |       22 | state updates, effects and cleanup, keys, stale closures, memoisation, transitions           |
-| TypeScript         |       22 | utility types, narrowing, generics, discriminated unions, `satisfies`, exhaustiveness        |
-| JS APIs            |       20 | array/object methods, promises, the event loop, closures, cloning, `AbortController`         |
-| Coding             |       20 | **write the function**: chunk, debounce, memoize, LRU, retry, concurrency pool, deep equal   |
-| HTTP & Fetch       |       22 | status codes, `response.ok`, CORS preflight, caching, ETags, SSE, the WebSocket handshake    |
-| Debugging          |       15 | spot-the-bug snippets: async `forEach`, `this`, floats, shared references                    |
-| CSS & Layout       |       12 | box sizing, specificity, flex and grid, margin collapse, stacking and container queries      |
-| Accessibility      |       12 | accessible names, heading order, focus management, live regions, reduced motion              |
-| Query Params       |       10 | `URL` / `URLSearchParams`, encoding, relative resolution                                     |
-| Forms & Validation |       10 | submit handling, `FormData`, validating on both sides, double submits                        |
-| Dates & Time       |       10 | UTC storage, locale formatting, DST, durations, timer drift                                  |
-| DOM & Browser      |        9 | delegation, `textContent` vs `innerHTML`, storage, observers                                 |
-| Testing            |        8 | query priority, what to mock, testing behaviour over implementation, flaky timing            |
-| Auth & Security    |        8 | XSS sources, injection, token storage, password hashing, open redirects                      |
+One file per category in `apps/server/src/seed/problems/`, which is the live inventory. Roughly:
 
-74 easy / 117 medium / 38 hard. The queue runs easy → medium → hard and round-robins across
-categories, so you never get twenty SQL questions in a row.
+- **Data** — SQL from joins through window functions and recursive trees, and query plans.
+- **The language** — JavaScript under the hood (references, equality, mutation, the event loop),
+  TypeScript from utility types through conditional types and `satisfies`, and write-the-function
+  coding problems with real assertions.
+- **The browser** — React, the DOM, semantic HTML, accessibility, CSS, forms, dates.
+- **The wire** — HTTP status codes and methods, headers, caching, CORS, SSE and WebSockets, auth
+  and security.
+- **Systems** — one concept a card: consistency, replication, sharding, queues, circuit breakers.
+- **Debugging** — spot-the-bug snippets, mostly the mistakes fast thinking makes.
+
+Every problem declares a **relevance** alongside its difficulty: `daily` for what you write in
+ordinary feature work, `occasional` for a bug or a perf pass, `foundational` for what you meet
+through a framework more often than you write. That is what lets a 15-minute session be judged on
+what it is actually teaching.
+
+The queue runs easy → medium → hard and round-robins across categories, so you never get twenty SQL
+questions in a row. `pnpm grade --list <category>` prints the current slugs.
 
 ## How grading works
 
 All grading is deterministic and local. No LLM, no network.
 
-- **SQL** (29) runs your query against `practice.db` opened **read-only**, then compares raw row
+- **SQL** runs your query against `practice.db` opened **read-only**, then compares raw row
   values against the canonical solution executed at the same moment. Column names and aliases never
   matter; row counts, values and (where stated) order do. Non-read statements are refused, as is
   `ATTACH`, so `app.db` is unreachable from user SQL.
-- **Coding** (23) runs your function against real assertions and reports per-test pass/fail with
+- **Coding** runs your function against real assertions and reports per-test pass/fail with
   expected vs actual. Console output from a failing test is attached to the diff. The editor
   prefills the signature so your function name matches the tests.
-- **Short-text** (96) normalises both sides (case, whitespace, quotes, code fences, trailing
+- **Short-text** normalises both sides (case, whitespace, quotes, code fences, trailing
   punctuation), then checks exact matches, regex patterns, known near-misses, and finally fuzzy
   matching for typos.
-- **Explain** (81) scores keyword groups: every idea must appear, half of them earns a "close".
+- **Explain** scores keyword groups: every idea must appear, half of them earns a "close".
 
 Every non-correct attempt reveals the next hint. After three attempts you can reveal the solution,
 which marks the problem skipped rather than solved.
@@ -138,21 +141,20 @@ makes an unfinished attempt worth something: at ten minutes you can see two of f
 failure output tells you which behaviour is missing. Each checkpoint carries a hint that appears
 after it fails. The reference solution is there when you want it.
 
-| Workout                                   | Stack                  | Min | Shape    |
-| ----------------------------------------- | ---------------------- | --: | -------- |
-| Sortable employee table, end to end       | Drizzle, SQLite, React |  20 | feature  |
-| Login and a protected route               | Express, jose          |  20 | feature  |
-| The orders list got slow                  | Kysely, PGlite         |  25 | bug-hunt |
-| Search the product catalogue              | Drizzle, PGlite        |  20 | feature  |
-| Rate limit an endpoint with Redis         | Express, fake Redis    |  20 | feature  |
-| Autocomplete that behaves itself          | React, fixture API     |  25 | feature  |
-| The orders report melts under real data   | TypeORM, SQLite        |  25 | bug-hunt |
-| The ownership check is in the wrong place | NestJS                 |  20 | bug-hunt |
+Two shapes: **build a feature** and **find the bugs**. A brief states the symptom and the
+constraints, never the cause, because working out what is wrong is the exercise.
+
+**Breadth of stack is the point**, not a side effect: reading an unfamiliar codebase under time
+pressure is the thing being practised, so the same brief on a tool you do not know is worth more
+than a second brief on one you do. The library spans Express, NestJS and plain Node on the server;
+Drizzle, Kysely and TypeORM for data; SQLite and Postgres; React on the client. Browse
+`packages/workouts/content/` for the current set.
 
 Nothing reaches the network. Postgres is [PGlite](https://pglite.dev), which is Postgres compiled
 to WASM and running in-process, so `ILIKE` and `EXPLAIN` are the real thing. Redis is a small fake
 with the real `ioredis` surface plus a clock you can wind forward, which is how a checkpoint waits
-out a sixty-second window for free.
+out a sixty-second window for free. The same trick makes a race deterministic: the fixture API takes
+a per-query delay, so a checkpoint can hold one answer back until after a newer one has landed.
 
 ### Adding a workout
 
@@ -171,6 +173,25 @@ Needs a library the others don't use? Add it to `packages/workouts/package.json`
 symlinks its `node_modules` there, so a workout imports the real drizzle-orm with no install per
 attempt. `workouts.spec.ts` then holds the content to the same bar as the problems: every solution
 passes every checkpoint, and every starter fails at least one.
+
+## Handbook
+
+The study half of the gym. A page is one concept, in a fixed shape: the question it answers phrased
+the way you would ask it when stuck, the model, a worked example, the traps stated as symptoms
+first, and where to practise it. A page that cannot fill the traps section honestly is a page nobody
+needed.
+
+Pages are markdown with frontmatter under `packages/handbook/content/<section>/`, so adding one
+touches no application code. The links run both ways: a page lists the problems and workouts that
+exercise it, and those find the pages that name them without keeping a list of their own.
+
+`pnpm verify` enforces the citation policy mechanically — every page cites at least one source with
+an author and a canonical URL, no link shorteners, every practise slug resolves, and every page has
+all five parts of the shape. Two rules it cannot check, so review does: inspirations are named and
+never reproduced, and a paywalled source can shape a page but never carry a claim, which must always
+be checkable against an open reference.
+
+See `packages/handbook/README.md` for the authoring contract.
 
 ## Layout
 

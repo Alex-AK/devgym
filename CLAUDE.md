@@ -68,6 +68,11 @@ apps/web/src/
 - **Adding a workout** is a new directory under `packages/workouts/content/`. No application code
   changes. `workouts.spec.ts` then asserts the solution passes every checkpoint and the starter does
   not, which is what makes workout content as safe to edit as problem content.
+- **A brief states the symptom, never the cause.** Working out what is wrong is the exercise, so
+  `brief.md` and the manifest `summary` describe what someone would report ("9 seconds in
+  production"), not the diagnosis ("a query per row, and no index"). Constraints and unguessable
+  environment details stay explicit; checkpoint hints are where it is safe to be specific, because
+  they appear only after that checkpoint has failed. See `WRITING.md`.
 - **A workout needs a new library?** Add it to `packages/workouts/package.json`. Workspaces symlink
   their `node_modules` at that package, which is how a workout imports the real drizzle-orm.
 
