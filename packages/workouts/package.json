@@ -1,0 +1,17 @@
+{
+  "name": "@devgym/workouts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Workout content plus the dependency set every workout workspace resolves against",
+  "type": "module",
+  "dependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "better-sqlite3": "^12.11.1",
+    "drizzle-orm": "^0.45.2",
+    "jsdom": "^28.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "vitest": "^3.2.7"
+  }
+}

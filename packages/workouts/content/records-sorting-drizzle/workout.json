@@ -1,0 +1,43 @@
+{
+  "slug": "records-sorting-drizzle",
+  "title": "Sortable employee table, end to end",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "server": "express-style handlers",
+    "orm": "drizzle",
+    "database": "sqlite",
+    "client": "react"
+  },
+  "summary": "Add column sorting to a paginated employee list: query params on the backend, ORDER BY in SQL, toggling headers on the frontend.",
+  "focus": ["api design", "sql", "pagination", "react state"],
+  "editable": ["src/server/employees.ts", "src/client/EmployeeTable.tsx", "src/client/api.ts"],
+  "checkpoints": [
+    {
+      "id": "api-accepts-sort",
+      "title": "The handler accepts sort and direction",
+      "testFile": "tests/checkpoints/01-api-accepts-sort.test.ts",
+      "hint": "listEmployees already takes a query object. Add sort and dir to it, with sensible defaults."
+    },
+    {
+      "id": "sorted-in-sql",
+      "title": "Sorting happens in the database, not after pagination",
+      "testFile": "tests/checkpoints/02-sorted-in-sql.test.ts",
+      "hint": "If you sort the rows you already fetched, page 1 is only the first page re-ordered. The ORDER BY has to be in the query, before LIMIT."
+    },
+    {
+      "id": "rejects-unknown-column",
+      "title": "An unknown sort column is rejected, not interpolated",
+      "testFile": "tests/checkpoints/03-rejects-unknown-column.test.ts",
+      "hint": "Map the incoming string to a real column through an allowlist. Never build the ORDER BY from raw input."
+    },
+    {
+      "id": "client-toggles",
+      "title": "Clicking a header sorts, and clicking again reverses it",
+      "testFile": "tests/checkpoints/04-client-toggles.test.tsx",
+      "hint": "The header click has to change local state and pass it to the fetch, and clicking the active column flips the direction."
+    }
+  ]
+}
