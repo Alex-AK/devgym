@@ -7,7 +7,19 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist', '**/build', '**/node_modules', '**/.turbo', 'apps/server/drizzle'],
+    ignores: [
+      '**/dist',
+      '**/build',
+      '**/node_modules',
+      '**/.turbo',
+      'apps/server/drizzle',
+      // Workout content is not part of any tsconfig project: it is source code
+      // for a *different* program, materialised into a scratch workspace and
+      // type-checked there. Linting it against this repo's rules is meaningless,
+      // and deliberately broken starter files would fail anyway.
+      'packages/workouts/content',
+      'packages/workouts/scaffold',
+    ],
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],

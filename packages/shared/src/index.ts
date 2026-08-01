@@ -278,3 +278,112 @@ export interface PracticeTable {
 export interface PracticeSchemaResponse {
   tables: PracticeTable[];
 }
+
+/* ------------------------------------------------------------------ workouts */
+
+/**
+ * A workout is a 15-30 minute build against a real toolchain: edit files in the
+ * IDE, run the checkpoints, see how far you got. Content lives in
+ * `packages/workouts/content/<slug>/`, so adding one touches no code.
+ */
+export const WORKOUT_KINDS = ['feature', 'bug-hunt', 'refactor'] as const;
+export type WorkoutKind = (typeof WORKOUT_KINDS)[number];
+
+export const WORKOUT_KIND_LABELS: Record<WorkoutKind, string> = {
+  feature: 'Build a feature',
+  'bug-hunt': 'Find the bugs',
+  refactor: 'Refactor',
+};
+
+/** Free-form on purpose: the point is to practise against stacks you do not know. */
+export interface WorkoutStack {
+  server?: string;
+  orm?: string;
+  database?: string;
+  client?: string;
+}
+
+export interface WorkoutCheckpoint {
+  id: string;
+  title: string;
+  /** Path within the workout directory. One suite per checkpoint. */
+  testFile: string;
+  hint?: string;
+}
+
+export interface WorkoutManifest {
+  slug: string;
+  title: string;
+  kind: WorkoutKind;
+  /** The timer the workout is designed around. */
+  minutes: number;
+  difficulty: Difficulty;
+  relevance: Relevance;
+  stack: WorkoutStack;
+  summary: string;
+  focus: string[];
+  /** Files the editor opens. Everything else in the workspace is read-only. */
+  editable: string[];
+  checkpoints: WorkoutCheckpoint[];
+}
+
+/** Row in the workout list (`GET /api/workouts`). */
+export interface WorkoutSummary {
+  slug: string;
+  title: string;
+  kind: WorkoutKind;
+  minutes: number;
+  difficulty: Difficulty;
+  relevance: Relevance;
+  stack: WorkoutStack;
+  summary: string;
+  focus: string[];
+  checkpointCount: number;
+  /** Best result so far, or null if never attempted. */
+  bestCheckpointsPassed: number | null;
+  lastAttemptedAt: string | null;
+}
+
+export interface WorkoutFile {
+  path: string;
+  contents: string;
+}
+
+/** An in-progress attempt: a materialised workspace plus a clock. */
+export interface WorkoutAttempt {
+  id: number;
+  slug: string;
+  startedAt: string;
+  finishedAt: string | null;
+  files: WorkoutFile[];
+  lastRun: WorkoutRun | null;
+}
+
+export interface WorkoutCheckpointResult {
+  id: string;
+  title: string;
+  hint?: string;
+  status: 'passed' | 'failed' | 'not-run';
+  testsPassed: number;
+  testsTotal: number;
+  /** First failing assertion, trimmed for display. */
+  failure: string | null;
+}
+
+export interface WorkoutRun {
+  ranAt: string;
+  durationMs: number;
+  checkpoints: WorkoutCheckpointResult[];
+  passedCount: number;
+  /** Set when the suite could not run at all: a syntax error, a bad import. */
+  crashed: string | null;
+}
+
+export interface WorkoutDetail extends WorkoutSummary {
+  brief: string;
+  editable: string[];
+  checkpoints: WorkoutCheckpoint[];
+  attempt: WorkoutAttempt | null;
+  /** Revealed once every checkpoint passes, or on request. */
+  solution: WorkoutFile[] | null;
+}

@@ -136,3 +136,22 @@ export const sessionItems = sqliteTable(
 
 export type SessionRow = typeof sessions.$inferSelect;
 export type SessionItemRow = typeof sessionItems.$inferSelect;
+
+/**
+ * One attempt at a workout. The workspace itself lives on disk under
+ * `<data>/workouts/<id>/`; this row is the index and the history.
+ */
+export const workoutAttempts = sqliteTable('workout_attempts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  slug: text('slug').notNull(),
+  startedAt: text('started_at').notNull(),
+  finishedAt: text('finished_at'),
+  /** JSON: the last WorkoutRun, so the UI survives a reload. */
+  lastRun: text('last_run'),
+  /** Best checkpoint count across every run of this attempt. */
+  bestPassed: integer('best_passed').notNull().default(0),
+  solutionViewed: integer('solution_viewed').notNull().default(0),
+});
