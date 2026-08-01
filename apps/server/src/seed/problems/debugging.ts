@@ -779,4 +779,316 @@ export const debuggingProblems: ProblemDraft[] = [
     explanation:
       'Wrapping an error to add context is good practice; replacing it is not. The `cause` option keeps the chain intact so a logger can walk down to the root, and Node prints the chain automatically for uncaught errors. Two related habits help as much: never `catch` without either handling or rethrowing, and remember that a caught value is not guaranteed to be an `Error` at all, since any value can be thrown. Checking `err instanceof Error` before touching `.message` avoids a second error inside your error handler.',
   },
+
+  {
+    slug: 'debug-spreadsheet-copy',
+    title: "The duplicate spreadsheet that isn't",
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'Editing a cell in the duplicated spreadsheet edits the original too, even though `cells` was spread into a new array:',
+      '',
+      code(
+        'js',
+        'function duplicateSpreadsheet(sheet) {',
+        '  return { ...sheet, cells: [...sheet.cells] };',
+        '}',
+        '',
+        "const original = { title: 'Q1', cells: [['A1', 'B1'], ['A2', 'B2']] };",
+        'const copy = duplicateSpreadsheet(original);',
+        "copy.cells[0][0] = 'EDITED';",
+        "original.cells[0][0]; // 'EDITED'"
+      ),
+      '',
+      'Explain why the edit still leaks through, and fix `duplicateSpreadsheet`.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['outer array', 'top level', 'one level', 'not the rows'],
+          missingFeedback:
+            'What exactly did [...sheet.cells] copy: the rows themselves, or just the array holding them?',
+        },
+        {
+          synonyms: ['same array', 'same reference', 'still shared', 'not copied'],
+          missingFeedback: 'What do copy.cells[0] and original.cells[0] point at?',
+        },
+        {
+          synonyms: ['map', 'each row', 'copy each', 'structuredclone'],
+          missingFeedback: 'How do you get independent rows, not just an independent outer array?',
+        },
+      ],
+      hints: [
+        '[...sheet.cells] does copy something, just not what you might assume.',
+        'It copies the outer array. Each row inside it is still the exact same array as before.',
+        'Copy every row too: cells: sheet.cells.map((row) => [...row]), or clone the whole sheet with structuredClone(sheet).',
+      ],
+    },
+    canonicalAnswer:
+      '[...sheet.cells] only copies the outer array; each row inside it is still the exact same array reference as in original.cells, nothing about the rows themselves was copied. copy.cells[0] === original.cells[0], so editing a cell through the "copy" edits the original row too. Copy each row as well, cells: sheet.cells.map((row) => [...row]), or clone the whole thing with structuredClone(sheet).',
+    solution: code(
+      'js',
+      'function duplicateSpreadsheet(sheet) {',
+      '  return { ...sheet, cells: sheet.cells.map((row) => [...row]) };',
+      '}',
+      '',
+      '// or, for arbitrarily nested data:',
+      'function duplicateSpreadsheet(sheet) {',
+      '  return structuredClone(sheet);',
+      '}'
+    ),
+    explanation:
+      'This is the shallow-copy bug in its two-dimensional form, and the reason it survives review is that a spread is sitting right there on `cells`, so it looks handled. `[...sheet.cells]` does copy the outer array: `copy.cells !== original.cells`. But each element of that outer array is a row, and a spread only duplicates one level, so `copy.cells[0]` is still the identical array reference as `original.cells[0]`. Editing through it edits both. Fixing it means copying the level you are actually going to mutate, here the rows, not just the container around them, or reaching for `structuredClone` and not thinking about depth at all.',
+  },
+
+  {
+    slug: 'debug-prototype-shadow',
+    title: 'The shared counter that stopped being shared',
+    category: 'debugging',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    type: 'explain',
+    prompt: md(
+      'Every new session is supposed to pick up where the shared default left off, but the very first `hits++` freezes the default at 0 forever:',
+      '',
+      code(
+        'js',
+        'const defaults = { hits: 0 };',
+        'const session = Object.create(defaults);',
+        'session.hits++;',
+        'console.log(session.hits, defaults.hits); // 1 0'
+      ),
+      '',
+      'Explain what `session.hits++` actually did to the prototype chain, and why `defaults.hits` never moves.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['prototype chain', 'inherit', 'walks up', 'looks up'],
+          missingFeedback: 'Where does the read half of hits++ find its starting value?',
+        },
+        {
+          synonyms: ['own property', 'shadow', 'new property', 'creates a property'],
+          missingFeedback:
+            'What does the write half of hits++ create on session, instead of touching defaults?',
+        },
+        {
+          synonyms: ['writes never', 'never travel', 'does not travel', "doesn't travel"],
+          missingFeedback: "Why doesn't defaults.hits ever change?",
+        },
+      ],
+      hints: [
+        'hits++ is a read, then a write. Trace them separately.',
+        'The read walks up the prototype chain to defaults, because session has no hits property of its own yet.',
+        'The write always lands on session, creating a new own property that shadows the inherited one. It never reaches back up to defaults.',
+      ],
+    },
+    canonicalAnswer:
+      'session.hits++ reads first: session has no own hits property, so the read walks the prototype chain and finds defaults.hits = 0. The write half assigns straight back to session, creating a brand new own property that shadows the one on the prototype; it never touches defaults. Property writes never travel up the prototype chain, so defaults.hits stays 0 no matter how many sessions increment their own count.',
+    solution: code(
+      'js',
+      'const defaults = { hits: 0 };',
+      'const session = Object.create(defaults);',
+      '',
+      'session.hits++;',
+      '// read:  session.hits not own -> walks up -> finds defaults.hits (0)',
+      '// write: session.hits = 0 + 1 -> creates an OWN property on session',
+      '',
+      'session.hits;                    // 1',
+      'defaults.hits;                   // 0, untouched',
+      "Object.hasOwn(session, 'hits');  // true"
+    ),
+    explanation:
+      'session.hits++ is sugar for session.hits = session.hits + 1, and the two halves behave differently. The read side finds no `hits` property directly on `session`, so it walks the prototype chain and returns `defaults.hits`, which is `0`. The write side never walks anywhere: it assigns straight to `session`, and because `session` had no own `hits` property, that assignment creates one, shadowing the inherited property rather than writing through to it. Every future session repeats exactly this: reads `0` from `defaults`, writes its own `1`, and `defaults.hits` never changes. Property writes only travel up the prototype chain when the inherited property is an accessor with a setter; a plain data property like this one never does.',
+  },
+
+  {
+    slug: 'debug-freeze-shallow',
+    title: 'Frozen, and it changed anyway',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'This config is frozen at boot specifically so nothing can change it at runtime. By the time a request handler reads it, one field is different anyway:',
+      '',
+      code(
+        'js',
+        "const config = Object.freeze({ name: 'prod', limits: { maxUsers: 10 } });",
+        "config.name = 'staging';       // silently ignored",
+        'config.limits.maxUsers = 999;  // works',
+        "console.log(config.name, config.limits.maxUsers); // 'prod' 999"
+      ),
+      '',
+      'Explain why one write was blocked and the other was not, and how to actually lock the whole thing.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['shallow', 'one level', 'immediate propert'],
+          missingFeedback: 'How deep does Object.freeze actually go?',
+        },
+        {
+          synonyms: ['limits', 'nested object', 'separate object'],
+          missingFeedback: 'Is the limits object itself frozen?',
+        },
+        {
+          synonyms: ['recurse', 'deepfreeze', 'freeze each nested', 'freeze the nested'],
+          missingFeedback: 'How do you protect the nested object too?',
+        },
+      ],
+      hints: [
+        "Object.freeze does not recurse into the object's properties.",
+        'config itself is frozen, so config.name is protected. limits is a separate object, and freeze never reached it.',
+        'Freeze config.limits too, or write a small deepFreeze that walks every nested object and freezes each one.',
+      ],
+    },
+    canonicalAnswer:
+      'Object.freeze only locks the immediate properties of the object you call it on, one level deep. config itself is frozen, so reassigning config.name is silently ignored, but limits is a separate, unfrozen object, so writing through to it works fine. Freeze it too, Object.freeze(config.limits), or write a small deepFreeze helper that recurses through every nested object.',
+    solution: code(
+      'js',
+      "const config = Object.freeze({ name: 'prod', limits: { maxUsers: 10 } });",
+      'Object.isFrozen(config);          // true',
+      'Object.isFrozen(config.limits);   // false. freeze only touched the top level',
+      '',
+      'function deepFreeze(obj) {',
+      '  for (const value of Object.values(obj)) {',
+      "    if (value && typeof value === 'object') deepFreeze(value);",
+      '  }',
+      '  return Object.freeze(obj);',
+      '}'
+    ),
+    explanation:
+      'Object.freeze locks only the properties sitting directly on the object you call it on: it makes them non-writable and non-configurable, and stops there. `config.limits` is itself an ordinary, unfrozen object, so writing to `config.limits.maxUsers` goes through exactly as if freeze had never been called. The blocked write is also silent by default, sloppy mode swallows it, so a frozen config with a live nested object can look completely safe until something downstream reads a value that quietly changed. Freezing the object you actually meant to protect means freezing every level of it, either by hand or with a small recursive deepFreeze.',
+  },
+
+  {
+    slug: 'debug-module-shared-instance',
+    title: 'Two drafts that are actually one object',
+    category: 'debugging',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'Every call to `newDraftFrom` is supposed to hand back a fresh draft. Instead, editing one draft edits every other draft, and the original template:',
+      '',
+      code(
+        'js',
+        "const templates = new Map([['invoice', { title: 'Invoice', fields: [] }]]);",
+        '',
+        'function newDraftFrom(name) {',
+        '  return templates.get(name);',
+        '}',
+        '',
+        "const draftA = newDraftFrom('invoice');",
+        "const draftB = newDraftFrom('invoice');",
+        "draftA.fields.push('total');",
+        "draftB.fields; // ['total']"
+      ),
+      '',
+      'Explain why draftA and draftB see the same data, and how you would fix `newDraftFrom`.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['same object', 'same reference', 'one object', 'not a copy'],
+          missingFeedback: 'How many objects actually exist here: one, or one per call?',
+        },
+        {
+          synonyms: ['get(', 'hands back', 'no clone', 'not cloned'],
+          missingFeedback: 'What does templates.get(name) actually hand back?',
+        },
+        {
+          synonyms: ['clone', 'copy', 'spread', 'structuredclone'],
+          missingFeedback: 'How do you give each draft its own object instead?',
+        },
+      ],
+      hints: [
+        'Map.get does not make a copy of anything. It hands back exactly what was stored.',
+        'draftA, draftB and the template itself are the same object. There was never more than one.',
+        'Clone before you return: structuredClone(templates.get(name)), or spread and copy the fields array by hand.',
+      ],
+    },
+    canonicalAnswer:
+      'templates.get(name) returns the exact object stored in the Map, not a copy, so newDraftFrom hands out the same reference every single time. draftA, draftB and the template itself are literally one object, so pushing into draftA.fields mutates the shared template permanently. Return a copy instead, for example structuredClone(templates.get(name)), so each caller gets its own fields array.',
+    solution: code(
+      'js',
+      'function newDraftFrom(name) {',
+      '  return structuredClone(templates.get(name));',
+      '}',
+      '',
+      "const draftA = newDraftFrom('invoice');",
+      "const draftB = newDraftFrom('invoice');",
+      "draftA.fields.push('total');",
+      'draftB.fields; // []. independent now'
+    ),
+    explanation:
+      "`templates.get(name)` returns the exact object living in the Map, the same reference every time, because a Map never clones its values on the way out. Calling the function `newDraftFrom` does not make that true: `draftA`, `draftB` and `templates.get('invoice')` are, by `===`, one single object. Pushing into `draftA.fields` mutates that one object, so every other caller sees it, and worse, the template itself is now permanently polluted for the next draft too. The registry is not the bug; handing out its live contents is. Clone at the point where you mean to transfer a fresh, independent copy to the caller.",
+  },
+
+  {
+    slug: 'debug-clone-methods-compare',
+    title: 'The clone that lost the discount codes',
+    category: 'debugging',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A "resend receipt" feature duplicates an order three different ways, and each copy loses something different:',
+      '',
+      code(
+        'js',
+        'const order = {',
+        '  placedAt: new Date(),',
+        '  total: 42,',
+        "  discountCodes: new Set(['SAVE10']),",
+        '};',
+        '',
+        'const viaSpread = { ...order };',
+        'const viaJson = JSON.parse(JSON.stringify(order));',
+        'const viaClone = structuredClone(order);'
+      ),
+      '',
+      'For each copy, say what breaks, if anything, and why. Which one is actually safe to use?'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['shallow', 'top level', 'same date', 'same set'],
+          missingFeedback: 'What does viaSpread share with order that a real copy should not?',
+        },
+        {
+          synonyms: ['iso string', 'becomes a string', 'no date type', 'empty object'],
+          missingFeedback: 'What happens to placedAt and discountCodes after the JSON round trip?',
+        },
+        {
+          synonyms: ['structuredclone', 'actually copies', 'real date', 'real set'],
+          missingFeedback: 'Which of the three actually produces an independent, correct copy?',
+        },
+      ],
+      hints: [
+        'Spread copies one level. What does that mean for placedAt and discountCodes specifically?',
+        'JSON has six types, and neither Date nor Set is one of them.',
+        'structuredClone is the one built for exactly this: it walks the whole object graph, including Date, Map and Set.',
+      ],
+    },
+    canonicalAnswer:
+      'viaSpread only copies the top level, so viaSpread.placedAt and viaSpread.discountCodes are the exact same Date and Set as order, nothing was actually duplicated. viaJson round-trips through JSON, which has no Date or Set type: placedAt becomes an ISO string with no getFullYear method, and discountCodes becomes an empty object, {}, because JSON.stringify has nothing sensible to do with a Set. viaClone, structuredClone(order), is the one that is actually safe: placedAt stays a real Date and discountCodes stays a real Set, both independent of order.',
+    solution: code(
+      'js',
+      'viaSpread.placedAt === order.placedAt;             // true. same Date, not a copy',
+      'viaSpread.discountCodes === order.discountCodes;   // true. same Set',
+      '',
+      "typeof viaJson.placedAt;                            // 'string'. Date became ISO text",
+      'viaJson.discountCodes;                              // {}. Set has no JSON representation',
+      '',
+      'viaClone.placedAt instanceof Date;                  // true',
+      'viaClone.discountCodes instanceof Set;              // true',
+      'viaClone.placedAt === order.placedAt;               // false. genuinely independent'
+    ),
+    explanation:
+      'The three copies fail in three different ways. viaSpread only duplicates the top level, so `placedAt` and `discountCodes` are not copied at all, they are the exact same `Date` and `Set` `order` points at. viaJson goes through `JSON.stringify` and `JSON.parse`, and JSON has no Date or Set type: a Date becomes whatever `toJSON` returns (an ISO string, with none of the Date methods), and a Set becomes `{}`, because stringify has no idea what to do with one and gives up. structuredClone is the one that gets this right: it implements the structured clone algorithm, the same one the browser uses for `postMessage`, and it copies a Date, Map or Set as itself, independent of the original. It still cannot clone a function or a DOM node, and throws a clear `DataCloneError` rather than failing quietly when you try.',
+  },
 ];

@@ -807,4 +807,248 @@ export const jsApiProblems: ProblemDraft[] = [
     explanation:
       '`AbortController` is the generic cancellation primitive: it owns a `signal` you hand to the operation, and an `abort()` method you keep for yourself. Pass `controller.signal` as fetch\'s `signal` option, then call `controller.abort()`. The pending promise rejects with a `DOMException` whose `name` is `"AbortError"`, so filter that out rather than reporting it as a failure. A controller is single-use: once aborted it stays aborted, so create a fresh one per request (the usual pattern for cancelling a stale search-as-you-type call). The same signal works with `addEventListener`, so one controller can tear down listeners and requests together.',
   },
+
+  {
+    slug: 'js-negative-zero',
+    title: 'The -0 that === cannot see',
+    category: 'js-apis',
+    difficulty: 'medium',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      "A price-change widget divides by the day's delta and shows `-Infinity`, even on a day the price didn't move. Upstream, the delta was computed like this:",
+      '',
+      code(
+        'js',
+        'const delta = Math.round(-0.4);',
+        'console.log(delta === 0, Object.is(delta, 0));'
+      ),
+      '',
+      'What does it log? Answer with the two booleans in order.'
+    ),
+    graderConfig: {
+      accept: ['true false', 'true, false', 'true and false'],
+      acceptPatterns: ['\\btrue\\b[\\s,]+(and\\s+)?\\bfalse\\b'],
+      nearMisses: {
+        'false false':
+          '=== does not distinguish -0 from 0, so the first comparison is true. Only Object.is does.',
+        'true true':
+          'Object.is is the one algorithm built to tell -0 and 0 apart, so the second comparison is false.',
+      },
+      hints: [
+        'Math.round(-0.4) does not round to a plain positive zero.',
+        '=== treats -0 and 0 as equal. One specific comparison does not.',
+        '-0 === 0 is true. Object.is(-0, 0) is false, because Object.is is the algorithm that tells them apart.',
+      ],
+    },
+    canonicalAnswer: 'true false',
+    solution: code(
+      'js',
+      'const delta = Math.round(-0.4); // -0',
+      'delta === 0;           // true.  === cannot see the sign',
+      'Object.is(delta, 0);   // false. Object.is can',
+      '1 / delta;              // -Infinity, the symptom that gives it away'
+    ),
+    explanation:
+      '-0 is a real value, produced here by rounding a small negative fraction toward zero, and it is very good at hiding: it compares equal to 0 under `===`, prints as `"0"`, and serialises with `JSON.stringify` as `0`. `===` and `==` both treat `-0` and `0` as the same value on purpose, one of the two special cases carved out for IEEE 754 (the other is `NaN`). `Object.is` is the one algorithm that tells them apart, which is also why React uses it to decide whether state actually changed. The usual tell that `-0` got produced is a division: `1 / -0` is `-Infinity` while `1 / 0` is `Infinity`.',
+  },
+
+  {
+    slug: 'js-samevaluezero-includes',
+    title: 'includes finds NaN, indexOf cannot',
+    category: 'js-apis',
+    difficulty: 'medium',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'A dedupe check keeps re-adding the same failed sensor reading, because `indexOf` insists it is not there yet:',
+      '',
+      code(
+        'js',
+        'const readings = [72, NaN, 68];',
+        'console.log(readings.indexOf(NaN), readings.includes(NaN));'
+      ),
+      '',
+      'What do the two calls return, in order?'
+    ),
+    graderConfig: {
+      accept: ['-1 true', '-1, true', '-1 and true'],
+      acceptPatterns: ['-1[\\s,]+(and\\s+)?true'],
+      nearMisses: {
+        '-1 false':
+          'includes does not compare with ===. It uses SameValueZero, which does find NaN.',
+        '1 true':
+          'NaN really is at index 1, but indexOf can never say so: it compares with ===, and NaN === NaN is false, so it always returns -1.',
+      },
+      hints: [
+        'indexOf compares with ===, and NaN === NaN is false.',
+        'includes compares with a different algorithm: SameValueZero.',
+        'SameValueZero treats NaN as equal to itself, so includes finds it. indexOf can never report that, and returns -1.',
+      ],
+    },
+    canonicalAnswer: '-1 true',
+    solution: code(
+      'js',
+      'const readings = [72, NaN, 68];',
+      'readings.indexOf(NaN);   // -1.   Uses ===, and NaN === NaN is false',
+      'readings.includes(NaN);  // true. Uses SameValueZero, and NaN equals itself there'
+    ),
+    explanation:
+      '`indexOf` compares every element with `===`, and `NaN` is the one value that is never `===` to itself, so it can never be found that way no matter where it sits. `includes` compares with `SameValueZero` instead, the algorithm MDN names as the one used by `includes`, `Map` and `Set`: it treats `NaN` as equal to itself, so it finds it. The same algorithm is why `new Set([NaN, NaN]).size` is `1`. It is not a special case bolted onto `includes`; it is the equality the method was specified against from the start.',
+  },
+
+  {
+    slug: 'js-autobox-assign',
+    title: 'The tag that never landed on the string',
+    category: 'js-apis',
+    difficulty: 'easy',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'A cache tries to tag a lookup key directly, so it does not need a second data structure:',
+      '',
+      code('js', "const key = 'user:42';", 'key.cached = true;', 'console.log(key.cached);'),
+      '',
+      'What does this log?'
+    ),
+    graderConfig: {
+      accept: ['undefined'],
+      nearMisses: {
+        true: 'The write never lands on the string. Reading key.cached back autoboxes a brand new wrapper object, one the earlier assignment never touched.',
+        error:
+          'It does not throw here. This is a plain script, sloppy mode, where a failed write is silent. It throws only in strict code: a module or a class body.',
+        typeerror:
+          'It does not throw here. This is a plain script, sloppy mode, where a failed write is silent. It throws only in strict code: a module or a class body.',
+      },
+      hints: [
+        'key is a string, a primitive, and primitives cannot hold properties of their own.',
+        'The assignment autoboxes a throwaway wrapper object, writes to it, then discards it immediately.',
+        'Reading key.cached back autoboxes a brand new wrapper, one that never saw that write. In sloppy mode the failed write is silent, so this logs undefined.',
+      ],
+    },
+    canonicalAnswer: 'undefined',
+    solution: code(
+      'js',
+      "const key = 'user:42';",
+      'key.cached = true;   // autoboxes a wrapper, writes to it, throws the wrapper away',
+      'key.cached;          // undefined. a fresh wrapper, never touched',
+      '',
+      '// in a module or class body, the same assignment throws instead:',
+      "// TypeError: Cannot create property 'cached' on string 'user:42'"
+    ),
+    explanation:
+      'Accessing a property on a primitive autoboxes it: JavaScript wraps the value in its wrapper object for that one access and discards the wrapper right after. `key.cached = true` autoboxes a wrapper, sets `cached` on it, and throws that wrapper away, so the write never had anywhere permanent to land. The next line autoboxes a fresh wrapper that was never touched, so it reads `undefined`. Sloppy mode silently ignores the failed write; strict mode, which a module or a class body always is, throws a `TypeError` for the identical line, one more reason to reach for a real `Map` for anything you actually need to attach data to.',
+  },
+
+  {
+    slug: 'js-string-index-assign',
+    title: 'The capitalise that silently did nothing',
+    category: 'js-apis',
+    difficulty: 'medium',
+    relevance: 'foundational',
+    type: 'explain',
+    prompt: md(
+      'This is supposed to capitalise the first letter. It runs with no error, and the name is still lowercase:',
+      '',
+      code('js', "const name = 'ada';", "name[0] = 'A';", "console.log(name); // 'ada'"),
+      '',
+      'Explain why there is no error here, what changes if this file is a module or the code sits inside a class body, and how you would actually get "Ada".'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['sloppy', 'ignor', 'no-op', 'silently'],
+          missingFeedback: 'What does a plain script (sloppy mode) do with `name[0] = ...`?',
+        },
+        {
+          synonyms: ['module', 'class', 'strict', 'typeerror'],
+          missingFeedback:
+            'What changes if this same line runs in a module or inside a class body?',
+        },
+        {
+          synonyms: ['slice', 'touppercase', 'concat', 'build a new'],
+          missingFeedback: 'How do you actually produce the capitalised string?',
+        },
+      ],
+      hints: [
+        'Strings are immutable, there is no character sitting in memory to overwrite.',
+        'In a plain script, sloppy mode, an assignment like this is simply ignored.',
+        'A module or a class body is always strict mode, and the identical line throws a TypeError there instead. Build a new string: name[0].toUpperCase() + name.slice(1).',
+      ],
+    },
+    canonicalAnswer:
+      'In a plain script this is sloppy mode, so the index assignment is silently ignored: strings are immutable and there is nowhere to write. The same line in a module or a class body is strict mode and throws a TypeError instead. To actually capitalise it, build a new string: name[0].toUpperCase() + name.slice(1).',
+    solution: code(
+      'js',
+      "const name = 'ada';",
+      "name[0] = 'A'; // sloppy mode: silently ignored",
+      "name; // 'ada'",
+      '',
+      '// the same line in a module or class body:',
+      "// TypeError: Cannot assign to read only property '0' of string 'ada'",
+      '',
+      '// the only way to actually get it:',
+      "const capitalised = name[0].toUpperCase() + name.slice(1); // 'Ada'"
+    ),
+    explanation:
+      "A string's index properties are neither writable nor configurable, so the engine refuses the write. It just refuses differently depending on mode. Sloppy mode swallows a failed write silently, which is why the log a line later shows nothing changed. Module code and class bodies are always strict, and strict mode turns that same silent failure into a thrown `TypeError`, worded by V8 as `Cannot assign to read only property '0' of string 'ada'`. Either way nothing about the string itself ever changes: the only move available is building a new one out of pieces, here `name[0].toUpperCase()` joined to `name.slice(1)`.",
+  },
+
+  {
+    slug: 'js-array-holes',
+    title: 'The mapped skeleton that stayed empty',
+    category: 'js-apis',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    type: 'explain',
+    prompt: md(
+      'You build a 3-row skeleton and map over it to fill in row ids for a loading state. The ids array comes back with the same 3 holes instead of `0, 1, 2`:',
+      '',
+      code(
+        'js',
+        'const rows = new Array(3);',
+        'const ids = rows.map((_, i) => i);',
+        'console.log(ids); // [ <3 empty items> ]'
+      ),
+      '',
+      'Explain why map skipped every slot, and which call actually builds a dense array of 3 items.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['hole', 'empty slot', 'nothing there', 'not defined'],
+          missingFeedback:
+            'What does new Array(3) actually contain: three undefined values, or three empty slots?',
+        },
+        {
+          synonyms: ['skip', 'never call', "doesn't call", 'does not call', 'not invoked'],
+          missingFeedback: 'What does map do with an index that has no element at all?',
+        },
+        {
+          synonyms: ['array.from'],
+          missingFeedback:
+            'Name the call that actually visits every index and builds a dense array.',
+        },
+      ],
+      hints: [
+        'new Array(3) does not contain three undefined values.',
+        'map, like forEach and filter, never calls its callback for an index that has no element at all.',
+        'Array.from({ length: 3 }, (_, i) => i) builds a real array from a length, so every index actually exists.',
+      ],
+    },
+    canonicalAnswer:
+      'new Array(3) creates three holes, empty slots with no element at all, not three undefined values. map, like forEach and filter, skips any index that has no element, so the holes just pass straight through untouched. Array.from({ length: 3 }, (_, i) => i) visits every index because it builds a real array from a length, so it actually returns [0, 1, 2].',
+    solution: code(
+      'js',
+      'const rows = new Array(3);',
+      '0 in rows; // false. there is no element at index 0, only a hole',
+      'rows.map((_, i) => i); // [ <3 empty items> ]. map skips holes entirely',
+      '',
+      'const dense = Array.from({ length: 3 }, (_, i) => i);',
+      '0 in dense; // true',
+      'dense; // [0, 1, 2]'
+    ),
+    explanation:
+      'new Array(3) sets length to 3 without creating any elements, so every index is a hole, not an element holding undefined. map, forEach, filter and reduce all check for an element before calling back and skip straight past a hole, which is why the result keeps the same 3 empty slots instead of [0, 1, 2]. Array.from builds its result from a length (or an iterable) and calls the mapping function for every index from the start, so it never has a hole to skip. Spread and for...of also visit holes, but as undefined, and JSON.stringify turns them into null, so "does this array have holes" gets a different answer depending which method you ask.',
+  },
 ];
