@@ -1142,4 +1142,714 @@ export const reactProblems: ProblemDraft[] = [
     explanation:
       'Marking an update as a transition tells React it may be interrupted by anything more urgent, so a keystroke always wins over a list rerender and the input stays responsive. `isPending` gives you a handle for a subtle loading affordance without a spinner flash. `useDeferredValue` is the same idea expressed as a value rather than a callback, and it is usually the smaller change: derive the deferred query and filter from that. Neither makes the filtering faster, so if the work is genuinely heavy, virtualise the list as well.',
   },
+
+  {
+    slug: 'react-context-read-scope',
+    title: 'A sidebar that rerenders on every mousemove',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Everything under this provider shares one context value:',
+      '',
+      code(
+        'jsx',
+        'const CursorContext = createContext(null);',
+        '',
+        'function App() {',
+        '  const [pos, setPos] = useState({ x: 0, y: 0 });',
+        '  const [theme, setTheme] = useState("dark");',
+        '  return (',
+        '    <CursorContext.Provider value={{ pos, theme }}>',
+        '      <Canvas onMove={setPos} />',
+        '      <Sidebar />',
+        '    </CursorContext.Provider>',
+        '  );',
+        '}',
+        '',
+        'function Sidebar() {',
+        '  const { theme } = useContext(CursorContext);',
+        '  return <aside className={theme}>...</aside>;',
+        '}'
+      ),
+      '',
+      'The profiler shows Sidebar rerendering dozens of times a second while the mouse moves, even though it only reads `theme`, and `theme` never changes.',
+      '',
+      'Explain why, and how to fix it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'every consumer',
+            'any consumer',
+            'whole value',
+            'entire value',
+            'regardless of which',
+            'no matter which',
+          ],
+          missingFeedback:
+            'What does useContext subscribe to: the whole value, or just the field you destructure?',
+        },
+        {
+          synonyms: [
+            'never changes',
+            'never changed',
+            'unrelated field',
+            'stayed the same',
+            'unchanged',
+          ],
+          missingFeedback:
+            'theme itself is not the problem. What is changing on every mousemove instead?',
+        },
+        {
+          synonyms: ['split', 'separate context', 'two context', 'another context'],
+          missingFeedback: 'What is the fix?',
+        },
+      ],
+      hints: [
+        'useContext has no concept of subscribing to part of a value — it rereads the whole thing on every provider render.',
+        'pos updates on every mousemove; that is what makes the value object new each time, not theme.',
+        'Give the fast-changing part its own provider, separate from the slow-changing part.',
+      ],
+    },
+    canonicalAnswer:
+      'useContext subscribes to the whole context value, so every consumer rerenders whenever the provider passes a new value, no matter which field it actually destructures. Sidebar reads only theme, but pos changes on every mousemove and theme itself never changes, so Sidebar rerenders anyway because it shares the same value object as Canvas. Split the value into two contexts, a fast-changing CursorContext and a slow-changing ThemeContext, so Sidebar only subscribes to the one that actually changes.',
+    solution: code(
+      'jsx',
+      'const CursorContext = createContext(null); // pos, changes on every move',
+      'const ThemeContext = createContext(null);  // theme, changes rarely',
+      '',
+      'function Sidebar() {',
+      '  const theme = useContext(ThemeContext);',
+      '  return <aside className={theme}>...</aside>;',
+      '}'
+    ),
+    explanation:
+      "Context propagation is all-or-nothing: a component that calls useContext rerenders whenever the provider passes a new value, whatever slice of that value it actually reads. Memoizing the value with useMemo, the fix when a value's identity changes for no real reason, does not help here, because pos genuinely changes on every mousemove; there is no stale identity to fix. The only lever left is scope: split the value so a field that changes 60 times a second lives in a different context from one that changes once a session. Libraries like Zustand and Jotai exist largely to give components a way to subscribe to a slice of state instead of a whole context value.",
+  },
+
+  {
+    slug: 'react-context-dispatch-split',
+    title: 'A button that only dispatches still rerenders',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'dispatch from useReducer keeps the same identity for the life of the component, but this button rerenders every time a todo is toggled anywhere in the list:',
+      '',
+      code(
+        'jsx',
+        'const TodosContext = createContext(null);',
+        '',
+        'function TodosProvider({ children }) {',
+        '  const [state, dispatch] = useReducer(todosReducer, initialState);',
+        '  return (',
+        '    <TodosContext.Provider value={{ state, dispatch }}>',
+        '      {children}',
+        '    </TodosContext.Provider>',
+        '  );',
+        '}',
+        '',
+        'function AddButton() {',
+        '  const { dispatch } = useContext(TodosContext);',
+        '  return <button onClick={() => dispatch({ type: "add" })}>Add</button>;',
+        '}'
+      ),
+      '',
+      'AddButton never reads `state`. Explain why it rerenders anyway, and the fix.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['stable', 'never changes', 'same reference', 'does not change'],
+          missingFeedback: "What's true about dispatch's identity across renders, on its own?",
+        },
+        {
+          synonyms: ['same context', 'bundled', 'coupled', 'tied to'],
+          missingFeedback: 'Why does that stability not help AddButton here?',
+        },
+        {
+          synonyms: ['split', 'separate context', 'dispatch context', 'two context'],
+          missingFeedback: 'What is the fix?',
+        },
+      ],
+      hints: [
+        "dispatch returned by useReducer keeps the same identity for the component's whole lifetime.",
+        'AddButton does not read that stable dispatch directly — it reads it off a context value that also carries state.',
+        'Give dispatch its own context, separate from state, so a dispatch-only consumer subscribes to something that never produces a new value.',
+      ],
+    },
+    canonicalAnswer:
+      'dispatch from useReducer is stable and never changes identity across renders, but AddButton reads it off the same context value as state, and that value is bundled together in one object, so a new value is created whenever state changes and AddButton rerenders anyway even though dispatch itself never changed. Split state and dispatch into two contexts, a TodosContext and a TodosDispatchContext, so a component that only dispatches subscribes to a context that truly never produces a new value.',
+    solution: code(
+      'jsx',
+      'const TodosContext = createContext(null);',
+      'const TodosDispatchContext = createContext(null);',
+      '',
+      'function TodosProvider({ children }) {',
+      '  const [state, dispatch] = useReducer(todosReducer, initialState);',
+      '  return (',
+      '    <TodosContext value={state}>',
+      '      <TodosDispatchContext value={dispatch}>',
+      '        {children}',
+      '      </TodosDispatchContext>',
+      '    </TodosContext>',
+      '  );',
+      '}',
+      '',
+      'function AddButton() {',
+      '  const dispatch = useContext(TodosDispatchContext);',
+      '  return <button onClick={() => dispatch({ type: "add" })}>Add</button>;',
+      '}'
+    ),
+    explanation:
+      'useReducer guarantees dispatch keeps the same identity for as long as the component is mounted, but that guarantee only pays off if a consumer can read it without also subscribing to something that changes. Bundling { state, dispatch } into one context value throws the guarantee away, because the object wrapping them is new every time state changes. Splitting costs a second provider and a second import wherever a component needs both, so it earns its place once a tree has enough dispatch-only consumers (toolbars, buttons, forms) to matter, not reflexively on every reducer.',
+  },
+
+  {
+    slug: 'react-memo-inline-prop',
+    title: 'Wrapping it in memo changed nothing',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'You wrap Row in memo to stop it rerendering when an unrelated part of the list changes:',
+      '',
+      code(
+        'jsx',
+        'const Row = memo(function Row({ item, onSelect }) {',
+        '  return <li onClick={() => onSelect(item.id)}>{item.name}</li>;',
+        '});',
+        '',
+        'function List({ items }) {',
+        '  return (',
+        '    <ul>',
+        '      {items.map((item) => (',
+        '        <Row key={item.id} item={item} onSelect={(id) => setSelected(id)} />',
+        '      ))}',
+        '    </ul>',
+        '  );',
+        '}'
+      ),
+      '',
+      'The profiler shows every Row rerendering on every render of List anyway. Explain why memo does nothing here, and fix it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'new function',
+            'new reference',
+            'arrow function',
+            'inline function',
+            'every render',
+          ],
+          missingFeedback: 'What is different about the onSelect prop on each render of List?',
+        },
+        {
+          synonyms: ['object.is', 'reference equality', 'compares props', 'shallow'],
+          missingFeedback: 'How does memo decide whether to skip a render?',
+        },
+        {
+          synonyms: ['usecallback', 'stable reference', 'stable function'],
+          missingFeedback: 'What fixes it?',
+        },
+      ],
+      hints: [
+        'memo compares each prop with Object.is; it does not know two different function objects do the same thing.',
+        'onSelect={(id) => setSelected(id)} is a new function literal every time List renders.',
+        'useCallback(() => ..., [deps]) keeps the same function reference across renders, so memo can actually skip Row.',
+      ],
+    },
+    canonicalAnswer:
+      'memo bails out only when every prop is Object.is-equal to last time, but onSelect={(id) => setSelected(id)} creates a new function every render of List, so Row always sees a changed prop and rerenders anyway. Wrap the handler in useCallback so its reference stays stable across renders of List, and memo can actually skip Row.',
+    solution: code(
+      'jsx',
+      'function List({ items }) {',
+      '  const handleSelect = useCallback((id) => setSelected(id), []);',
+      '  return (',
+      '    <ul>',
+      '      {items.map((item) => (',
+      '        <Row key={item.id} item={item} onSelect={handleSelect} />',
+      '      ))}',
+      '    </ul>',
+      '  );',
+      '}'
+    ),
+    explanation:
+      'memo only helps when every prop is referentially stable; one new object, array or function per render is enough to defeat it completely, and it gives no warning about which prop broke it. useCallback fixes this specific case, but check first whether Row is expensive enough to be worth protecting at all — wrapping a cheap component in memo and useCallback adds bookkeeping on every render in exchange for skipping a render that was already cheap.',
+  },
+
+  {
+    slug: 'react-usecallback-cost',
+    title: 'useCallback around a plain button handler',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A teammate wraps every handler in useCallback out of habit, including this one:',
+      '',
+      code(
+        'jsx',
+        'function Toolbar({ onSave }) {',
+        '  const handleClick = useCallback(() => {',
+        '    onSave();',
+        '  }, [onSave]);',
+        '',
+        '  return <button onClick={handleClick}>Save</button>;',
+        '}'
+      ),
+      '',
+      '`<button>` is a plain DOM element, not a component wrapped in memo. Explain why the useCallback here does not save anything, and when useCallback actually pays for itself.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['wrapped in memo', 'memoized child', 'memo component', 'react.memo'],
+          missingFeedback:
+            'What kind of thing does a cached function reference actually need to be handed to, for the caching to matter?',
+        },
+        {
+          synonyms: ['host element', 'dom element', 'plain button', 'not memoized'],
+          missingFeedback:
+            'What is <button> in React terms, and does it compare props by reference?',
+        },
+        {
+          synonyms: ['allocates', 'overhead', 'cost', 'bookkeeping'],
+          missingFeedback: 'What does useCallback itself cost, on every render?',
+        },
+      ],
+      hints: [
+        "Ask who actually reads handleClick's identity. A <button> does not compare it to anything.",
+        'useCallback protects against unnecessary work downstream, typically a memoized component or an effect dependency array.',
+        'Reserve it for handlers passed to a component wrapped in memo, or used inside a dependency array.',
+      ],
+    },
+    canonicalAnswer:
+      'useCallback only pays off when the cached function is handed to something that compares it by reference, like a component wrapped in memo or a dependency array. A button is a host element, not a memoized component, so React rerenders it regardless of whether handleClick changed reference, and the useCallback here buys nothing. It still allocates a closure and compares the dependency array on every render, which is pure overhead. useCallback earns its keep once handleClick is passed to a memoized child that would otherwise see a new reference every render.',
+    solution: code(
+      'jsx',
+      '// Not worth it: <button> never compares handleClick by reference',
+      'function Toolbar({ onSave }) {',
+      '  const handleClick = useCallback(() => onSave(), [onSave]);',
+      '  return <button onClick={handleClick}>Save</button>;',
+      '}',
+      '',
+      '// Worth it: SaveButton is memoized, so a stable handler lets it skip renders',
+      'const SaveButton = memo(function SaveButton({ onClick }) {',
+      '  return <button onClick={onClick}>Save</button>;',
+      '});',
+      '',
+      'function Toolbar({ onSave }) {',
+      '  const handleClick = useCallback(() => onSave(), [onSave]);',
+      '  return <SaveButton onClick={handleClick} />;',
+      '}'
+    ),
+    explanation:
+      'useCallback and useMemo share the same bill of costs: an allocation and a dependency comparison on every render. That cost is worth paying only when something downstream actually reads the reference and skips work because of it, a memoized component or a dependency array. A host element like `<button>` never does either, so caching the handler here is overhead with no offsetting saving. The fix is not to remove useCallback everywhere, it is to check whether anything downstream actually benefits before reaching for it.',
+  },
+
+  {
+    slug: 'react-slow-render',
+    title: 'Memoized, and still slow',
+    category: 'react',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Table is already wrapped in memo. rows has 20,000 entries. Typing in the filter box drops frames, and the profiler shows the time inside Table itself, not a rerender triggered from somewhere else:',
+      '',
+      code(
+        'jsx',
+        'const Table = memo(function Table({ rows, filter }) {',
+        '  const visible = rows',
+        '    .filter((r) => r.name.includes(filter))',
+        '    .sort((a, b) => a.name.localeCompare(b.name));',
+        '',
+        '  return (',
+        '    <table>',
+        '      <tbody>',
+        '        {visible.map((r) => (',
+        '          <tr key={r.id}>',
+        '            <td>{r.name}</td>',
+        '          </tr>',
+        '        ))}',
+        '      </tbody>',
+        '    </table>',
+        '  );',
+        '});'
+      ),
+      '',
+      'Explain why memo does not fix this, and what actually would.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['every keystroke', 'has to render', 'unchanged', 'correctly renders'],
+          missingFeedback:
+            'Does filter change on every keystroke? What does that mean for whether memo can skip this render?',
+        },
+        {
+          synonyms: ['inside the render', 'render itself', 'expensive render'],
+          missingFeedback: 'Where is the actual cost, according to the profiler?',
+        },
+        {
+          synonyms: ['usememo', 'virtualiz'],
+          missingFeedback: 'Name a fix that targets the render cost itself.',
+        },
+      ],
+      hints: [
+        "memo's whole job is skipping a render when props did not change. Did filter change here?",
+        "The profiler says the time is inside Table's own render function, not from a wasted rerender triggered elsewhere.",
+        'Move the filter and sort into useMemo so they do not redo the O(n log n) work every render, and consider windowing so the render only touches the rows on screen.',
+      ],
+    },
+    canonicalAnswer:
+      'memo only skips a render when props are unchanged, and filter changes on every keystroke, so Table has to render every time regardless, memo was never going to help here. The actual cost is inside the render itself: filtering and sorting 20,000 rows on every keystroke. Fix the render, not the rerender: memoize the expensive filter and sort with useMemo keyed on rows and filter, or better, virtualize the table so only the visible rows are ever rendered.',
+    solution: code(
+      'jsx',
+      'const Table = memo(function Table({ rows, filter }) {',
+      '  const visible = useMemo(',
+      '    () =>',
+      '      rows',
+      '        .filter((r) => r.name.includes(filter))',
+      '        .sort((a, b) => a.name.localeCompare(b.name)),',
+      '    [rows, filter]',
+      '  );',
+      '',
+      '  // Better still: hand `visible` to a windowed list so only',
+      '  // the rows on screen are ever mounted.',
+      '  return <VirtualizedRows rows={visible} />;',
+      '});'
+    ),
+    explanation:
+      'Re-render prevention and render cost are two different levers, and memo only operates the first one. When a prop legitimately changes every time, as filter does here, memo cannot help at all: it is designed to skip renders, not speed them up. useMemo fixes the redundant work, so the sort only reruns when rows or filter actually change instead of on every render of an ancestor. But even a memoized sort still does O(n log n) work on every real keystroke; if that is still too slow at 20,000 rows, the render itself has to touch less, which is what windowing is for. Profile before optimizing, because memoizing a component whose real bottleneck is inside its own render buys nothing.',
+  },
+
+  {
+    slug: 'react-list-windowing',
+    title: 'Twenty thousand rows in the DOM',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A table renders 20,000 rows directly into the DOM. It is smooth on a laptop and stutters badly on a mid-range phone, because the browser is laying out and painting thousands of offscreen rows for no reason.',
+      '',
+      'Name the technique that keeps the DOM small by rendering only the rows near the current scroll position.'
+    ),
+    graderConfig: {
+      accept: [
+        'windowing',
+        'virtualization',
+        'virtualisation',
+        'react-window',
+        'list virtualization',
+      ],
+      nearMisses: {
+        pagination:
+          'Pagination avoids rendering everything too, but it breaks the list into separate pages. This keeps one continuous, scrollable list.',
+      },
+      hints: [
+        'The DOM cost scales with rows actually rendered, not with how much data exists.',
+        'Only the rows near the current scroll position need to exist in the DOM at all; the rest mount and unmount as the user scrolls.',
+        "The library already used in this repo's workouts is react-window; the general technique it implements is called ___.",
+      ],
+    },
+    canonicalAnswer: 'windowing',
+    solution: code(
+      'jsx',
+      'import { FixedSizeList } from "react-window";',
+      '',
+      '<FixedSizeList height={600} itemCount={rows.length} itemSize={32} width="100%">',
+      '  {({ index, style }) => <div style={style}>{rows[index].name}</div>}',
+      '</FixedSizeList>'
+    ),
+    explanation:
+      'Windowing keeps exactly one continuous, scrollable list while only mounting the rows near the viewport, which is the right call for exploring or searching a large, fairly uniform dataset. Pagination is the better choice when items vary a lot in height (windowing wants row sizes it can measure or fix), when a specific page needs its own shareable URL, or when the data source already paginates server-side and you would rather not hand the client the whole set. Either way, windowing only shrinks the render; the data still has to be fetched from somewhere, which is why the two techniques often pair rather than compete.',
+  },
+
+  {
+    slug: 'react-state-colocation',
+    title: 'One input rerenders the whole page',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'query lives in App, and typing in the search box rerenders the whole Dashboard subtree on every keystroke, even though Dashboard never reads query:',
+      '',
+      code(
+        'jsx',
+        'function App() {',
+        '  const [query, setQuery] = useState("");',
+        '  return (',
+        '    <>',
+        '      <SearchBox value={query} onChange={setQuery} />',
+        '      <Dashboard />',
+        '    </>',
+        '  );',
+        '}'
+      ),
+      '',
+      'Explain why Dashboard rerenders, and the fix that does not involve memo.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['every child', 'whole subtree', 'children rerender', 'rerenders by default'],
+          missingFeedback: 'What happens to children by default when a parent rerenders?',
+        },
+        {
+          synonyms: ['does not read', 'never reads', 'no reason', 'unrelated'],
+          missingFeedback: 'What does Dashboard actually have to do with query?',
+        },
+        {
+          synonyms: ['colocate', 'move the state down', 'closest', 'smallest', 'local state'],
+          missingFeedback: 'Where should the state live instead?',
+        },
+      ],
+      hints: [
+        'Rendering is not selective by default: when App rerenders, so does everything under it, whether or not a child reads the changed state.',
+        'Ask which component actually needs query. It is not Dashboard.',
+        'Move the state, and the input, down into SearchBox. App no longer needs to know query exists.',
+      ],
+    },
+    canonicalAnswer:
+      'React rerenders a whole subtree by default: when App rerenders, every child rerenders too, whether or not it reads the changed state. Dashboard does not read query at all, it is just a sibling under the same App that rerenders on every keystroke for no reason of its own. The fix is to colocate the state: move query, and the input, down into SearchBox itself, the smallest component that actually needs it, instead of leaving it in App.',
+    solution: code(
+      'jsx',
+      'function App() {',
+      '  return (',
+      '    <>',
+      '      <SearchBox />',
+      '      <Dashboard />',
+      '    </>',
+      '  );',
+      '}',
+      '',
+      'function SearchBox() {',
+      '  const [query, setQuery] = useState("");',
+      '  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;',
+      '}'
+    ),
+    explanation:
+      'Lifting state up is a one-way ratchet if nothing ever pulls it back down. Once query moved to App to feed some component that has since been removed or refactored, App keeps rerendering everything under it for state that only one small component ever needed. Colocating is not the opposite of lifting, it is the same judgment applied honestly: state lives at the lowest point that needs it, and moves up only when something else genuinely has to share it. memo on Dashboard would also stop the rerender, but it treats the symptom; moving the state removes the cause and deletes code instead of adding a wrapper.',
+  },
+
+  {
+    slug: 'react-derive-write-time',
+    title: 'An index rebuilt on every keystroke',
+    category: 'react',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'notes rarely changes, but buildSearchIndex runs on every keystroke because it sits in the render body, which is why typing here drops frames:',
+      '',
+      code(
+        'jsx',
+        'function NoteSearch({ notes, query }) {',
+        '  const index = buildSearchIndex(notes); // expensive: 50,000 notes',
+        '  const results = index.search(query);',
+        '  return <ResultList results={results} />;',
+        '}'
+      ),
+      '',
+      'A teammate suggests moving buildSearchIndex into a useEffect that stores the index in state. Explain why that is still not the best fix, and what to do instead.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'extra render',
+            'second render',
+            'after paint',
+            'render twice',
+            'double render',
+          ],
+          missingFeedback:
+            'What does moving the work into an effect cost, on top of the original problem?',
+        },
+        {
+          synonyms: ['usememo', 'depends on notes', 'keyed on notes'],
+          missingFeedback:
+            'What should the rebuild actually be keyed on, and what hook does that during render?',
+        },
+        {
+          synonyms: ['write time', 'precompute', 'once when', 'when notes are saved'],
+          missingFeedback: 'What is the better fix than rebuilding on the client at all?',
+        },
+      ],
+      hints: [
+        "An effect runs after the commit, so React paints once without the index and again once the effect's setState lands, two renders for one keystroke's worth of change.",
+        'The index only needs to change when notes changes, not query. That is exactly what a memoized computation keyed on notes gives you.',
+        'The cheapest place to build an index is once, wherever notes are produced, not on every client that renders them.',
+      ],
+    },
+    canonicalAnswer:
+      'An effect still costs an extra render: React commits once without the new index, then the effect runs after paint and sets state, which schedules a second render. It also does not fix the real bug, which is that the index gets rebuilt on renders that only changed query, not notes. Key the rebuild on notes with useMemo instead, so it only reruns when notes itself changes. Better still, do not rebuild it in the browser at all: compute the index once at write time, whenever notes are saved or fetched, and ship the built index instead of raw notes.',
+    solution: code(
+      'jsx',
+      '// Correct default: rebuild only when notes changes',
+      'function NoteSearch({ notes, query }) {',
+      '  const index = useMemo(() => buildSearchIndex(notes), [notes]);',
+      '  const results = index.search(query);',
+      '  return <ResultList results={results} />;',
+      '}',
+      '',
+      '// Better: build the index once when notes is written, not on every read',
+      '// (e.g. in the API handler that saves a note, or the loader that fetches them)',
+      'function NoteSearch({ notes, prebuiltIndex, query }) {',
+      '  const results = prebuiltIndex.search(query);',
+      '  return <ResultList results={results} />;',
+      '}'
+    ),
+    explanation:
+      'Three places can do this work, and they are not equally good: in the render body it reruns on every render including ones that only changed query; in an effect it reruns reactively and adds a whole extra render pass on top; in useMemo it reruns only when notes actually changes, during the render that needs it, no extra pass. All three still repeat the work on every client that mounts this component. The write-time option breaks that pattern: notes changes far less often than NoteSearch renders, so building the index once when a note is saved and reading a finished index everywhere else amortizes the cost across every future read instead of paying it again per mount.',
+  },
+
+  {
+    slug: 'react-lazy-bundle-growth',
+    title: 'Splitting the button that is always visible',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'SubmitButton sits above the fold on the landing page, visible the instant the page loads:',
+      '',
+      code(
+        'jsx',
+        'const SubmitButton = lazy(() => import("./SubmitButton"));',
+        '',
+        'function LandingPage() {',
+        '  return (',
+        '    <Suspense fallback={<Spinner />}>',
+        '      <SubmitButton />',
+        '      <Hero />',
+        '    </Suspense>',
+        '  );',
+        '}'
+      ),
+      '',
+      'After this change, the network tab shows more total bytes downloaded for this page, not fewer, and users see a spinner where the button used to appear instantly. Explain why, and when lazy is the right call instead.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'first paint',
+            'needed immediately',
+            'critical path',
+            'above the fold',
+            'right away',
+          ],
+          missingFeedback:
+            'When is SubmitButton actually needed: at first paint, or only after some later interaction?',
+        },
+        {
+          synonyms: ['extra request', 'round trip', 'chunk overhead', 'separate request'],
+          missingFeedback:
+            'What does splitting it into its own chunk cost, on top of the code itself?',
+        },
+        {
+          synonyms: ['not needed immediately', 'route', 'modal', 'rarely used'],
+          missingFeedback: 'Name a case where lazy is the right call.',
+        },
+      ],
+      hints: [
+        'Ask when SubmitButton is needed: at first paint, or only after some later interaction?',
+        'A dynamic import always costs a network round trip before the module resolves, even when the file itself is tiny.',
+        'Reserve lazy for a route, a modal, or a feature most visits never touch, so the request only happens if the user gets there.',
+      ],
+    },
+    canonicalAnswer:
+      'SubmitButton is needed on first paint, so splitting it does not move any work off the critical path, it just adds an extra request and a loading spinner in front of something that used to render immediately. Each chunk also carries its own module overhead, and if it shares code with the main bundle a bundler that is not configured to dedupe that code ships it twice, which is how the total can grow instead of shrink. lazy pays off for code that is not needed immediately: a route the user has not navigated to yet, a modal that has not been opened, a feature most visits never touch, so its bytes and its request only happen if and when the user reaches it.',
+    solution: code(
+      'jsx',
+      '// SubmitButton is needed immediately: import it normally',
+      'import SubmitButton from "./SubmitButton";',
+      '',
+      '// A settings panel behind a click is a good lazy candidate',
+      'const SettingsPanel = lazy(() => import("./SettingsPanel"));',
+      '',
+      'function LandingPage() {',
+      '  const [showSettings, setShowSettings] = useState(false);',
+      '  return (',
+      '    <>',
+      '      <SubmitButton />',
+      '      <Hero />',
+      '      {showSettings && (',
+      '        <Suspense fallback={<Spinner />}>',
+      '          <SettingsPanel />',
+      '        </Suspense>',
+      '      )}',
+      '    </>',
+      '  );',
+      '}'
+    ),
+    explanation:
+      'Code splitting trades bundle size for a network request; it is worth it exactly when that request can happen later than the code would otherwise have loaded, or not at all. Splitting something needed at first paint gets the trade backwards: the bytes still have to arrive before anything useful shows, plus the round trip to fetch them, plus a Suspense fallback the user did not have before. The measure is not whether a lazy call was added, it is whether this code gets requested later than it otherwise would have been, for a user who might never need it at all.',
+  },
+
+  {
+    slug: 'react-batching-scope',
+    title: 'Two updates outside an event handler',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      "Since React 18, this listener's two setState calls trigger one rerender, not two, because updates inside native event listeners now batch automatically, the same as updates inside a JSX handler:",
+      '',
+      code(
+        'jsx',
+        'function handleServerMessage() {',
+        '  setCount((c) => c + 1);',
+        '  setFlag((f) => !f);',
+        '}',
+        '',
+        'socket.addEventListener("message", handleServerMessage);'
+      ),
+      '',
+      'If you needed the count update to land in the DOM before the very next line of code runs, name the function that forces that.'
+    ),
+    graderConfig: {
+      accept: ['flushsync'],
+      acceptPatterns: ['flush\\s*sync'],
+      nearMisses: {
+        unstable_batchedupdates:
+          'That was the pre-18 escape hatch for forcing a batch. You need the opposite: a way to force an immediate, synchronous flush.',
+        usetransition:
+          'useTransition marks an update as low priority. It does not force one to flush synchronously.',
+        batching:
+          'Batching is the behavior itself, not a function you call. Name the escape hatch that forces a synchronous flush.',
+      },
+      hints: [
+        'Since React 18, updates inside promises, timeouts and native event listeners batch automatically, the same as updates inside JSX handlers.',
+        'There is a dedicated escape hatch that forces a synchronous flush when you truly need the DOM updated before the next line runs.',
+        'import { flushSync } from "react-dom";',
+      ],
+    },
+    canonicalAnswer: 'flushSync',
+    solution: code(
+      'jsx',
+      'import { flushSync } from "react-dom";',
+      '',
+      'function handleServerMessage() {',
+      '  flushSync(() => {',
+      '    setCount((c) => c + 1);',
+      '  });',
+      '  setFlag((f) => !f); // still batched with nothing else here',
+      '}'
+    ),
+    explanation:
+      'Automatic batching in React 18+ extends the old event-handler-only rule to promises, timeouts and native listeners like this one, so two setState calls that used to trigger two renders outside a handler now trigger one. flushSync is the deliberate escape hatch: it forces React to apply an update and commit to the DOM before returning, occasionally necessary for something like measuring layout right after a change. It re-renders synchronously and can hurt performance, which is why the docs call it a last resort rather than a default.',
+  },
 ];
