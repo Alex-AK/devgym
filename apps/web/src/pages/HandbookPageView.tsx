@@ -86,10 +86,7 @@ function Sources({ page }: { page: HandbookPageDetail }): React.ReactElement {
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-xs">
-        Claims last checked against these sources on {page.verified}. This page was written by an
-        LLM and is largely unreviewed: check the sources when it matters.
-      </p>
+      <p className="mt-3 text-xs">Claims last checked against these sources on {page.verified}.</p>
     </footer>
   );
 }

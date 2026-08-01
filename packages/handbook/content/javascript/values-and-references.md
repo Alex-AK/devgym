@@ -8,9 +8,6 @@ practise:
   - js-deep-clone
   - code-deep-equal
 sources:
-  - author: Dan Abramov
-    title: Just JavaScript
-    url: https://justjavascript.com
   - author: MDN
     title: JavaScript data types and data structures
     url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures
@@ -95,6 +92,3 @@ object contents for you: compare a field, key by an id, or write the structural 
 **A helper reordered the caller's array.** Handing an array to a function hands over the reference,
 and `sort`, `reverse`, `splice` and `push` all edit in place. The mutation is real work happening to
 somebody else's object, which is what the [mutation](./mutation.md) page is about.
-
-_The model here was shaped by Dan Abramov's Just JavaScript, a paid course. Nothing from it is
-reproduced; every claim is checked against this page's open sources._

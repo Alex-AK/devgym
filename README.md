@@ -212,12 +212,13 @@ implementation must pass its own tests while its starter must not.
 
 Two things worth saying plainly, and there is a fuller version at `/about` in the app.
 
-**This content was largely written by an LLM, and is largely unreviewed.** The test suite guarantees
-that every canonical answer grades correctly and every workout solution passes its checkpoints. It
-cannot guarantee that an explanation or a handbook page is true. Treat the prose the way you would
-treat any unreviewed technical writing: useful, probably right, worth checking against the cited
-sources when it matters. Corrections are welcome and easy to make; every piece of content is a small
-file in this repo.
+**This content was largely written by an LLM, and is reviewed progressively as it gets used.** A page
+gets read properly during the study session it was written for, and corrected there. The test suite
+guarantees that every canonical answer grades correctly and every workout solution passes its
+checkpoints; it cannot guarantee that an explanation or a handbook page is true. Every handbook page
+carries its sources and the date its claims were last checked against them, so you can see how far
+that review has actually got. Corrections are welcome and easy to make; every piece of content is a
+small file in this repo.
 
 **It owes nearly everything to other people.** Open source software, freely shared writing, and the
 people who teach: course authors, documentation writers, bloggers, and the maintainers of every

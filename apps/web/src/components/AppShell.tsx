@@ -51,7 +51,7 @@ export function AppShell(): React.ReactElement {
         <Outlet />
       </main>
       <footer className={cn('mx-auto px-4 pt-4 pb-8 text-xs text-muted-foreground', container)}>
-        Content here is largely machine-written and largely unreviewed.{' '}
+        Content here is largely machine-written, and progressively reviewed through study sessions.{' '}
         <NavLink to="/about" className="underline underline-offset-2 hover:text-foreground">
           What this is, and what it owes to other people
         </NavLink>

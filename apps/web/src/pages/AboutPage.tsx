@@ -43,12 +43,13 @@ export function AboutPage(): React.ReactElement {
         <section>
           <h2>How it was written</h2>
           <p>
-            Largely by an LLM, and largely unreviewed. The test suite guarantees that every
-            canonical answer grades correctly and every workout solution passes its checkpoints; it
-            cannot guarantee that an explanation or a handbook page is true. Treat the prose here
-            the way you would treat any unreviewed technical writing: useful, probably right, worth
-            checking against the cited sources when it matters. Corrections are very welcome and
-            easy to make; every piece of content is a small file in the open repo.
+            Largely by an LLM, then reviewed progressively as it gets used: a page gets read
+            properly during the study session it was written for, and corrected there. The test
+            suite guarantees that every canonical answer grades correctly and every workout solution
+            passes its checkpoints; it cannot guarantee that an explanation or a handbook page is
+            true. Every handbook page carries its sources and the date its claims were last checked
+            against them, so you can see how far that review has actually got. Corrections are very
+            welcome and easy to make; every piece of content is a small file in the open repo.
           </p>
         </section>
 

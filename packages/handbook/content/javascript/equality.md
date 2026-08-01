@@ -8,9 +8,6 @@ practise:
   - code-deep-equal
   - react-state-object-mutation
 sources:
-  - author: Dan Abramov
-    title: Just JavaScript
-    url: https://justjavascript.com
   - author: MDN
     title: Equality comparisons and sameness
     url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness
@@ -97,6 +94,3 @@ multiplication or a rounding of a small negative number. It survives `===`, `Str
 converts both sides to numbers, while `if ('0')` runs, because a non-empty string is truthy. Loose
 equality and truthiness are two different questions, and asking one while thinking of the other is
 what makes `==` worth avoiding.
-
-_The model here was shaped by Dan Abramov's Just JavaScript, a paid course. Nothing from it is
-reproduced; every claim is checked against this page's open sources._

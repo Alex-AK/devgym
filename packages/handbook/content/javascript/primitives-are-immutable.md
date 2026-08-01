@@ -6,9 +6,6 @@ practise:
   - js-dedupe
   - js-map-vs-object
 sources:
-  - author: Dan Abramov
-    title: Just JavaScript
-    url: https://justjavascript.com
   - author: MDN
     title: JavaScript data types and data structures
     url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures
@@ -89,6 +86,3 @@ different reports.
 `'object'`, `new String('x') === 'x'` is false, and every wrapper object is truthy, which makes
 `new Boolean(false)` truthy. Call `String(x)` and `Number(x)` without `new`: they convert and return
 primitives.
-
-_The model here was shaped by Dan Abramov's Just JavaScript, a paid course. Nothing from it is
-reproduced; every claim is checked against this page's open sources._

@@ -8,9 +8,6 @@ practise:
   - debug-mutable-shared-default
   - debug-object-default-param
 sources:
-  - author: Dan Abramov
-    title: Just JavaScript
-    url: https://justjavascript.com
   - author: MDN
     title: Array.prototype.sort()
     url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
@@ -99,6 +96,3 @@ reference is unchanged, a UI that may not update. Copy first with `[...items].so
 the immediate properties" and nested objects "are not frozen and may be the target of property
 addition, removal or value re-assignment". The failed write is also silent in sloppy mode, so freezing
 without strict mode hides the very error it was meant to surface.
-
-_The model here was shaped by Dan Abramov's Just JavaScript, a paid course. Nothing from it is
-reproduced; every claim is checked against this page's open sources._

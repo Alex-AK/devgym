@@ -8,9 +8,6 @@ practise:
   - js-await-in-loop
   - debug-try-catch-async
 sources:
-  - author: Dan Abramov
-    title: Just JavaScript
-    url: https://justjavascript.com
   - author: MDN
     title: JavaScript execution model
     url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model
@@ -100,6 +97,3 @@ first, then wait once: `await Promise.all(ids.map((id) => fetchUser(id)))`.
 the drain going, and the loop cannot reach the task queue until it is empty. MDN warns about it
 directly: "there's a real risk of getting the event loop endlessly processing microtasks". Recursion
 belongs on a task queue, so use `setTimeout` when you want the loop to breathe.
-
-_The model here was shaped by Dan Abramov's Just JavaScript, a paid course. Nothing from it is
-reproduced; every claim is checked against this page's open sources._
