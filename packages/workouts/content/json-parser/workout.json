@@ -1,0 +1,40 @@
+{
+  "slug": "json-parser",
+  "title": "Write a JSON parser",
+  "kind": "feature",
+  "minutes": 30,
+  "difficulty": "hard",
+  "relevance": "foundational",
+  "stack": {
+    "server": "node, no dependencies"
+  },
+  "summary": "JSON.parse, by hand and from nothing. Turn the text into tokens, turn the tokens into values, nest to any depth, and get the escape and number rules right. A document that is not JSON has to throw rather than come back wrong.",
+  "focus": ["tokenising", "recursive descent", "string escapes", "error handling"],
+  "editable": ["src/lib/tokenizer.ts", "src/lib/parser.ts"],
+  "checkpoints": [
+    {
+      "id": "text-becomes-tokens",
+      "title": "The text becomes a token stream",
+      "testFile": "tests/checkpoints/01-the-text-becomes-tokens.test.ts",
+      "hint": "Strings and numbers are the two types you have to scan for: read forward from the character that opened them and return where you stopped, so the loop knows where to pick up. A token carries the JavaScript value, so the text -3.5 arrives as the number -3.5."
+    },
+    {
+      "id": "flat-values",
+      "title": "A flat document parses to the right value",
+      "testFile": "tests/checkpoints/02-flat-documents-parse.test.ts",
+      "hint": "parseValue has already consumed the token it switched on, so parseObject starts after the opening brace and finishes by consuming the closing one. Empty is the case that bites: {} and [] never reach the comma loop at all."
+    },
+    {
+      "id": "nesting",
+      "title": "Nesting goes as deep as the document does",
+      "testFile": "tests/checkpoints/03-nesting-goes-all-the-way-down.test.ts",
+      "hint": "Depth comes free once parseObject and parseArray call parseValue for each member, because a member is a value and a value can be another object or array. Nothing here needs a depth counter."
+    },
+    {
+      "id": "escapes-and-numbers",
+      "title": "Escapes, number edge cases, and refusing what is not JSON",
+      "testFile": "tests/checkpoints/04-escapes-numbers-and-refusals.test.ts",
+      "hint": "The tokeniser resolves escapes, so \\n arrives as one newline character and \\uXXXX as one character built from four hex digits. For the refusals, check that every token got consumed: 01 and {} junk both parse fine if you stop at the first value."
+    }
+  ]
+}
