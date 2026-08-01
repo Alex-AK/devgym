@@ -422,4 +422,577 @@ export const securityProblems: ProblemDraft[] = [
     explanation:
       'Correct credential checking is only the first requirement. Rate limiting is what makes guessing impractical, and it belongs on both the account and the source address so neither a targeted attack nor a spray gets a free run. Enumeration is subtler: "no such user" versus "wrong password" hands an attacker a list of valid accounts, and so does returning faster when the user does not exist, which is why the example hashes against a dummy value anyway. The same care applies to password reset and signup, which leak the same information if they are not equally careful.',
   },
+
+  {
+    slug: 'security-nosniff-mime',
+    title: 'The upload that executes as a script',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A file-sharing app serves user uploads at `/uploads/:id` with `Content-Type: text/plain`. A',
+      'user uploads a file that is actually HTML with a `<script>` tag, links straight to it, and',
+      'anyone who opens the link runs the script.',
+      '',
+      'Name the response header that stops the browser reinterpreting the declared type.'
+    ),
+    graderConfig: {
+      accept: ['x-content-type-options', 'x-content-type-options: nosniff', 'nosniff'],
+      acceptPatterns: ['x-content-type-options', '\\bnosniff\\b'],
+      nearMisses: {
+        'content-type':
+          'Content-Type is what the server already sent. The bug is the browser second-guessing it.',
+        'content-disposition': 'That controls download versus inline display, not MIME sniffing.',
+      },
+      hints: [
+        'The browser is the one deciding to reinterpret the file, not your server.',
+        'One header tells it to trust the declared Content-Type instead of guessing from the bytes.',
+        '`X-Content-Type-Options: nosniff`',
+      ],
+    },
+    canonicalAnswer: 'X-Content-Type-Options: nosniff',
+    solution: code('http', 'X-Content-Type-Options: nosniff'),
+    explanation:
+      'Without nosniff, a browser can ignore the Content-Type you sent and guess the type from the bytes, which is what lets a file declared text/plain still render and run as HTML if its content looks like a page. nosniff forces the browser to use your declared type as-is. For a request whose destination is script or style, a type that is not a JavaScript type or text/css gets the response blocked outright; for everything else, including someone navigating straight to the file, the declared type is used without inspection. Pair it with the right Content-Type on uploads, such as application/octet-stream plus Content-Disposition: attachment, so there is nothing left to execute even before nosniff enters the picture. Helmet and most frameworks set this header by default, which is why the bug tends to show up only in a hand-rolled server.',
+  },
+
+  {
+    slug: 'security-sri',
+    title: 'The CDN script that changed without a deploy',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'A page loads a library straight from a third-party CDN:',
+      '',
+      code('html', '<script src="https://cdn.example.com/lib.js"></script>'),
+      '',
+      'The CDN is compromised and starts serving different bytes at that same URL, with no deploy of',
+      'your own. Name the HTML attribute that makes the browser refuse to run a file whose bytes do',
+      'not match a hash you pin.'
+    ),
+    graderConfig: {
+      accept: ['integrity', 'integrity attribute', 'sri', 'subresource integrity'],
+      acceptPatterns: ['\\bintegrity\\b', '\\bsri\\b', 'subresource integrity'],
+      nearMisses: {
+        crossorigin:
+          'crossorigin is required alongside it for a cross-origin load, but the hash itself lives in a different attribute.',
+        nonce:
+          'A nonce is for inline scripts under CSP, not for pinning a hash of an external file.',
+      },
+      hints: [
+        'The browser needs something to compare the downloaded bytes against.',
+        'You supply a hash of the file you expect, in the tag that loads it.',
+        '`integrity="sha384-…"`, the Subresource Integrity attribute.',
+      ],
+    },
+    canonicalAnswer: 'integrity',
+    solution: code(
+      'html',
+      '<script',
+      '  src="https://cdn.example.com/lib.js"',
+      '  integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC"',
+      '  crossorigin="anonymous"',
+      '></script>'
+    ),
+    explanation:
+      "The browser hashes the bytes it downloads and compares them against the value in integrity before executing anything, so a mismatch means the script never runs and a tampered CDN response fails safe instead of executing. crossorigin has to be set too, since checking the hash requires the response to go through a CORS-permitted read. What it does not do matters just as much: a swapped file just breaks the page instead of running, it does not stop the CDN from tracking who fetched it, and the hash has to be regenerated on every version bump, or the new file fails the same check an attacker's would.",
+  },
+
+  {
+    slug: 'security-authorization-caching',
+    title: 'The shared cache that will not store a 200',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A reverse proxy sits in front of an API. Every response carries `Cache-Control: max-age=300`,',
+      'but any request that carries an `Authorization` header is always forwarded to the origin,',
+      'cache or no cache.',
+      '',
+      'Name a `Cache-Control` directive that lets the response be cached anyway, when it really is',
+      'the same for every caller.'
+    ),
+    graderConfig: {
+      accept: ['public', 's-maxage', 'must-revalidate'],
+      acceptPatterns: ['\\bpublic\\b', 's-maxage', 'must-revalidate'],
+      nearMisses: {
+        private:
+          'private does the opposite: it keeps a shared cache from ever storing the response.',
+        'max-age':
+          'max-age is already there. It is not what unblocks storage for an authorized request.',
+      },
+      hints: [
+        'The rule against storing this response applies specifically to a shared cache, and it takes an explicit opt-in to override.',
+        'Three directives grant that opt-in: public, must-revalidate, or s-maxage.',
+        '`Cache-Control: public, max-age=300`',
+      ],
+    },
+    canonicalAnswer: 'public',
+    solution: code(
+      'http',
+      '# before: a shared cache refuses to store this, whatever max-age says',
+      'Cache-Control: max-age=300',
+      '',
+      '# after: explicitly declared safe to share',
+      'Cache-Control: public, max-age=300'
+    ),
+    explanation:
+      "RFC 9111 singles this case out: a shared cache must not reuse a stored response to a request that carried Authorization unless the response itself says public, must-revalidate, or s-maxage. The default assumption has to be that anything behind Authorization is personal to whoever asked, and getting that wrong hands one user's data to another. The rule only binds shared caches, so it says nothing about the browser's own private cache keeping a copy for the one user allowed to see it. Reach for public only when the response really is identical for every caller, such as a catalog gated by an API key rather than personalised per account.",
+  },
+
+  {
+    slug: 'security-csp-unsafe-inline',
+    title: 'The CSP that still lets the injection run',
+    category: 'security',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      "A site ships `Content-Security-Policy: script-src 'self' 'unsafe-inline'` after an XSS audit,",
+      'expecting the header to shut the hole down. An attacker still gets an injected `<script>` tag',
+      'to run.',
+      '',
+      'Explain what script-src is supposed to stop, and why unsafe-inline gives most of that back.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['xss', 'cross-site scripting', 'injected script', 'malicious script'],
+          missingFeedback: 'What kind of attack is script-src there to stop?',
+        },
+        {
+          synonyms: [
+            'allowlist',
+            'trusted source',
+            'inline script by default',
+            'disallow inline',
+            'blocks inline',
+          ],
+          missingFeedback: 'How does script-src normally stop an injected script from running?',
+        },
+        {
+          synonyms: [
+            'unsafe-inline',
+            'any inline script',
+            'inline event handler',
+            'regardless of where',
+          ],
+          missingFeedback: 'What does unsafe-inline specifically re-permit?',
+        },
+      ],
+      hints: [
+        'The header exists to stop injected script from running, not to declare a policy in the abstract.',
+        'By default script-src only trusts an explicit source list and refuses any inline <script> or event handler, wherever it sits in the page.',
+        'unsafe-inline turns that refusal off entirely: any inline script executes, including one an attacker injected.',
+      ],
+    },
+    canonicalAnswer:
+      "script-src exists to stop XSS: an attacker's injected script or inline event handler running with your page's privileges. It works by only allowing script from an explicit allowlist of trusted sources and refusing inline script by default. unsafe-inline permits any inline script or event handler regardless of where it came from, which is exactly what an injected script uses, so it hands back most of the protection the policy exists for.",
+    solution: code(
+      'http',
+      "Content-Security-Policy: script-src 'self'",
+      '',
+      '# keep specific inline scripts without the blanket exception:',
+      "Content-Security-Policy: script-src 'self' 'nonce-<random-per-response>'"
+    ),
+    explanation:
+      "CSP's script-src is an allowlist: script has to come from a source you named, and inline script and event handlers are excluded from that allowlist by default, which is exactly where most XSS payloads land. unsafe-inline is a blanket exception to that exclusion, so an attacker's injected <script> tag or onerror handler becomes indistinguishable from code you wrote. A nonce, a random value generated per response and echoed on the tags you trust, or a hash of the exact script contents, lets you keep inline script without reopening the allowlist. CSP is not a substitute for encoding output correctly either. It is what catches the injection you missed, not the first line of defence.",
+  },
+
+  {
+    slug: 'security-hsts-redirect',
+    title: 'The redirect that still gets stripped',
+    category: 'security',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    type: 'explain',
+    prompt: md(
+      'A site redirects every `http://` request to `https://` with a 301 and calls the connection',
+      "secure. An attacker on the same coffee-shop network still intercepts a user's first visit and",
+      'serves them a page over plain HTTP that never redirects.',
+      '',
+      'Explain what the redirect fails to prevent, and what Strict-Transport-Security adds that fixes',
+      'it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'ssl strip',
+            'sslstrip',
+            'ssl-stripping',
+            'ssl stripping',
+            'man-in-the-middle',
+            'mitm',
+            'intercept',
+          ],
+          missingFeedback:
+            'Name the attack: what can someone on the network do to that first plaintext request?',
+        },
+        {
+          synonyms: [
+            'redirect is still http',
+            'redirect itself is sent over http',
+            'attacker can just not forward it',
+            'never lets the redirect through',
+            'serve their own page instead',
+            'serves its own response instead',
+            'intercepts the redirect',
+          ],
+          missingFeedback:
+            'The redirect is itself an HTTP response. What stops an attacker from just not passing it on?',
+        },
+        {
+          synonyms: [
+            'rewrites the url',
+            'before sending any request',
+            'no plaintext request',
+            'preload',
+            'remembers the host',
+            'upgrades to https before',
+          ],
+          missingFeedback: 'What does HSTS make the browser do before it sends anything at all?',
+        },
+      ],
+      hints: [
+        'The very first request from a fresh browser has to go out unencrypted, before any header from you exists yet.',
+        'Your 301 is itself sent over that same connection. Nothing stops an attacker on the network from intercepting it and answering instead.',
+        'HSTS makes the browser rewrite the URL to https and skip the plaintext request entirely, from the visit after it first saw the header. Preload removes even that first gap.',
+      ],
+    },
+    canonicalAnswer:
+      "This is SSL stripping. The first request to a fresh browser has to go out over plain HTTP, so it travels through whatever the attacker controls on the network, and the redirect you send back is itself an HTTP response on that same connection: the attacker can just intercept it and serve their own page instead of ever letting your redirect through. Strict-Transport-Security fixes it from the second visit onward. Once the browser has seen the header, it remembers the host and rewrites the URL to https before sending any request at all, so there is no plaintext request left to intercept. Preloading, which ships known HSTS hosts inside the browser itself, closes the remaining gap on a user's very first visit.",
+    solution: code(
+      'text',
+      'Visit 1, host never seen before:',
+      '  http://site.example  ->  attacker on the network answers first, no redirect required',
+      '',
+      'Visit 2, after Strict-Transport-Security was received once:',
+      '  browser rewrites to https://site.example before sending anything',
+      '  -> nothing left for an attacker to intercept'
+    ),
+    explanation:
+      'A redirect only runs after a request already went out, and that first request is exactly the one HSTS is for: with nothing cached yet, the browser has no reason to prefer https, so it asks for http and an attacker in the path can answer instead of your server ever seeing the request. HSTS closes this from the second visit on, because the browser stores the host and upgrades the scheme locally before opening a connection, somewhere the attacker never gets a chance to interfere. The remaining gap is the very first visit to a browser that has never seen the header, which is what the preload list is for: browsers ship with a hardcoded set of hosts that are HSTS from the first request, no prior visit required. Getting listed requires max-age of at least a year and includeSubDomains, since a single subdomain still served in plain HTTP would otherwise undermine the guarantee for the rest of the site.',
+  },
+
+  {
+    slug: 'security-referrer-policy',
+    title: 'The token that leaked through Referer',
+    category: 'security',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A password-reset link is `https://app.example.com/reset?token=abc123`. To keep a legacy',
+      "analytics tool's attribution working, the team sets `Referrer-Policy: unsafe-url`. The reset",
+      "page includes a marketing pixel from a third-party domain, and that domain's access logs start",
+      'showing the full reset URL, token included, as the Referer on every page view.',
+      '',
+      'Explain what unsafe-url sends that a stricter policy would not, and name a value that would',
+      'have kept the token off that log.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'full url',
+            'query string',
+            'path and query',
+            'even on a downgrade',
+            'regardless of security',
+          ],
+          missingFeedback: 'What does unsafe-url send that a stricter policy would trim or drop?',
+        },
+        {
+          synonyms: [
+            'third party',
+            'third-party',
+            'cross-origin request',
+            'external domain',
+            'another origin',
+          ],
+          missingFeedback: 'Why did a domain that is not yours see it at all?',
+        },
+        {
+          synonyms: [
+            'no-referrer',
+            'strict-origin-when-cross-origin',
+            'strict-origin',
+            'same-origin',
+          ],
+          missingFeedback:
+            'Name a Referrer-Policy value that would have kept the query string off that log.',
+        },
+      ],
+      hints: [
+        'unsafe-url is the one policy that never trims the URL, whoever is asking.',
+        "It's attached to every subrequest the page makes, including one to a third party's pixel, not just navigations.",
+        'Referrer-Policy: strict-origin-when-cross-origin (or no-referrer) stops the query string leaving your origin.',
+      ],
+    },
+    canonicalAnswer:
+      'unsafe-url sends the full URL, path and query string included, on every request the page makes, even to a third-party origin and even on a downgrade from HTTPS to HTTP, which is exactly what the stricter policies exist to trim. The marketing pixel is on another origin, and the browser attached the Referer to that request the same as any other, so the token rode along into logs nobody on the team controls. strict-origin-when-cross-origin, the safer default, or no-referrer would have kept the query string, and the token, off that log.',
+    solution: code(
+      'http',
+      'Referrer-Policy: strict-origin-when-cross-origin',
+      '',
+      '# same-origin request  -> full URL, path and query included',
+      '# cross-origin request -> origin only, e.g. https://app.example.com/',
+      '# https -> http          -> nothing sent at all'
+    ),
+    explanation:
+      "unsafe-url exists for cases that genuinely need the full referring URL everywhere, and analytics attribution is rarely one of them: strict-origin-when-cross-origin still hands a cross-origin analytics tool the origin, which is enough to attribute a visit to your site without handing over the path a user was on. The header only controls the request the browser makes on the page's behalf. It says nothing about a token embedded in the page and copied by a script, or one a user pastes into another site by hand. A value this sensitive belongs in a POST body or a short-lived, single-use code rather than a URL, since a URL also survives in browser history and any proxy log along the way, whatever the Referrer-Policy says.",
+  },
+
+  {
+    slug: 'security-cors-credentials',
+    title: 'Cookies that never make it cross-origin',
+    category: 'security',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A single-page app on `https://app.example.com` calls an API on `https://api.example.com` with',
+      "`fetch(url, { credentials: 'include' })`. The API answers every origin with",
+      '`Access-Control-Allow-Origin: *`, and the browser refuses the response outright, without even',
+      'reaching the code that checks `response.ok`.',
+      '',
+      'Explain why the wildcard is rejected here, and what the server has to send instead.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'wildcard',
+            'cannot be combined',
+            "can't be combined",
+            'not allowed with credentials',
+            'fails with credentials',
+          ],
+          missingFeedback: 'What specifically is not allowed once the request carries credentials?',
+        },
+        {
+          synonyms: [
+            'specific origin',
+            'exact origin',
+            'echo the origin',
+            'actual origin',
+            'named origin',
+          ],
+          missingFeedback:
+            'What value must Access-Control-Allow-Origin have instead of the wildcard?',
+        },
+        {
+          synonyms: ['allow-credentials', 'allow credentials: true', 'credentials: true'],
+          missingFeedback: 'Which second header has to be present too?',
+        },
+      ],
+      hints: [
+        "This isn't a syntax error. The combination itself isn't allowed once cookies are on the request.",
+        'The server has to know exactly who it is answering, which a wildcard by definition does not say.',
+        'Echo the checked Origin back exactly, and add Access-Control-Allow-Credentials: true.',
+      ],
+    },
+    canonicalAnswer:
+      'A wildcard Access-Control-Allow-Origin cannot be combined with a credentialed request. The Fetch Standard treats * as meaning no origin was actually checked, and handing cookies to an unchecked audience defeats the point of asking permission at all. The server has to echo back the specific origin that made the request, after checking it against an allowlist, and add Access-Control-Allow-Credentials: true. Without both, the browser withholds the response before your code ever sees it.',
+    solution: code(
+      'http',
+      'Access-Control-Allow-Origin: https://app.example.com',
+      'Access-Control-Allow-Credentials: true',
+      'Vary: Origin'
+    ),
+    explanation:
+      "The Fetch Standard makes the two mutually exclusive: a response cannot use the literal * origin value if the request's credentials mode is include, and a browser that sees both together throws the CORS error rather than trusting the response. The fix is not to loosen anything, it is to be specific: check the incoming Origin against an allowlist and, if it passes, send that exact value back along with Access-Control-Allow-Credentials: true. That makes the response differ by who asked, so a shared cache in front of the API needs Vary: Origin or it can hand one origin's cookie-bearing response to a different one, the same mistake showing up in a different layer.",
+  },
+
+  {
+    slug: 'security-vary-origin-poisoning',
+    title: "One origin's response served to another",
+    category: 'security',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    type: 'explain',
+    prompt: md(
+      'An API sits behind a shared cache. It echoes back whatever `Origin` header a credentialed',
+      'request sends, correctly checked against an allowlist, and sets',
+      '`Access-Control-Allow-Origin` to that value. A few hours later, a request from a second',
+      'allowed origin gets back a response with the first origin still named in',
+      '`Access-Control-Allow-Origin`, and the browser rejects it.',
+      '',
+      'Explain what the cache did, and the header that would have prevented it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'keyed only on the url',
+            'keyed on the url',
+            'served the first',
+            'reused the response',
+            'served that cached response',
+            'served the stored response',
+          ],
+          missingFeedback: 'What did the cache treat as identical, that actually was not?',
+        },
+        {
+          synonyms: ['vary: origin', 'vary origin', 'vary header'],
+          missingFeedback: 'Which response header tells the cache the answer depends on Origin?',
+        },
+        {
+          synonyms: ['cache poisoning', 'wrong origin', 'served to the wrong', 'leaked to'],
+          missingFeedback: "What's the actual impact of serving one origin's response to another?",
+        },
+      ],
+      hints: [
+        'The two requests looked identical to the cache. What did it use as the key?',
+        'Only the URL, so the second origin got served exactly what was generated for the first.',
+        'Vary: Origin tells the cache that Origin is part of the key too, so each origin gets its own entry.',
+      ],
+    },
+    canonicalAnswer:
+      "The cache stored the response keyed only on the URL, so as far as it knew every request to that endpoint was interchangeable, and it served the second origin the exact response generated for the first, Access-Control-Allow-Origin included. That's cache poisoning: the wrong origin now holds an answer meant for someone else, and the only reason nothing worse happened is that the browser itself double-checks the header against its own Origin before trusting the response. Vary: Origin fixes it by making Origin part of the cache key, so each origin gets its own stored copy instead of sharing one.",
+    solution: code(
+      'http',
+      '# Origin: https://a.example.com  ->  cached under /api/data',
+      '# Origin: https://b.example.com  ->  cache hit, wrong Access-Control-Allow-Origin served',
+      '',
+      '# fix: name Origin as part of what the response depends on',
+      'Access-Control-Allow-Origin: https://a.example.com',
+      'Vary: Origin'
+    ),
+    explanation:
+      "A cache that only knows the URL treats every request to that path as the same question, which is fine right up until the answer stops being the same for everyone. Reflecting Origin makes the response depend on a request header the cache was never told to key on, so Vary: Origin is not optional the moment you echo it back: without it, the response generated for one origin becomes the response served to the next one who happens to hit a warm cache entry. The browser's own check catches this specific failure, since it compares the header against its own Origin before handing the response to script, but that safety net does not cover everything a shared cache can leak this way. A response that varies on Cookie or Authorization has the same shape of bug and the same fix: name what the response depends on in Vary, or keep it out of any shared cache at all.",
+  },
+
+  {
+    slug: 'security-xff-trust',
+    title: 'The rate limiter one attacker walks straight through',
+    category: 'security',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A login endpoint rate-limits by client IP, read from the `X-Forwarded-For` header. One',
+      'attacker is making unlimited attempts anyway, from a single machine, no botnet involved.',
+      '',
+      'Explain how they are bypassing it, and what has to be true before that header can be trusted.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'client can set',
+            'attacker can set',
+            'spoof',
+            'anyone can set',
+            'set it to anything',
+            'fake value',
+          ],
+          missingFeedback: 'Where does that header value actually come from, and who can write it?',
+        },
+        {
+          synonyms: [
+            'fresh key',
+            'new key each',
+            'different key every',
+            'resets the counter',
+            'never sees the same client',
+            'a new bucket each',
+          ],
+          missingFeedback: "What does a different value on every request do to the limiter's key?",
+        },
+        {
+          synonyms: [
+            'trust proxy',
+            'hop count',
+            'number of proxies',
+            'read from the right',
+            'proxies you control',
+            'hops you operate',
+          ],
+          missingFeedback:
+            'What has to be configured before any part of that header can be trusted?',
+        },
+      ],
+      hints: [
+        "Nothing forces that header to be true. It's just text the client sent.",
+        'A limiter that reads it verbatim gets a brand-new value, and therefore a brand-new bucket, every single request.',
+        'Only the hops your own proxy chain appended are trustworthy. Set trust proxy to that exact count and read from the right.',
+      ],
+    },
+    canonicalAnswer:
+      'X-Forwarded-For is just a request header, and a client can set it to anything before the request ever reaches your proxy, so sending a different value on every attempt hands the rate limiter a fresh key each time and it never sees the same client twice. The header only becomes trustworthy for the hops your own infrastructure actually appended. You have to configure the exact number of proxies in front of the app, trust proxy set to that count rather than to true, and read the entry that many hops in from the right, past anything the client could have written itself.',
+    solution: code(
+      'js',
+      "app.set('trust proxy', 1); // exactly one proxy in front of this app",
+      '',
+      '// req.ip is now the address that proxy attached,',
+      "// not whatever the client's own X-Forwarded-For claimed"
+    ),
+    explanation:
+      "RFC 7239 says plainly that X-Forwarded-For cannot be relied on, since every node on the path can append to it and nothing checks what was already there; a client is free to open the connection with the header already set. The fix isn't to stop reading it, since a proxy in front of you genuinely does need to pass the real client address along. It's to read only as many entries from the right as you have proxies you actually operate, because those are the only ones you can vouch for. Setting trust proxy to true rather than a count is the trap that looks like a fix: it tells the app to believe the whole chain, client-written entry included, which is the exact bug this problem starts with.",
+  },
+
+  {
+    slug: 'security-cookie-flags',
+    title: 'One cookie, three attributes, three attacks',
+    category: 'security',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A pentest report flags a session cookie shipped as `Set-Cookie: session=abc123`, nothing else.',
+      '',
+      'Name the three attributes missing and, for each, the specific attack it would have closed.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'httponly',
+            'http-only',
+            'javascript cannot read',
+            "javascript can't read",
+            'xss',
+          ],
+          missingFeedback:
+            'Which attribute keeps JavaScript from reading the cookie, and what attack does that stop?',
+        },
+        {
+          synonyms: [
+            'secure flag',
+            'over https',
+            'https only',
+            'man-in-the-middle',
+            'mitm',
+            'plaintext',
+          ],
+          missingFeedback:
+            'Which attribute keeps the cookie off plain HTTP, and what does that protect against?',
+        },
+        {
+          synonyms: ['samesite', 'same-site', 'csrf', 'cross-site request forgery'],
+          missingFeedback:
+            'Which attribute stops another site riding the cookie along, and what is that attack called?',
+        },
+      ],
+      hints: [
+        'One flag is about who can read the value, one is about which connections carry it, one is about which sites can trigger it.',
+        'HttpOnly, Secure and SameSite, each closing a different door.',
+        'HttpOnly stops XSS reading it, Secure stops it crossing plain HTTP, SameSite stops it riding along on a cross-site request (CSRF).',
+      ],
+    },
+    canonicalAnswer:
+      "HttpOnly, Secure and SameSite. HttpOnly keeps JavaScript from reading the cookie through document.cookie, which is what stops a single XSS from exfiltrating it. Secure sends the cookie only over HTTPS, so a network attacker on the same coffee-shop wifi can't read it off a plaintext request the way they could without the flag. SameSite, Lax by default in modern browsers, stops the cookie riding along on a cross-site POST that another site's page triggers, which is CSRF.",
+    solution: code(
+      'http',
+      'Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=3600'
+    ),
+    explanation:
+      "None of the three cover for each other. HttpOnly keeps document.cookie from returning it, but a same-origin fetch still attaches the cookie automatically, since HttpOnly blocks the JavaScript read, not the browser's own send. Secure only constrains the transport: a cookie readable by an injected script because HttpOnly is missing is exactly as stealable over HTTPS as over HTTP. SameSite=Lax is the default now in evergreen browsers when no attribute is set at all, which covers the classic hidden-form CSRF but still sends the cookie on an ordinary top-level GET link, so a state-changing action still needs to happen on POST rather than GET for SameSite to be doing any of the work. Set all three. They cost nothing and each closes a door the others do not.",
+  },
 ];
