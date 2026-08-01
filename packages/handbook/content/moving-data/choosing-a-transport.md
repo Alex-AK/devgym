@@ -6,6 +6,7 @@ practise:
   - http-sse-vs-websocket
   - http-streaming-response
   - http-pagination-cursor
+  - live-dashboard-sse
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'

@@ -1,0 +1,41 @@
+{
+  "slug": "live-dashboard-sse",
+  "title": "Live dashboard over SSE",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express",
+    "client": "react"
+  },
+  "summary": "Push readings to a dashboard down one HTTP response that never finishes: frame the events, give them ids so a client that drops can resume, keep an idle connection alive, and close what you opened.",
+  "focus": ["server-sent events", "streaming", "reconnection", "react effects"],
+  "editable": ["src/server/stream.ts", "src/client/Dashboard.tsx"],
+  "checkpoints": [
+    {
+      "id": "live-event-stream",
+      "title": "The endpoint answers with a live event stream",
+      "testFile": "tests/checkpoints/01-answers-with-a-live-event-stream.test.ts",
+      "hint": "Headers sit in a buffer until something sends them, so flush them when the request arrives rather than on the first reading. An event is a data: line followed by a blank line, and the blank line is what dispatches it."
+    },
+    {
+      "id": "resume-from-last-event-id",
+      "title": "A reconnecting client gets what it missed",
+      "testFile": "tests/checkpoints/02-a-reconnecting-client-catches-up.test.ts",
+      "hint": "An id on every event is what makes resuming possible: the browser sends the last one back as a Last-Event-ID header, and feed.since(id) is the replay. A missing header means a first connection, not id zero."
+    },
+    {
+      "id": "idle-and-cleanup",
+      "title": "The stream survives an idle spell and cleans up after itself",
+      "testFile": "tests/checkpoints/03-survives-an-idle-spell-and-cleans-up.test.ts",
+      "hint": "A line starting with a colon is a comment: it dispatches nothing and keeps the connection from looking dead. req.on('close') is where the interval gets cleared and the subscription undone, and nothing else will do either for you."
+    },
+    {
+      "id": "client-handles-the-drop",
+      "title": "The dashboard notices the drop and lets the stream go",
+      "testFile": "tests/checkpoints/04-the-dashboard-notices-the-drop.test.tsx",
+      "hint": "The effect's cleanup is where the stream gets closed. onerror fires on the drop and onopen fires again when it comes back, which is the pair the status is made of; opening a fresh EventSource yourself throws away the id it would have resumed from."
+    }
+  ]
+}

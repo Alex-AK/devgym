@@ -7,6 +7,7 @@ practise:
   - http-sse-resume
   - http-sse-vs-websocket
   - http-streaming-response
+  - live-dashboard-sse
 sources:
   - author: WHATWG
     title: 'HTML Standard: Server-sent events'
