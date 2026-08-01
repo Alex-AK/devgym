@@ -1,0 +1,41 @@
+{
+  "slug": "orders-report-typeorm",
+  "title": "The orders report melts under real data",
+  "kind": "bug-hunt",
+  "minutes": 25,
+  "difficulty": "hard",
+  "relevance": "occasional",
+  "stack": {
+    "orm": "typeorm",
+    "database": "sqlite"
+  },
+  "summary": "A report that runs two extra queries for every order it prints. Collapse it into one, add the numbers up in SQL, and do it without quietly dropping the orders that have nothing on them.",
+  "focus": ["n+1", "joins", "aggregates", "typeorm"],
+  "editable": ["src/server/report.ts"],
+  "checkpoints": [
+    {
+      "id": "report-is-still-right",
+      "title": "The report says the same thing it always did",
+      "testFile": "tests/checkpoints/01-the-report-is-still-right.test.ts",
+      "hint": "Every figure is checked against the same query written by hand. Making it fast and making it wrong is not an improvement."
+    },
+    {
+      "id": "not-one-query-per-order",
+      "title": "It does not cost a query per order",
+      "testFile": "tests/checkpoints/02-not-one-query-per-order.test.ts",
+      "hint": "Count the statements for five orders and for sixty. If the two numbers differ, the loop is the problem: join the customer in rather than looking each one up."
+    },
+    {
+      "id": "adding-up-in-sql",
+      "title": "The counting and adding up happen in the database",
+      "testFile": "tests/checkpoints/03-the-adding-up-happens-in-sql.test.ts",
+      "hint": "Joining every line item into one query fixes the round trips and still ships thousands of rows to add up here. COUNT, SUM and GROUP BY give you a row per order instead."
+    },
+    {
+      "id": "empty-order-still-appears",
+      "title": "An order with nothing on it still appears",
+      "testFile": "tests/checkpoints/04-an-empty-order-still-appears.test.ts",
+      "hint": "An inner join to the line items drops any order that has none. LEFT JOIN keeps it, and COALESCE turns the resulting NULL sum into a zero."
+    }
+  ]
+}

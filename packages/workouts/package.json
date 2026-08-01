@@ -6,6 +6,11 @@
   "type": "module",
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/testing": "^11.1.28",
+    "@swc/core": "^1.15.47",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/express": "^5.0.0",
@@ -18,7 +23,11 @@
     "kysely": "^0.29.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
     "supertest": "^7.1.1",
+    "typeorm": "^1.1.0",
+    "unplugin-swc": "^1.5.9",
     "vitest": "^3.2.7"
   }
 }

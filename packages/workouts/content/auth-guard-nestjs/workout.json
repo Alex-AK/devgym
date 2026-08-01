@@ -1,0 +1,40 @@
+{
+  "slug": "auth-guard-nestjs",
+  "title": "The ownership check is in the wrong place",
+  "kind": "bug-hunt",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "server": "nestjs"
+  },
+  "summary": "One route checks who owns the report. Three more were added later and nobody remembered. Move the check somewhere new routes cannot forget it.",
+  "focus": ["authorization", "guards", "layering", "nestjs"],
+  "editable": ["src/server/owner.guard.ts", "src/server/reports.controller.ts"],
+  "checkpoints": [
+    {
+      "id": "nobody-reads-anothers",
+      "title": "Nobody reads somebody else's report",
+      "testFile": "tests/checkpoints/01-nobody-reads-someone-elses-report.test.ts",
+      "hint": "Read all four routes before you fix any of them. The export route serves the same data as the one that is checked, and the list route hands out everybody's."
+    },
+    {
+      "id": "nobody-deletes-anothers",
+      "title": "Nobody deletes somebody else's report",
+      "testFile": "tests/checkpoints/02-nobody-deletes-someone-elses-report.test.ts",
+      "hint": "A 403 that has already deleted the row is not a 403. The check has to run before the handler does, which is exactly what a guard is for."
+    },
+    {
+      "id": "anonymous-and-missing",
+      "title": "Anonymous is 401, missing is 404",
+      "testFile": "tests/checkpoints/03-anonymous-is-401-and-missing-is-404.test.ts",
+      "hint": "401 is \"I do not know who you are\", 403 is \"I know, and no\". Answer the first before looking anything up, or a stranger learns which ids exist from the difference between 404 and 403."
+    },
+    {
+      "id": "check-in-one-place",
+      "title": "The check lives in one place",
+      "testFile": "tests/checkpoints/04-the-check-lives-in-one-place.test.ts",
+      "hint": "@UseGuards on the controller rather than on each route. This checkpoint reads the metadata rather than the behaviour, because the point is that the route added next month is covered too."
+    }
+  ]
+}
