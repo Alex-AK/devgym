@@ -1,7 +1,8 @@
 > **Historical document.** This is the original v1 specification, written before any code existed.
 > It is kept for provenance. The app has since grown past it: pinned daily sessions, spaced
 > repetition and executable code problems were all listed here as non-goals and were added anyway.
-> For what devgym actually does today, read [README.md](./README.md).
+> For what devgym actually does today, read [README.md](./README.md). For where it is going, read
+> [PRD-v2.md](./PRD-v2.md), which is the live spec.
 
 # devgym — PRD v1
 

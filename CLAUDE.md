@@ -5,7 +5,8 @@ does and how to run it. This file covers what an agent needs to change it safely
 
 `PRD.md` is the original v1 spec and is now **historical**. Where it disagrees with the code, the
 code wins: sessions, spaced repetition and executable code problems were all v1 non-goals that were
-added later.
+added later. `PRD-v2.md` is the **live** spec: it covers workouts, the planned workout library, and
+the handbook. Read it before starting anything in that area.
 
 ## Hard constraints
 
@@ -23,11 +24,13 @@ added later.
 
 ```
 packages/shared/src/index.ts       types + const tuples, no runtime deps
+packages/workouts/content/<slug>/  workout content: manifest, brief, files, tests, solution
 apps/server/src/
   db/                              Drizzle schema, client, migrations module
   grading/                         four graders + the sandboxed code runner
   seed/problems/<category>.ts      problem content, one file per category
   problems/ progress/ sessions/    Nest modules
+  workouts/                        workspace materialisation + the vitest checkpoint runner
   cli/grade.ts                     `pnpm grade` grader-inspection tool
 apps/web/src/
   pages/                           Dashboard, Session, Practice, Problem, Problems
@@ -59,6 +62,11 @@ apps/web/src/
   starter does not.
 - **Seeding without touching the real database:** set `DEVGYM_DATA_DIR` to a scratch path. Useful
   for checking the seeder end to end when the user is mid-streak.
+- **Adding a workout** is a new directory under `packages/workouts/content/`. No application code
+  changes. `workouts.spec.ts` then asserts the solution passes every checkpoint and the starter does
+  not, which is what makes workout content as safe to edit as problem content.
+- **A workout needs a new library?** Add it to `packages/workouts/package.json`. Workspaces symlink
+  their `node_modules` at that package, which is how a workout imports the real drizzle-orm.
 
 ## Conventions
 
