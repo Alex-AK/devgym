@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from '@/components/AppShell';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { HandbookPage } from '@/pages/HandbookPage';
+import { HandbookPageView } from '@/pages/HandbookPageView';
 import { PracticePage } from '@/pages/PracticePage';
 import { ProblemPage } from '@/pages/ProblemPage';
 import { ProblemsPage } from '@/pages/ProblemsPage';
@@ -20,6 +22,8 @@ export function App(): React.ReactElement {
         <Route path="problems" element={<ProblemsPage />} />
         <Route path="workouts" element={<WorkoutsPage />} />
         <Route path="workouts/:slug" element={<WorkoutPage />} />
+        <Route path="handbook" element={<HandbookPage />} />
+        <Route path="handbook/:section/:slug" element={<HandbookPageView />} />
         <Route path="problems/:slug" element={<ProblemPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -379,6 +379,63 @@ export interface WorkoutRun {
   crashed: string | null;
 }
 
+/* ------------------------------------------------------------------ handbook */
+
+/**
+ * The handbook is the study half of the gym: short pages you read beside a
+ * workout, each wired to the problems and workouts that prove you absorbed it.
+ * Content lives in `packages/handbook/content/<section>/<slug>.md`, so adding a
+ * page touches no code.
+ */
+export interface HandbookSource {
+  author: string;
+  title: string;
+  url: string;
+}
+
+/** A problem or workout that exercises a page's material. */
+export interface HandbookPractiseLink {
+  kind: 'problem' | 'workout';
+  slug: string;
+  title: string;
+}
+
+export interface HandbookPageSummary {
+  section: string;
+  slug: string;
+  title: string;
+  /** The question the page answers, phrased the way you'd ask it when stuck. */
+  question: string;
+  /** Problem and workout slugs, unresolved. Enough to link back from either. */
+  practise: string[];
+}
+
+export interface HandbookSectionSummary {
+  slug: string;
+  title: string;
+  summary: string;
+  pages: HandbookPageSummary[];
+}
+
+/** A neighbouring page, for moving through a section in order. */
+export interface HandbookPageRef {
+  section: string;
+  slug: string;
+  title: string;
+}
+
+export interface HandbookPageDetail extends HandbookPageSummary {
+  sectionTitle: string;
+  /** Markdown, frontmatter stripped. */
+  body: string;
+  sources: HandbookSource[];
+  /** ISO date the page's claims were last checked against its sources. */
+  verified: string;
+  practiseLinks: HandbookPractiseLink[];
+  previous: HandbookPageRef | null;
+  next: HandbookPageRef | null;
+}
+
 export interface WorkoutDetail extends WorkoutSummary {
   brief: string;
   editable: string[];

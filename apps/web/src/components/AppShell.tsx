@@ -10,6 +10,7 @@ const LINKS = [
   { to: '/practice', label: 'Practice', end: false },
   { to: '/problems', label: 'Problems', end: false },
   { to: '/workouts', label: 'Workouts', end: false },
+  { to: '/handbook', label: 'Handbook', end: false },
 ];
 
 export function AppShell(): React.ReactElement {

@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { CodeEditor, type CodeEditorHandle } from '@/components/CodeEditor';
+import { HandbookLinks } from '@/components/HandbookLinks';
 import { Markdown } from '@/components/Markdown';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +69,7 @@ function WorkoutIntro({
       <Card>
         <CardContent className="p-6">
           <Markdown>{detail.brief}</Markdown>
+          <HandbookLinks slug={detail.slug} className="mt-6 border-t pt-4" />
         </CardContent>
       </Card>
 

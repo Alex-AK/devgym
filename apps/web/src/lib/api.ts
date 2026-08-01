@@ -1,6 +1,8 @@
 import type {
   AttemptResponse,
   CreateSessionRequest,
+  HandbookPageDetail,
+  HandbookSectionSummary,
   NextProblem,
   PracticeSchemaResponse,
   ProblemDetail,
@@ -85,6 +87,10 @@ export const api = {
   revealWorkoutSolution: (slug: string): Promise<{ files: WorkoutFile[] }> =>
     request(`/workouts/${slug}/reveal-solution`, { method: 'POST' }),
 
+  handbook: (): Promise<HandbookSectionSummary[]> => request('/handbook'),
+  handbookPage: (section: string, slug: string): Promise<HandbookPageDetail> =>
+    request(`/handbook/${section}/${slug}`),
+
   next: (
     after?: string,
     dir: 'next' | 'prev' = 'next',
@@ -135,4 +141,6 @@ export const queryKeys = {
   latestSession: ['session', 'latest'] as const,
   workouts: ['workouts'] as const,
   workout: (slug: string) => ['workout', slug] as const,
+  handbook: ['handbook'] as const,
+  handbookPage: (section: string, slug: string) => ['handbook', section, slug] as const,
 };

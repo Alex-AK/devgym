@@ -16,6 +16,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { CategoryBadge, DifficultyBadge, RelevanceBadge, StatusBadge } from '@/components/badges';
 import { CodeEditor, type CodeEditorHandle } from '@/components/CodeEditor';
+import { HandbookLinks } from '@/components/HandbookLinks';
 import { Markdown } from '@/components/Markdown';
 import { SchemaPanel } from '@/components/SchemaPanel';
 import { ErrorState, LoadingState } from '@/components/states';
@@ -452,6 +453,7 @@ export function ProblemPage(): React.ReactElement {
                 <Markdown>{explanation}</Markdown>
               </div>
             )}
+            <HandbookLinks slug={data.slug} />
             <div className="flex flex-wrap items-center gap-3">
               <Button onClick={() => void move('next')} disabled={busy}>
                 Next problem
