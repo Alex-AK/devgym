@@ -150,6 +150,7 @@ export function ProblemsPage(): React.ReactElement {
                 <TableHead>Problem</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Difficulty</TableHead>
+                <TableHead>Relevance</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Attempts</TableHead>
               </TableRow>
@@ -167,6 +168,8 @@ export function ProblemsPage(): React.ReactElement {
                   </TableCell>
                   <TableCell>
                     <DifficultyBadge difficulty={problem.difficulty} />
+                  </TableCell>
+                  <TableCell>
                     <RelevanceBadge relevance={problem.relevance} />
                   </TableCell>
                   <TableCell>
@@ -179,7 +182,7 @@ export function ProblemsPage(): React.ReactElement {
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
                     No problems match those filters.
                   </TableCell>
                 </TableRow>
