@@ -77,7 +77,9 @@ run still tells you something. Checkpoints are ordered and carry a hint shown on
 
 ### 1.4 What is built
 
-- `packages/workouts/` with the scaffold and one workout.
+- `packages/workouts/` with the scaffold and the workouts. The scaffold's vitest config picks a test
+  environment by extension, so a `.test.tsx` checkpoint gets a DOM and a `.test.ts` one does not. It
+  does that with two projects rather than `environmentMatchGlobs`, which vitest deprecated in 3.2.
 - `apps/server/src/workouts/` — content loading and manifest validation, workspace materialisation
   with path-escape guards, the vitest runner and its JSON mapping, Nest module.
 - `workout_attempts` table: one attempt at a time per workout, best-checkpoint history, last run
@@ -114,6 +116,17 @@ The centre of it is the third checkpoint. Parameterising the query defeats injec
 about `LIKE` syntax, so searching "50%" quietly matches everything containing "50" — a bug that
 passes review because the query looks safe.
 
+**Workout 5: `rate-limit-express`** (20 min, Express + a fake Redis). A fixed-window limiter as
+middleware. Checkpoints: a client gets through to its allowance with the `RateLimit-*` headers
+counting down; past it a 429 with a `Retry-After` and no handler run; the window genuinely turns
+over; and one client's spending does not come out of another's budget.
+
+Its third checkpoint is the one that pays. `INCR` on a missing key creates it with no deadline, so a
+limiter that forgets `EXPIRE` blocks the client forever, and one that calls `EXPIRE` on every request
+keeps pushing the window out so a busy client never gets back in. The checkpoint spends part of an
+allowance, advances the fake clock into the window, spends the rest, then advances past where the
+window should have closed. Only the correct version is let back in.
+
 The second workout is what proved the format: it added Express, jose and supertest to
 `packages/workouts/package.json` and touched no application source at all. The third is what proved
 the format can carry a whole database engine.
@@ -126,31 +139,50 @@ the failure messages the teaching: "one query came back with 40000 rows for a pa
 chooses, which is the distinction the exercise is about. Any workout about performance should be
 built this way.
 
+**Two things deliberately not shared yet.** Workouts 3 and 4 each log the statements their ORM runs,
+and the shapes differ enough (a hand-written dialect that counts rows against drizzle's own logger
+hook) that folding them into one helper at n=2 would be guessing. Anything shared would have to live
+in `scaffold/`, since that is the only directory copied into every workspace, and that makes it part
+of the authoring contract rather than an implementation detail. Same reasoning for the
+`pnpm workout <slug>` generator in phase 3: worth doing once enough workouts exist to show what
+actually varies, not before.
+
 ---
 
 ## 2. Roadmap
 
 ### Phase 2 — the workout library
 
-Port the accumulated briefs. Each is full stack, because that is the level being practised. JWT login,
-the slow list endpoint and search on Drizzle are done; the rest are still to write.
+Port the accumulated briefs. Each is full stack, because that is the level being practised. Four are
+done: JWT login, the slow list endpoint, search on Drizzle and rate limiting. The rest are still to
+write.
 
 | Workout                             | Stack                     | Shape    |
 | ----------------------------------- | ------------------------- | -------- |
-| Search with pagination              | Prisma + PGlite           | feature  |
-| Rate limiting middleware            | Express + fake Redis      | feature  |
 | Infinite scroll with retry          | React + local fixture API | feature  |
 | Drag-and-drop ordering, persisted   | React + Zustand + API     | feature  |
 | Autocomplete: debounce, abort, a11y | React + API               | feature  |
 | N+1 in the orders report            | TypeORM                   | bug-hunt |
 | Auth check on the wrong layer       | NestJS guards             | bug-hunt |
 
+**Prisma is off the list.** The plan was the same search brief on a second ORM, which is exactly the
+"practise against a stack you do not know" case. It does not fit: Prisma generates its client with
+`prisma generate`, which is a build step in a package that deliberately has none, and there is no
+PGlite driver adapter for it, so it would also need one written against Prisma's adapter API rather
+than the thirty lines Kysely needed. Both are solvable and neither is worth it for one workout. If a
+second ORM is wanted, TypeORM and Sequelize both connect without codegen.
+
 Three adaptations the offline constraint forces, all of which improve the exercise:
 
 - **jsonplaceholder → a local fixture endpoint** with the same response shape, plus fault injection
   so "handle failures and allow retry" is actually testable.
 - **Redis → a small in-repo fake** with the real `ioredis` surface (`incr`, `expire`, `ttl`), so the
-  code written is real Redis code.
+  code written is real Redis code. Done, in workout 5. Keeping the awkward semantics is what makes it
+  worth using: `incr` creating a key with no deadline is the whole lesson, and `ttl` answering -1 for
+  "no deadline" against -2 for "no key" is the kind of thing you only learn by needing it. The fake
+  also carries an `advanceTime` that real Redis has not, so a checkpoint can wait out a sixty-second
+  window for free. Anything time-based should get a fake clock rather than vitest's timers, which
+  fight supertest's sockets.
 - **Postgres → PGlite**, a WASM Postgres running in-process. Real `ILIKE`, real `EXPLAIN`, no server.
   This is also what makes a genuine query-optimisation workout possible. Done, in workout 3: it ships
   its own 25MB of WASM, boots in about a second and seeds 40,000 rows in well under one, so a

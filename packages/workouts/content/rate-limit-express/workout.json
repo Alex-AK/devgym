@@ -1,0 +1,41 @@
+{
+  "slug": "rate-limit-express",
+  "title": "Rate limit an endpoint with Redis",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express",
+    "database": "redis (in-repo fake)"
+  },
+  "summary": "A fixed-window limiter in Express middleware, counted in Redis: let a client through to its allowance, answer 429 after that, and make sure the window actually turns over.",
+  "focus": ["middleware", "redis", "http headers", "expiry"],
+  "editable": ["src/server/rate-limit.ts"],
+  "checkpoints": [
+    {
+      "id": "lets-a-client-through",
+      "title": "A client gets through until it hits the limit",
+      "testFile": "tests/checkpoints/01-lets-a-client-through-to-the-limit.test.ts",
+      "hint": "One INCR per request gives you the count. The headers go on every response, not just the ones you turn away, and remaining is limit minus what has been used."
+    },
+    {
+      "id": "turns-them-away",
+      "title": "Past the limit it answers 429",
+      "testFile": "tests/checkpoints/02-turns-them-away-past-the-limit.test.ts",
+      "hint": "Answer and return: calling next() as well runs the handler you were guarding. Retry-After is whole seconds and never zero."
+    },
+    {
+      "id": "window-turns-over",
+      "title": "The window actually turns over",
+      "testFile": "tests/checkpoints/03-the-window-turns-over.test.ts",
+      "hint": "INCR on a missing key creates it with no deadline at all, so something has to call EXPIRE. Calling it on every request is the trap: the deadline keeps moving and a busy client is locked out for good."
+    },
+    {
+      "id": "per-client-allowance",
+      "title": "Each client has its own allowance",
+      "testFile": "tests/checkpoints/04-each-client-has-its-own-allowance.test.ts",
+      "hint": "The counter key has to carry who the request came from. Fall back to something rather than throwing when there is no API key."
+    }
+  ]
+}
