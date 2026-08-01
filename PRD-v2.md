@@ -1,8 +1,9 @@
 # devgym — PRD v2: the practice platform
 
-> **Status: in progress.** Phase 0 and phase 1 have landed, and phase 2 is underway. Everything
-> below phase 2 is planned, not built. [PRD.md](./PRD.md) is the historical v1 spec; this is the
-> live one. The three `PRD-v3-*.md` documents extend it: the
+> **Status: in progress.** Phases 0 and 1 have landed. Phase 2 (the workout library) and phase 4
+> (the handbook) are both underway and both grow continuously. Phase 3 (workout depth) and phase 5
+> (the non-executable parts) are planned, not built. [PRD.md](./PRD.md) is the historical v1 spec;
+> this is the live one. The three `PRD-v3-*.md` documents extend it: the
 > [learning guide](./PRD-v3-learning-guide.md) grows phase 4 into a full curriculum, the
 > [content roadmap](./PRD-v3-content-roadmap.md) extends phase 2's queue, and
 > [open-sourcing](./PRD-v3-open-source.md) adds the about page and citation policy.

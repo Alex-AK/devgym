@@ -1,6 +1,11 @@
 # devgym — PRD v3: the content roadmap
 
-> **Status: planned, not started.** The problem and workout queue drawn from the vault material,
+> **Status: in progress.** Shipped so far: the `systems` and `html` categories, the TypeScript,
+> React, JavaScript mental-models and headers/security waves, and two workouts (the SSE dashboard
+> and the `json-parser` build-your-own pilot). Still queued: the `sql-performance`, `api-design`,
+> `node` and `dsa-patterns` categories, and the rest of the workout list below. `dsa-patterns`
+> remains the one item here that needs an application change, for the queue opt-out flag.
+> The problem and workout queue drawn from the vault material,
 > extending PRD-v2 phase 2. Nothing here changes how content works; it is all "what to write
 > next", which is exactly how it should be. Siblings:
 > [PRD-v3-learning-guide](./PRD-v3-learning-guide.md),

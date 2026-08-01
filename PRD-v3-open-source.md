@@ -1,6 +1,10 @@
 # devgym — PRD v3: open-sourcing honestly
 
-> **Status: planned, not started.** The repo is already public and MIT licensed. This document is
+> **Status: shipped.** The about page is live at `/about`, the citation policy is enforced in
+> `pnpm verify` where it can be and stated in CONTRIBUTING where it cannot, and the README carries
+> the authorship note. One deviation from the policy below, decided in use: paywalled courses are
+> not credited on pages at all rather than credited as inspiration, since no claim ever rested on
+> one. The repo is already public and MIT licensed. This document is
 > about doing that honestly: crediting the people whose teaching the content draws on, and telling
 > visitors plainly what this project is and how it was made. Siblings:
 > [PRD-v3-learning-guide](./PRD-v3-learning-guide.md),

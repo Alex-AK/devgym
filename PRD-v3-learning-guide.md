@@ -1,6 +1,11 @@
 # devgym — PRD v3: the learning guide
 
-> **Status: planned, not started.** This extends [PRD-v2](./PRD-v2.md), which remains the live spec
+> **Status: in progress.** The shape is built: `packages/handbook/content/`, the safety net in
+> `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 3 (moving
+> data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases) and 8 (the server runtime) are underway.
+> Sections 2 (React), 9 (systems) and 10 (trade-offs) are not started, though the `systems` problem
+> category that section 9 pairs with has shipped. This extends [PRD-v2](./PRD-v2.md), which remains
+> the live spec
 > for the workout platform and for what a handbook page is (its phase 4). This document is the map
 > the handbook grows into: a full curriculum, built from years of collected-but-unexecuted study
 > material, with sources credited on every page. Siblings:
