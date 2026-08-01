@@ -4,9 +4,11 @@
 > `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 3 (moving
 > data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases) and 8 (the server runtime) are underway.
 > Sections 2 (React), 9 (systems) and 10 (trade-offs) are not started, though the `systems` problem
-> category that section 9 pairs with has shipped. This extends [PRD-v2](./PRD-v2.md), which remains
-> the live spec
-> for the workout platform and for what a handbook page is (its phase 4). This document is the map
+> category that section 9 pairs with has shipped. Two further sections were added by the pairing
+> rule below: TypeScript, and the browser you are writing for.
+>
+> This extends [PRD-v2](./PRD-v2.md), which remains the live spec for the workout platform and for
+> what a handbook page is (its phase 4). This document is the map
 > the handbook grows into: a full curriculum, built from years of collected-but-unexecuted study
 > material, with sources credited on every page. Siblings:
 > [PRD-v3-content-roadmap](./PRD-v3-content-roadmap.md) for the problem and workout queue, and
@@ -72,9 +74,47 @@ The safety net runs in `pnpm verify`, like everything else:
 The UI stays minimal: a section list, a page view, and the links in both directions. No search, no
 progress tracking on pages themselves; the problems are the progress tracking.
 
+## Pairing: reps for every page, pages for every rep
+
+The guide and the problem set are two halves of one library, and the standing rule is that neither
+half runs far ahead of the other:
+
+- **Every page names somewhere to practise it.** Already enforced: a page with an empty `practise`
+  list fails `pnpm verify`. This is what stops the guide becoming a wiki nobody opens.
+- **Every area with real practice volume earns pages.** Not enforceable mechanically, and the
+  direction that actually drifts. A category can grow to thirty problems while the concept behind
+  them is written down nowhere.
+
+**Not 1:1, deliberately.** A page can be served by problems from three categories, and a category
+can back several pages. The target is that no page is unpractised and no substantial category is
+unexplained, not a matching count on each side.
+
+Where it stands, and it is lopsided in one direction:
+
+| Area                                                           | Practice                  | Pages | Gap                            |
+| -------------------------------------------------------------- | ------------------------- | ----- | ------------------------------ |
+| Moving data, headers, caching, APIs, databases, server runtime | yes                       | yes   | paired                         |
+| JavaScript under the hood                                      | yes                       | yes   | no workout yet                 |
+| **React**                                                      | 30+ problems, one workout | none  | **section owed**               |
+| **Systems**                                                    | ~19 cards                 | none  | **section owed**               |
+| **TypeScript**                                                 | 30+ problems              | none  | **decision to revisit, below** |
+| **HTML, accessibility, CSS, forms**                            | ~48 problems              | none  | **section owed**               |
+| **Dates and time, testing**                                    | ~18 problems              | none  | thinner, but unexplained       |
+| Trade-offs and architecture                                    | none                      | none  | neither half exists            |
+
+**The TypeScript decision is revisited.** This document originally put TypeScript under
+"deliberately absent" on the grounds that the vault had only stubs and the existing problems carried
+it. The problem set has since roughly doubled and now reaches conditional types, `infer`, mapped-type
+key remapping and assertion functions. That is well past what a prompt and a hint can explain on
+their own, so TypeScript earns a section. The original reasoning was about source material; the
+pairing rule is about the reader, and the reader wins.
+
+The same test applies to anything else in "deliberately absent": it stays absent until its practice
+volume says otherwise, and then it gets written.
+
 ## The map
 
-Ten sections. Web first throughout; each section notes what vault material feeds it and who gets
+Twelve sections. Web first throughout; each section notes what vault material feeds it and who gets
 credited (see the open-source PRD for the citation policy itself).
 
 ### 1. JavaScript, under the hood
@@ -200,10 +240,35 @@ The vault's 15-item architecture reading list survives as this section's further
 with every book credited. Credits: refactoring.guru, Microsoft's strangler-fig page, Will
 Larson's migrations essay, the listed books.
 
+### 11. TypeScript, at the type level
+
+Added by the pairing rule above, having originally been listed as deliberately absent. The problem
+set now runs from utility types through conditional types, `infer`, mapped-type key remapping,
+assertion functions and branded types, which is more than a prompt and three hints can carry.
+
+Pages: what the compiler actually erases, and why runtime validation is still your job; `as` versus
+an annotation versus `satisfies` (three different things, and `as` is the one that lies); the type
+level as a language (conditional types, `infer`, mapped types); narrowing and control flow analysis;
+generics and inference (why `T` widens, and what `const` type parameters do); structural typing and
+where it stops being enough (branded types). Credits: the TypeScript handbook and release notes, and
+`type-fest` as a worked reference for the harder patterns.
+
+### 12. The browser you are writing for
+
+The largest unpaired block: semantic HTML, accessibility, CSS layout and forms together carry
+roughly fifty problems and no pages at all. One section rather than four, because the through-line
+is the same in each: the platform already does most of this, and the bug is usually that something
+reimplemented it.
+
+Pages: which element means this (landmarks, sectioning, the outline myth); the accessibility tree,
+and what an accessible name is computed from; focus, and the three things that break it; layout that
+does not need a media query (flex, grid, container queries, intrinsic sizing); forms the browser
+already validates; and what the platform gives you free that people reach for a library to get
+(`<dialog>`, `<details>`, `popover`, `inputmode`). Credits: MDN, the WHATWG HTML Standard, the ARIA
+Authoring Practices Guide, web.dev.
+
 ### Deliberately absent
 
-- **TypeScript**: stays problem-led. The vault has only stubs, and the existing 22 problems carry
-  it. A section gets written when its pages can pass the traps test.
 - **Mobile and desktop**: the stated priority is web. The vault's React Native vs Flutter notes
   wait until the web map is substantially built.
 - **DSA theory**: the patterns become coding problems (content roadmap), not guide pages. A page
@@ -211,15 +276,18 @@ Larson's migrations essay, the listed books.
 
 ## Build order
 
-1. **Moving data** (v2 already names it first; it unblocks the SSE and WebSocket workouts)
-2. **Databases** (the material is readiest, and workouts 3 and 7 already exercise it)
-3. **JavaScript, under the hood** (second-readiest notes, source already confirmed)
-4. **APIs in practice** (short section, feeds three planned workouts)
-5. **Headers**, then **Caching** (as specified in v2)
-6. **React, beyond the API**
-7. **The server runtime**
-8. **Systems** (paired with the `systems` problem category shipping alongside)
-9. **Trade-offs** last
+Sections 1 to 8 of this order are done or underway: moving data, databases, JavaScript, APIs,
+headers, caching and the server runtime have all landed. What remains, ordered by how much
+unexplained practice is sitting behind each:
+
+1. **React, beyond the API** — the biggest gap by problem count, and one workout already points here
+2. **Systems** — the `systems` category shipped ahead of it, so the reps are already waiting
+3. **The browser you are writing for** — the largest unpaired block once React is done
+4. **TypeScript, at the type level**
+5. **Trade-offs and architecture** — last, as before, because it resists the page shape
+
+The gate for shipping any page is unchanged: the safety net plus the citation policy, not
+completeness of its section. A section is never finished and a page at a time is a fine pace.
 
 Cadence mirrors the content rule from v2: a section is never finished, and a page at a time is a
 fine pace. The gate for shipping any page is the safety net plus the citation policy, not

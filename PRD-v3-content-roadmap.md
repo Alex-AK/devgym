@@ -1,13 +1,15 @@
 # devgym — PRD v3: the content roadmap
 
-> **Status: in progress.** Shipped so far: the `systems` and `html` categories, the TypeScript,
-> React, JavaScript mental-models and headers/security waves, and two workouts (the SSE dashboard
-> and the `json-parser` build-your-own pilot). Still queued: the `sql-performance`, `api-design`,
-> `node` and `dsa-patterns` categories, and the rest of the workout list below. `dsa-patterns`
-> remains the one item here that needs an application change, for the queue opt-out flag.
-> The problem and workout queue drawn from the vault material,
-> extending PRD-v2 phase 2. Nothing here changes how content works; it is all "what to write
-> next", which is exactly how it should be. Siblings:
+> **Status: in progress.** The problem and workout queue drawn from the vault material, extending
+> PRD-v2 phase 2. Nothing here changes how content works; it is all "what to write next", which is
+> exactly how it should be.
+>
+> Shipped so far: the `systems` and `html` categories, the TypeScript, React, JavaScript
+> mental-models and headers/security waves, and two workouts (the SSE dashboard and the
+> `json-parser` pilot). Still queued: the `sql-performance`, `api-design`, `node` and
+> `dsa-patterns` categories, and the workout list below, which has since grown by ten.
+> `dsa-patterns` remains the one item here that needs an application change, for the queue opt-out
+> flag. Siblings:
 > [PRD-v3-learning-guide](./PRD-v3-learning-guide.md),
 > [PRD-v3-open-source](./PRD-v3-open-source.md).
 
@@ -26,8 +28,7 @@ changes, except where explicitly flagged (there is exactly one: the queue opt-ou
 
 ## Problems
 
-Current state: ~230 problems across 16 categories. Five new categories and four waves inside
-existing ones. Every problem still declares `relevance` honestly; the DSA category in particular
+Five new categories and four waves inside existing ones; the seed directory is the live count. Every problem still declares `relevance` honestly; the DSA category in particular
 leans `foundational` and `occasional`, and that is the point of the axis.
 
 ### New categories
@@ -87,13 +88,15 @@ opt-out flag the session builder respects. Small, but it is code, not content.
 
 ## Workouts
 
-Current state: 8 workouts. The v2 coverage table names transport as the widest gap, and the vault
-material agrees loudly (the web sockets note is the deepest production experience in it). Queue,
-roughly in order:
+The v2 coverage table names transport as the widest gap, and the vault material agrees loudly (the
+web sockets note is the deepest production experience in it). Queue, roughly in order:
+
+**Shipped since this document was written:** the SSE dashboard and the `json-parser` pilot.
+
+### Queued
 
 | Workout                     | Stack                     | Shape    | The lesson                                                                                         |
 | --------------------------- | ------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| Live dashboard over SSE     | Express + React           | feature  | Server push without WebSockets: reconnect, `Last-Event-ID`, and why SSE is the skipped-past option |
 | Two clients in sync         | WebSocket (`ws`) + React  | feature  | The delivery-guarantees page made real: reconnect, buffering, offset-and-replay for missed events  |
 | Idempotent payment endpoint | Express + SQLite          | feature  | `Idempotency-Key` check-store-replay; the double-submit that gets through anyway is the checkpoint |
 | Cursor pagination bug-hunt  | Kysely + PGlite           | bug-hunt | Offset pagination drifting under concurrent writes; keyset as the fix, plan asserted via EXPLAIN   |
@@ -107,6 +110,35 @@ roughly in order:
 | Search on Sequelize         | Sequelize + SQLite        | feature  | The product-search brief on a fourth ORM; stack breadth per the standing rule                      |
 | Infinite scroll with retry  | React + fixture API       | feature  | Carried from the v2 backlog                                                                        |
 | Drag-and-drop ordering      | React + Zustand + API     | feature  | Carried from the v2 backlog                                                                        |
+
+### Ten more, noodled
+
+Chosen to close pairing gaps rather than to pile onto areas that already have workouts. The
+handbook column is what each one is the practical half of.
+
+| Workout                       | Stack                 | Shape    | Pairs with  | The lesson                                                                                        |
+| ----------------------------- | --------------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------- |
+| Cache the expensive report    | Express + fake Redis  | feature  | caching     | Cache-aside with a TTL, then the stampede: fifty concurrent misses must recompute once, not fifty |
+| Accessible data table         | React                 | feature  | the browser | A sortable table a screen reader can use: `scope`, `aria-sort`, caption, and keyboard ordering    |
+| The form that loses your work | React                 | bug-hunt | the browser | Errors nobody is told about: association, focus to the first failure, and the double submit       |
+| Timezone-correct booking      | Node + fixed clock    | bug-hunt | dates       | Store UTC, render local, and survive the DST boundary the fixture lands on                        |
+| The migration that locks up   | PGlite                | feature  | databases   | Add a NOT NULL column to a large table without holding a long lock; backfill in batches           |
+| Sessions, not just tokens     | Express + SQLite      | feature  | APIs        | Revocation is the thing a stateless JWT cannot do; rotate, revoke, and prove it takes effect      |
+| The audit row that lied       | SQLite + transactions | bug-hunt | databases   | The state change and its audit row must land together or not at all; the checkpoint interrupts it |
+| Streaming a big export        | Express + React       | feature  | moving data | A CSV that must not buffer; the checkpoint measures peak buffered bytes, not wall-clock time      |
+| Optimistic UI that rolls back | React                 | feature  | React       | Apply now, reconcile later, roll back on failure without discarding edits made in the meantime    |
+| Search that ignores accents   | Drizzle + PGlite      | bug-hunt | databases   | Normalisation and collation: "cafe" has to find "café", and the index has to survive the fix      |
+
+Every one of these runs on infrastructure that already exists (PGlite, the fake Redis and its clock,
+the fixture API, testing-library) except where noted below.
+
+**Two that need a decision before they can be built:**
+
+- **N+1 in GraphQL** — deferred in this document until the transport pages existed. They do now, so
+  the brief has somewhere to link. It needs `graphql` as a new dependency in
+  `packages/workouts/package.json`, which is the one thing that is not just content.
+- **Drag-and-drop ordering** and **Windowed list** both name new dependencies too (Zustand,
+  react-window). Worth batching those three into one dependency decision rather than three.
 
 Fixture and fake infrastructure already proved out in v2 (the fixture API with fault injection
 and per-query delay, the fake Redis with `advanceTime`, PGlite) covers everything here. The fake
@@ -136,7 +168,23 @@ repository).
 - **React Native / desktop**: web is the stated priority; the platform can't checkpoint native
   targets today and should not grow that machinery speculatively.
 
-## Sizing and cadence
+## Pairing is the sizing rule
+
+The learning guide states it from the guide's side; here is what it means for this queue. Content is
+picked to close a gap between the three halves of the library, not to top up whichever one is
+easiest to add to:
+
+- **A handbook section with no workout** is the strongest signal, because a workout is the only place
+  the reading gets tested under time pressure. Caching, the browser material and dates all have or
+  will have pages with nothing to build against.
+- **A problem category with no pages** is the next strongest. React, systems, TypeScript and the
+  HTML/a11y/CSS/forms block are all in that state, and the guide now owes sections for each.
+- **A page with no problems** cannot ship at all: `pnpm verify` rejects an empty `practise` list.
+  That direction is already solved and needs no policy.
+
+It does not have to be 1:1 and should not be. One workout can be the practical half of four pages,
+and one page can be practised by problems from three categories. The rule is that nothing is
+orphaned, not that the counts match.
 
 Content is never finished (v2's standing rule). Waves of 10-20 problems keep the seed-file
 review small; workouts land one at a time, gated by `workouts.spec.ts`. Sensible first quarter:
