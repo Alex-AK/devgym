@@ -9,7 +9,7 @@
     "client": "react",
     "server": "local fixture API"
   },
-  "summary": "A search-as-you-type box that works with a mouse and nothing else. Debounce the typing, call off the search nobody wants, drive it from the keyboard, and give it the roles a combobox is supposed to have.",
+  "summary": "A search-as-you-type box with three complaints against it: it calls the API on every keystroke, the results sometimes flick back to an older search, and it cannot be used without a mouse.",
   "focus": ["react effects", "race conditions", "keyboard", "aria"],
   "editable": ["src/client/Autocomplete.tsx"],
   "checkpoints": [

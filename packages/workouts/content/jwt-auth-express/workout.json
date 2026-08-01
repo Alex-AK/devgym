@@ -9,7 +9,7 @@
     "server": "express",
     "database": "in-memory users"
   },
-  "summary": "Issue a signed JWT on login and gate a route behind it: sign with an expiry, verify properly, and turn every bad token into a 401.",
+  "summary": "Issue a signed JWT on login and gate a route behind it: an expiry on the token, a 401 for everything that is not a live one, and no password hash in the answer.",
   "focus": ["auth", "jwt", "middleware", "error handling"],
   "editable": ["src/server/auth.ts", "src/server/app.ts"],
   "checkpoints": [

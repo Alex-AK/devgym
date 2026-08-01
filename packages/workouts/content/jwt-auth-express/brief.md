@@ -14,17 +14,15 @@ Implement token auth across two files.
   - It expires. `TOKEN_TTL_SECONDS` is there for you, and anything over an hour fails the checkpoint.
 - `requireAuth` is Express middleware. It reads `Authorization: Bearer <token>`, verifies it, puts
   the user on `req.user`, and calls `next()`.
-  - Missing header, wrong scheme, junk token, wrong signature, expired, unknown subject: all 401.
-  - Verification rejects rather than throwing, so catch it. An uncaught rejection is a 500, and a 500
-    on a bad token is a bug.
+  - Missing header, wrong scheme, junk token, wrong signature, expired, unknown subject: all 401,
+    never a 500.
 
 **`src/server/app.ts`**
 
 - `POST /login` takes `{ email, password }`.
   - Correct: `200` and `{ token }`.
   - Anything else: `401` and no token.
-  - A wrong password and an unknown address get the identical status and body. Otherwise the endpoint
-    is a free list of who has an account.
+  - A wrong password and an unknown address get the identical status and body.
 - `GET /me` sits behind `requireAuth` and returns `{ id, email, name }` for the token holder.
   - The password hash never appears in a response.
 

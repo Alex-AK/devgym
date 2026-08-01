@@ -1,30 +1,30 @@
 # Autocomplete that behaves itself
 
 There is a working autocomplete in `src/client/Autocomplete.tsx`. It searches, it shows results, you
-can click one. It is also fine to ship only if every user has a mouse, a fast connection and their
-sight.
+can click one. Three things have come back about it.
+
+- It calls the API on every keystroke, one request per character.
+- Type quickly and the list sometimes settles on an older search than the one in the box.
+- It cannot be used without a mouse. Arrow keys do nothing, and a screen reader gets an input with a
+  pile of unlabelled buttons under it.
 
 ## The task
 
 Four things, in `src/client/Autocomplete.tsx`.
 
-**Wait for the typing to stop.** Right now every keystroke is a request. Wait `debounceMs` after the
-last one before searching, and do not search at all for an empty box. The component is given
-`debounceMs` as a prop; the checkpoints pass a short one.
+**Search once the typing stops.** Wait `debounceMs` after the last keystroke before searching, and do
+not search at all for an empty box. The component is given `debounceMs` as a prop; the checkpoints
+pass a short one.
 
-**Call off the search nobody wants.** Type "bra", then "c" a moment later, and two searches are in
-flight. They can land in either order, and if the older one lands second it wins. Pass an
-`AbortSignal` to `searchProducts` and abort it when the query moves on. An aborted request rejects
-with an `AbortError`, which is the expected outcome and not something to show the user.
+**Show the results for what is in the box.** Whatever order the answers come back in.
 
 **Make the keyboard work.** `ArrowDown` and `ArrowUp` move the highlight, `Enter` takes the
 highlighted option, `Escape` closes the list without choosing anything. `Enter` with nothing
 highlighted should not quietly pick the first result.
 
-**Make it announceable.** The ARIA combobox pattern: `role="combobox"` on the input with
-`aria-expanded` and `aria-controls`, `role="listbox"` on the list, `role="option"` on each result.
-Focus never leaves the input, so `aria-activedescendant` is the only thing telling a screen reader
-which option is highlighted, and each option needs an id for it to point at.
+**Make it announceable.** The ARIA combobox pattern: the input, the list and each result carry the
+roles that pattern gives them, and a screen reader can tell which option is highlighted. Focus never
+leaves the input.
 
 ## Notes
 

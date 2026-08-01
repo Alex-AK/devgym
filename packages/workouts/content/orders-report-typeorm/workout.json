@@ -9,7 +9,7 @@
     "orm": "typeorm",
     "database": "sqlite"
   },
-  "summary": "A report that runs two extra queries for every order it prints. Collapse it into one, add the numbers up in SQL, and do it without quietly dropping the orders that have nothing on them.",
+  "summary": "The report was built against a test database with a dozen orders in it. It went out to a customer with four thousand and took most of a minute. Same figures when you are done, in the same shape.",
   "focus": ["n+1", "joins", "aggregates", "typeorm"],
   "editable": ["src/server/report.ts"],
   "checkpoints": [

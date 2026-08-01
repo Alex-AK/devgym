@@ -15,7 +15,7 @@ text again.
 
 **`src/lib/parser.ts`** walks that list and builds the value. `Cursor` is written for you, along
 with `parseValue` for the scalars. `parseObject` and `parseArray` are the stage: recursive
-descent, one function per shape, calling back into `parseValue` for each member.
+descent, one function per shape.
 
 ## The rules
 

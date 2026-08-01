@@ -1,9 +1,10 @@
 # The ownership check is in the wrong place
 
-`GET /reports/:id` checks that the report belongs to whoever is asking. It was written when that was
-the only route on the controller. There are four now.
+A customer sent in a screenshot of somebody else's report. They had not done anything clever to get
+it.
 
-Read all of them before you change anything.
+`ReportsController` has grown since the ownership check on it was written. Read all four routes
+before you change any of them.
 
 ## The task
 
@@ -11,7 +12,7 @@ Read all of them before you change anything.
 place the ownership question gets answered.
 
 **`src/server/reports.controller.ts`** — apply the guard where it covers everything, and take the
-check back out of the handler that has it.
+checking back out of the handlers once it does.
 
 The rules, once and for all four routes:
 
@@ -20,8 +21,7 @@ The rules, once and for all four routes:
 - A report id that does not exist: **404**, for a caller who is allowed to ask.
 - `GET /reports` returns the caller's own reports and nobody else's.
 
-401 is "I do not know who you are". 403 is "I know, and no". Getting them the wrong way round leaks
-which ids exist to someone who should not even be asking.
+401 is "I do not know who you are". 403 is "I know, and no".
 
 ## Notes
 
@@ -30,9 +30,8 @@ already been checked and this is what it told you.
 
 `ReportsService` is read-only and already has everything you need, including a `findFor(ownerId)`.
 
-The fourth checkpoint reads the controller's metadata rather than its behaviour. That is deliberate,
-and it is the actual lesson: four copies of the same `if` can all be correct today and still leave
-the fifth route uncovered. A guard on the controller is the version that stays true.
+The fourth checkpoint reads the controller's metadata rather than its behaviour. That is deliberate:
+it is checking where the rule lives, not only that it holds today.
 
 `npm`-style commands are not available here. Hit **Run checkpoints** to see where you are.
 

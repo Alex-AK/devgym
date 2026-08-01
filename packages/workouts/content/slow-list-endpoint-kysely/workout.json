@@ -9,7 +9,7 @@
     "orm": "kysely",
     "database": "postgres via pglite"
   },
-  "summary": "One endpoint, three reasons it is slow: it reads the whole table, it pages in JavaScript, and it fetches the customer name one order at a time. The index it needs is missing too.",
+  "summary": "GET /orders?status=pending was fine at a few hundred rows. There are 40,000 now and the page takes seconds. Make it fast without changing a row of what it answers.",
   "focus": ["query plans", "indexes", "n+1", "pagination"],
   "editable": ["src/server/orders.ts", "src/server/schema.ts"],
   "checkpoints": [

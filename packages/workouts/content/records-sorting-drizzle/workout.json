@@ -11,7 +11,7 @@
     "database": "sqlite",
     "client": "react"
   },
-  "summary": "Add column sorting to a paginated employee list: query params on the backend, ORDER BY in SQL, toggling headers on the frontend.",
+  "summary": "Add column sorting to a paginated employee list: new query params on the handler, an ordering that holds across every page, and table headers that toggle it.",
   "focus": ["api design", "sql", "pagination", "react state"],
   "editable": ["src/server/employees.ts", "src/client/EmployeeTable.tsx", "src/client/api.ts"],
   "checkpoints": [

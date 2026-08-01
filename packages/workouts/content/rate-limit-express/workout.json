@@ -9,7 +9,7 @@
     "server": "express",
     "database": "redis (in-repo fake)"
   },
-  "summary": "A fixed-window limiter in Express middleware, counted in Redis: let a client through to its allowance, answer 429 after that, and make sure the window actually turns over.",
+  "summary": "One client is hammering POST /messages. Add a fixed-window limiter as middleware, counted in Redis: an allowance per client, honest headers, a 429 once it is gone, and a window that actually turns over.",
   "focus": ["middleware", "redis", "http headers", "expiry"],
   "editable": ["src/server/rate-limit.ts"],
   "checkpoints": [

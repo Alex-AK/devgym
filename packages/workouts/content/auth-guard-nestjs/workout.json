@@ -8,7 +8,7 @@
   "stack": {
     "server": "nestjs"
   },
-  "summary": "One route checks who owns the report. Three more were added later and nobody remembered. Move the check somewhere new routes cannot forget it.",
+  "summary": "A customer sent in a screenshot of somebody else's report. The controller has grown since the ownership check on it was written; put the check somewhere the next route cannot miss it.",
   "focus": ["authorization", "guards", "layering", "nestjs"],
   "editable": ["src/server/owner.guard.ts", "src/server/reports.controller.ts"],
   "checkpoints": [

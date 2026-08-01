@@ -9,7 +9,7 @@ Implement `createRateLimit` in `src/server/rate-limit.ts`. It takes the Redis cl
 `{ limit, windowSeconds }`, and returns Express middleware. `app.ts` has already wired it up.
 
 **Fixed window.** A client gets `limit` requests per `windowSeconds`. The window opens on their first
-request and runs from there, whatever they do in the middle of it.
+request and runs for `windowSeconds` from there.
 
 **Who the client is.** The `X-API-Key` header if there is one, otherwise the request's IP. A request
 with no key is a client too, not an error.
@@ -26,11 +26,10 @@ request reach the handler.
 ## Notes
 
 `FakeRedis` is a real enough Redis for this: `incr`, `expire`, `ttl`, `get`, `set`, `del`, with the
-semantics the real ones have. Two of those matter here.
+semantics the real ones have. Two of them are worth reading before you rely on them.
 
 - `incr` on a key that does not exist creates it at 1 **with no deadline**. Nothing expires by itself.
-- `ttl` answers `-1` when a key has no deadline and `-2` when there is no key. They are different
-  answers to different questions and it is worth knowing which you are looking at.
+- `ttl` answers `-1` when a key has no deadline and `-2` when there is no key.
 
 It also has an `advanceTime(seconds)` that real Redis does not, which is how the checkpoints wait out
 a sixty-second window without taking sixty seconds.

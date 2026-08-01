@@ -9,7 +9,7 @@
     "orm": "drizzle",
     "database": "postgres via pglite"
   },
-  "summary": "Search products by name or SKU, case-insensitive and partial, paginated with a total. What the user types is text, not a LIKE pattern.",
+  "summary": "Search products by name or SKU, case-insensitive and partial, paginated with a total. A customer looking for the 50% Cotton Tee has to get the 50% Cotton Tee.",
   "focus": ["sql", "search", "pagination", "input handling"],
   "editable": ["src/server/products.ts"],
   "checkpoints": [

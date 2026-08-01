@@ -13,32 +13,30 @@ Two files: `src/server/stream.ts` and `src/client/Dashboard.tsx`.
 `createStream(feed, { keepAliveMs })` returns the handler behind `GET /events`.
 
 **Open the stream and say what it is.** `Content-Type: text/event-stream` and `Cache-Control:
-no-store`, sent when the request arrives rather than when the first reading does. Headers wait in a
-buffer until something flushes them, and the first reading might be a minute away.
+no-store`, on the wire when the request arrives rather than when the first reading does. The first
+reading might be a minute away.
 
-**Frame each reading as an event.** A `data:` line carrying the JSON, then a blank line, which is
-what dispatches it. Put an `id:` on every event as well.
+**Frame each reading as an event.** A `data:` line carrying the JSON, and an `id:` on every event.
 
 **Give a returning client what it missed.** A browser that has seen an id sends it back in a
 `Last-Event-ID` header when it reconnects. Read that header and replay from it before you send
 anything new. A request without the header is a first connection: it gets the stream from now on,
 not the whole buffer.
 
-**Keep it alive, and let it go.** Send a comment every `keepAliveMs` so nothing in the middle
-mistakes an idle connection for a dead one. When the request closes, clear the timers and
-unsubscribe. A stream nobody is reading is still a timer, a subscription and a socket.
+**Keep it alive, and let it go.** Send something every `keepAliveMs` that keeps a proxy in the middle
+from mistaking an idle connection for a dead one, without it arriving as an event. When the request
+closes, clear the timers and unsubscribe.
 
 ### The dashboard
 
 `Dashboard.tsx` opens the stream and paints what arrives. Two things are missing.
 
-**Close the stream when the component goes.** The connection currently outlives it, and the next
-mount opens a second one next to the first.
+**Close the stream when the component goes.** Nothing else is going to.
 
 **Say when the connection has dropped.** Put the connection state in an element with `role="status"`
-so it is announced rather than only drawn. `EventSource` reconnects on its own and resumes from the
-last id it saw, so this is a label rather than a retry loop, and it must leave the readings alone:
-numbers with a warning on them beat an empty page.
+so it is announced rather than only drawn. `EventSource` reconnects on its own, so this is a label
+rather than a retry loop, and it must leave the readings alone: numbers with a warning on them beat
+an empty page.
 
 ## Notes
 
@@ -48,8 +46,7 @@ the way every buffer does.
 
 `app.ts` is wiring, and it counts two things the checkpoints read: how many clients have gone, and
 how many writes went to a response whose client had already gone. The second has no equivalent in a
-real service, because node discards those writes without complaint. That is what makes a leaked
-interval invisible until the process runs out of handles.
+real service, because node discards those writes without complaint.
 
 jsdom has no `EventSource`, so `src/client/event-source.ts` is one: the browser's API with a scripted
 connection behind it instead of a socket. The checkpoints send events and kill the connection by

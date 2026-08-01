@@ -2,6 +2,9 @@
 
 There is a products table and a search box that does nothing yet. Wire it up.
 
+Support have a ticket open against the old search that has to stop being true here: a customer went
+looking for the 50% Cotton Tee and got a widget.
+
 ## The task
 
 Implement `searchProducts` in `src/server/products.ts`. It takes `{ q, page, limit }` and returns
@@ -12,21 +15,17 @@ Implement `searchProducts` in `src/server/products.ts`. It takes `{ q, page, lim
 - **Ignore case, match anywhere.** Searching "idget" finds "Blue Widget".
 - **A blank search is not a search.** No term, an empty string or only spaces all mean "the whole
   catalogue".
-- **What the user typed is text.** `%` and `_` mean something to `LIKE`, and the person in the search
-  box does not know that. Searching "50%" returns the one product with "50%" in its name, not
-  everything containing "50".
+- **What the user typed is text.** Searching "50%" returns the one product with "50%" in its name and
+  nothing else. Searching "Cable_A" returns Cable_A and not CableXA. Searching "%" is a search for a
+  percent sign.
 - **`total` is the number of matches**, not the number of rows on this page.
-- **Order by name, ascending.** Twelve products are called "Refill pack", so name alone is not enough
-  to put the rows in a settled order.
+- **Order by name, ascending.** Walking the pages has to visit every product exactly once.
 
 ## Notes
 
-Parameterised queries are not the answer to the fourth point. The parameter is safe from injection
-and still read as a pattern, which is a different problem with a different fix.
-
 Every statement is logged to `workspace.queries`, and the last checkpoint reads the `ORDER BY` out of
-it to check the tie-break, since a database is allowed to return ties in a consistent order right up
-until the day it doesn't.
+it rather than the rows, since a database is allowed to return them in a settled order right up until
+the day it doesn't.
 
 `npm`-style commands are not available here. Hit **Run checkpoints** to see where you are.
 
