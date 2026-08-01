@@ -13,6 +13,10 @@ export default tseslint.config(
       '**/node_modules',
       '**/.turbo',
       'apps/server/drizzle',
+      // Runtime state: the databases, and the workout workspaces materialised
+      // for an in-progress attempt. The workspace is a copy of workout content,
+      // so the reasoning below applies to it too.
+      'apps/server/data',
       // Workout content is not part of any tsconfig project: it is source code
       // for a *different* program, materialised into a scratch workspace and
       // type-checked there. Linting it against this repo's rules is meaningless,
