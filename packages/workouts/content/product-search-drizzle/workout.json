@@ -1,0 +1,41 @@
+{
+  "slug": "product-search-drizzle",
+  "title": "Search the product catalogue",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "orm": "drizzle",
+    "database": "postgres via pglite"
+  },
+  "summary": "Search products by name or SKU, case-insensitive and partial, paginated with a total. What the user types is text, not a LIKE pattern.",
+  "focus": ["sql", "search", "pagination", "input handling"],
+  "editable": ["src/server/products.ts"],
+  "checkpoints": [
+    {
+      "id": "finds-matches-anywhere",
+      "title": "It matches part of a name, whatever the case",
+      "testFile": "tests/checkpoints/01-finds-matches-anywhere-in-the-name.test.ts",
+      "hint": "ILIKE with the term wrapped in % on both sides. An absent or blank term is not a filter that matches everything, it is no filter at all."
+    },
+    {
+      "id": "searches-the-sku",
+      "title": "A code that is nowhere in the name still finds the product",
+      "testFile": "tests/checkpoints/02-searches-the-sku-too.test.ts",
+      "hint": "or() over the two columns. Keep it one condition on one query: a product matching on both name and SKU is still one row."
+    },
+    {
+      "id": "wildcards-are-literal",
+      "title": "A percent sign is a percent sign",
+      "testFile": "tests/checkpoints/03-percent-and-underscore-are-literal.test.ts",
+      "hint": "Parameterising the query stops SQL injection but does nothing about LIKE syntax: the value is still read as a pattern. Escape %, _ and the backslash itself before wrapping the term."
+    },
+    {
+      "id": "pages-line-up",
+      "title": "The pages line up with the total",
+      "testFile": "tests/checkpoints/04-pages-line-up-with-the-total.test.ts",
+      "hint": "Total counts matches, so the count query needs the same filter as the page. Twelve products share a name, so ordering by name alone lets rows move between pages: order by something unique as well."
+    }
+  ]
+}

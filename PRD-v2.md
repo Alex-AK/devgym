@@ -104,6 +104,16 @@ index to help it. Checkpoints: the page it answers with is unchanged; no stateme
 than the page holds; a page costs the same number of round trips whatever its size; and `EXPLAIN` of
 the query actually sent shows an index scan with no sort step.
 
+**Workout 4: `product-search-drizzle`** (20 min, Drizzle + PGlite). Search a catalogue by name or
+SKU, case-insensitive and partial, paginated with a total. Checkpoints: partial matches whatever the
+case and a blank term meaning the whole catalogue; a SKU-only term finding its product exactly once;
+`%` and `_` treated as characters rather than wildcards; and pages that walk the catalogue without
+repeating a row. It needed no new dependencies: drizzle ships its own PGlite driver.
+
+The centre of it is the third checkpoint. Parameterising the query defeats injection and does nothing
+about `LIKE` syntax, so searching "50%" quietly matches everything containing "50" — a bug that
+passes review because the query looks safe.
+
 The second workout is what proved the format: it added Express, jose and supertest to
 `packages/workouts/package.json` and touched no application source at all. The third is what proved
 the format can carry a whole database engine.
@@ -122,12 +132,11 @@ built this way.
 
 ### Phase 2 — the workout library
 
-Port the accumulated briefs. Each is full stack, because that is the level being practised. JWT login
-and the slow list endpoint are done; the rest are still to write.
+Port the accumulated briefs. Each is full stack, because that is the level being practised. JWT login,
+the slow list endpoint and search on Drizzle are done; the rest are still to write.
 
 | Workout                             | Stack                     | Shape    |
 | ----------------------------------- | ------------------------- | -------- |
-| Search with pagination              | Drizzle + PGlite          | feature  |
 | Search with pagination              | Prisma + PGlite           | feature  |
 | Rate limiting middleware            | Express + fake Redis      | feature  |
 | Infinite scroll with retry          | React + local fixture API | feature  |
