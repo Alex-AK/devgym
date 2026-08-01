@@ -1,4 +1,4 @@
-import type { AttemptResponse, ProblemDetail } from '@devgym/shared';
+import type { AttemptResponse, ProblemDetail, ProblemType } from '@devgym/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -14,7 +14,8 @@ import {
 import * as React from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { CategoryBadge, DifficultyBadge, StatusBadge } from '@/components/badges';
+import { CategoryBadge, DifficultyBadge, RelevanceBadge, StatusBadge } from '@/components/badges';
+import { CodeEditor, type CodeEditorHandle } from '@/components/CodeEditor';
 import { Markdown } from '@/components/Markdown';
 import { SchemaPanel } from '@/components/SchemaPanel';
 import { ErrorState, LoadingState } from '@/components/states';
@@ -41,6 +42,14 @@ const PLACEHOLDER = {
 
 const EDITOR_ROWS = { sql: 8, 'short-text': 4, explain: 4, 'js-code': 14 } as const;
 
+/** The two types that get a real editor. Prose answers stay a plain textarea. */
+const CODE_SHAPED = ['sql', 'js-code'] as const;
+const EDITOR_MIN_HEIGHT = { sql: '11rem', 'js-code': '20rem' } as const;
+
+function isCodeShaped(type: ProblemType): type is (typeof CODE_SHAPED)[number] {
+  return (CODE_SHAPED as readonly ProblemType[]).includes(type);
+}
+
 const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac');
 
 export function ProblemPage(): React.ReactElement {
@@ -59,6 +68,13 @@ export function ProblemPage(): React.ReactElement {
     null
   );
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const editorRef = React.useRef<CodeEditorHandle>(null);
+
+  // Only one of the two is mounted, depending on the problem type.
+  const focusAnswer = React.useCallback((options?: { preventScroll?: boolean }) => {
+    if (editorRef.current) editorRef.current.focus();
+    else textareaRef.current?.focus(options);
+  }, []);
 
   // Clear the previous problem's answer, verdict and reveal when the slug changes.
   // A `key` on the route element would be the idiomatic fix, but remounting also
@@ -92,8 +108,8 @@ export function ProblemPage(): React.ReactElement {
   // preventScroll so the prompt above stays in view.
   React.useEffect(() => {
     if (isPending) return;
-    textareaRef.current?.focus({ preventScroll: true });
-  }, [slug, isPending]);
+    focusAnswer({ preventScroll: true });
+  }, [slug, isPending, focusAnswer]);
 
   const { data: activeSession } = useQuery({
     queryKey: queryKeys.activeSession,
@@ -190,9 +206,15 @@ export function ProblemPage(): React.ReactElement {
   const busy = submit.isPending || skip.isPending || reveal.isPending || reset.isPending;
 
   // Keep the keyboard listener stable while it always sees the latest state.
-  const latest = React.useRef({ move, skip: () => {}, solved: false, busy: false });
+  const latest = React.useRef({
+    move,
+    skip: () => {},
+    solved: false,
+    busy: false,
+    focusAnswer,
+  });
   React.useEffect(() => {
-    latest.current = { move, skip: () => skip.mutate(), solved, busy };
+    latest.current = { move, skip: () => skip.mutate(), solved, busy, focusAnswer };
   });
 
   React.useEffect(() => {
@@ -211,7 +233,7 @@ export function ProblemPage(): React.ReactElement {
 
       if (event.key === '/') {
         event.preventDefault();
-        textareaRef.current?.focus();
+        latest.current.focusAnswer();
         return;
       }
       if (latest.current.busy) return;
@@ -286,22 +308,34 @@ export function ProblemPage(): React.ReactElement {
 
       <Card>
         <CardContent className="space-y-3 p-6">
-          <textarea
-            ref={textareaRef}
-            value={answer}
-            onChange={(event) => setAnswer(event.target.value)}
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-                event.preventDefault();
-                onSubmit();
-              }
-            }}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={PLACEHOLDER[data.type]}
-            rows={EDITOR_ROWS[data.type]}
-            className="w-full resize-y rounded-md border bg-card px-3 py-2 font-mono text-sm shadow-sm placeholder:text-muted-foreground"
-          />
+          {isCodeShaped(data.type) ? (
+            <CodeEditor
+              ref={editorRef}
+              value={answer}
+              onChange={setAnswer}
+              language={data.type === 'sql' ? 'sql' : 'javascript'}
+              placeholder={PLACEHOLDER[data.type]}
+              onSubmit={onSubmit}
+              minHeight={EDITOR_MIN_HEIGHT[data.type]}
+            />
+          ) : (
+            <textarea
+              ref={textareaRef}
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+              onKeyDown={(event) => {
+                if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                  event.preventDefault();
+                  onSubmit();
+                }
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder={PLACEHOLDER[data.type]}
+              rows={EDITOR_ROWS[data.type]}
+              className="w-full resize-y rounded-md border bg-card px-3 py-2 font-mono text-sm shadow-sm placeholder:text-muted-foreground"
+            />
+          )}
           <div className="flex flex-wrap items-center gap-2">
             <Button onClick={onSubmit} disabled={busy || answer.trim().length === 0}>
               {submit.isPending ? 'Grading…' : 'Submit'}
@@ -461,6 +495,7 @@ function Header({
       <div className="flex flex-wrap items-center gap-2">
         <CategoryBadge category={detail.category} />
         <DifficultyBadge difficulty={detail.difficulty} />
+        <RelevanceBadge relevance={detail.relevance} />
         <StatusBadge status={status} />
         <span className="text-xs text-muted-foreground">
           {attemptsCount} attempt{attemptsCount === 1 ? '' : 's'}

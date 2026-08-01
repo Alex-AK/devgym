@@ -1,13 +1,19 @@
 import { CATEGORIES, type Category, DIFFICULTIES } from '@devgym/shared';
 
+import { a11yProblems } from './problems/a11y';
 import { codingProblems } from './problems/coding';
+import { cssProblems } from './problems/css';
+import { dateProblems } from './problems/dates';
 import { debuggingProblems } from './problems/debugging';
 import { domProblems } from './problems/dom';
+import { formProblems } from './problems/forms';
 import { httpProblems } from './problems/http';
 import { jsApiProblems } from './problems/js-apis';
 import { queryParamProblems } from './problems/query-params';
 import { reactProblems } from './problems/react';
+import { securityProblems } from './problems/security';
 import { sqlProblems } from './problems/sql';
+import { testingProblems } from './problems/testing';
 import type { ProblemDraft, ProblemSeed } from './problems/types';
 import { typescriptProblems } from './problems/typescript';
 
@@ -21,6 +27,12 @@ const drafts: ProblemDraft[] = [
   ...reactProblems,
   ...httpProblems,
   ...domProblems,
+  ...cssProblems,
+  ...a11yProblems,
+  ...formProblems,
+  ...dateProblems,
+  ...testingProblems,
+  ...securityProblems,
   ...debuggingProblems,
   ...codingProblems,
 ];

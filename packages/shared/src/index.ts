@@ -10,6 +10,12 @@ export const CATEGORIES = [
   'react',
   'http',
   'dom',
+  'css',
+  'a11y',
+  'forms',
+  'dates',
+  'testing',
+  'security',
   'debugging',
   'coding',
 ] as const;
@@ -17,6 +23,14 @@ export type Category = (typeof CATEGORIES)[number];
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
+
+/**
+ * How often the knowledge actually comes up, which is a separate axis from how
+ * hard the problem is. A hard problem can be daily bread (`sql-window-rank`)
+ * and an easy one can be pure under-the-hood trivia (`dom-queryselectorall-type`).
+ */
+export const RELEVANCES = ['daily', 'occasional', 'foundational'] as const;
+export type Relevance = (typeof RELEVANCES)[number];
 
 export const PROBLEM_TYPES = ['sql', 'short-text', 'explain', 'js-code'] as const;
 export type ProblemType = (typeof PROBLEM_TYPES)[number];
@@ -27,6 +41,19 @@ export type Verdict = (typeof VERDICTS)[number];
 export const PROBLEM_STATUSES = ['unseen', 'in_progress', 'solved', 'skipped'] as const;
 export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
 
+export const RELEVANCE_LABELS: Record<Relevance, string> = {
+  daily: 'Daily',
+  occasional: 'Occasional',
+  foundational: 'Foundational',
+};
+
+/** Tooltip copy for the relevance badge. */
+export const RELEVANCE_BLURBS: Record<Relevance, string> = {
+  daily: 'You write this in ordinary feature work.',
+  occasional: 'Comes up in specific situations: a bug, a perf pass, an edge case.',
+  foundational: "Under the hood. You'll meet it through a framework more often than you write it.",
+};
+
 export const CATEGORY_LABELS: Record<Category, string> = {
   sql: 'SQL',
   'query-params': 'Query Params',
@@ -35,6 +62,12 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   react: 'React',
   http: 'HTTP & Fetch',
   dom: 'DOM & Browser',
+  css: 'CSS & Layout',
+  a11y: 'Accessibility',
+  forms: 'Forms & Validation',
+  dates: 'Dates & Time',
+  testing: 'Testing',
+  security: 'Auth & Security',
   debugging: 'Debugging',
   coding: 'Coding',
 };
@@ -47,6 +80,7 @@ export interface ProblemSummary {
   title: string;
   category: Category;
   difficulty: Difficulty;
+  relevance: Relevance;
   type: ProblemType;
   position: number;
   status: ProblemStatus;
@@ -158,6 +192,7 @@ export interface SessionItem {
   title: string;
   category: Category;
   difficulty: Difficulty;
+  relevance: Relevance;
   position: number;
   status: SessionItemStatus;
 }

@@ -20,7 +20,7 @@ import {
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { DifficultyBadge } from '@/components/badges';
+import { DifficultyBadge, RelevanceBadge } from '@/components/badges';
 import { FilterChip, FilterRow } from '@/components/filters';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
@@ -254,6 +254,7 @@ function SessionItems({ items }: { items: SessionItem[] }): React.ReactElement {
               {CATEGORY_LABELS[item.category]}
             </span>
             <DifficultyBadge difficulty={item.difficulty} />
+            <RelevanceBadge relevance={item.relevance} />
           </Link>
         </li>
       ))}

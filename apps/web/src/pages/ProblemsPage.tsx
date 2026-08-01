@@ -12,7 +12,7 @@ import { Play, Search } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { DifficultyBadge, STATUS_LABEL, StatusBadge } from '@/components/badges';
+import { DifficultyBadge, RelevanceBadge, STATUS_LABEL, StatusBadge } from '@/components/badges';
 import { FilterChip, FilterRow } from '@/components/filters';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
@@ -167,6 +167,7 @@ export function ProblemsPage(): React.ReactElement {
                   </TableCell>
                   <TableCell>
                     <DifficultyBadge difficulty={problem.difficulty} />
+                    <RelevanceBadge relevance={problem.relevance} />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={problem.status} />

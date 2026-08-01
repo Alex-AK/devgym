@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { CATEGORIES, DIFFICULTIES, PROBLEM_TYPES } from '@devgym/shared';
+import { CATEGORIES, DIFFICULTIES, PROBLEM_TYPES, RELEVANCES } from '@devgym/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -48,6 +48,7 @@ describe('seeded problems', () => {
     for (const seed of problemSeeds) {
       expect(CATEGORIES, seed.slug).toContain(seed.category);
       expect(DIFFICULTIES, seed.slug).toContain(seed.difficulty);
+      expect(RELEVANCES, seed.slug).toContain(seed.relevance);
       expect(PROBLEM_TYPES, seed.slug).toContain(seed.type);
       expect(seed.prompt.trim().length, seed.slug).toBeGreaterThan(0);
       expect(seed.solution.trim().length, seed.slug).toBeGreaterThan(0);

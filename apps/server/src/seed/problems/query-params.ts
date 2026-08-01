@@ -11,6 +11,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'searchParams.get with repeated keys',
     category: 'query-params',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Given:',
@@ -41,6 +42,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Read every value of a repeated param',
     category: 'query-params',
     difficulty: 'easy',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'Same URL as before:',
@@ -69,6 +71,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Build a query string from an object',
     category: 'query-params',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       "You have `const params = { q: 'shoes', size: '42' };`",
@@ -100,6 +103,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Detect a flag-style param',
     category: 'query-params',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'A URL ends in `?debug`. The param is present but has an empty value.',
@@ -131,6 +135,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'set() versus append()',
     category: 'query-params',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'Starting from `?tag=sale&tag=new`, describe what the query string looks like after each of these, and why they differ:',
@@ -170,6 +175,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Encoding a value into a URL',
     category: 'query-params',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'You are hand-building a URL and need to insert the search term `a&b` as the value of `q`.',
@@ -209,6 +215,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Read params from the current page',
     category: 'query-params',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'In the browser, write the shortest expression that gives you a `URLSearchParams` for the **current page** URL.'
@@ -243,6 +250,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Resolve a relative URL',
     category: 'query-params',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'What does this evaluate to?',
@@ -281,6 +289,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'The plus-sign space trap',
     category: 'query-params',
     difficulty: 'medium',
+    relevance: 'foundational',
     type: 'explain',
     prompt: md(
       'A search for `C++` arrives at the server as `C  ` (two spaces). The client built the URL with string concatenation.',
@@ -321,6 +330,7 @@ export const queryParamProblems: ProblemDraft[] = [
     title: 'Remove a param and rebuild the URL',
     category: 'query-params',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'A user cleared a filter. Given a `URL` object called `url`, write the statement that removes the `tag` parameter entirely (all occurrences).'

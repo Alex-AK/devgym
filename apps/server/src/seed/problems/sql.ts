@@ -11,6 +11,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-select-genre',
     title: 'Filter books by genre',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'List the titles of all books in the **Fantasy** genre.',
       '',
@@ -31,6 +32,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-top-recent',
     title: 'Five priciest recent books',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Show the **title and price** of the 5 most expensive books published after 2015, most expensive first.',
       '',
@@ -58,6 +60,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-distinct-cities',
     title: 'Deduplicate a column',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Two customers live in Bristol. List each customer **city exactly once**.',
       '',
@@ -77,6 +80,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-count-genre',
     title: 'Count matching rows',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'How many books are in the **Mystery** genre?',
       '',
@@ -96,6 +100,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-null-check',
     title: 'Find NULLs',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Some reviews were left without written feedback. Return the `id` of every review whose `comment` is NULL.',
       '',
@@ -115,6 +120,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-in-list',
     title: 'Match any of several values',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'List the title and genre of every book in the **Fantasy** or **Science** genre.',
       '',
@@ -134,6 +140,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-like-search',
     title: 'Pattern matching',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Find every book whose title **starts with** `The`.',
       '',
@@ -154,6 +161,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-between-years',
     title: 'Inclusive range filter',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'List the title and publication year of books published from **2015 to 2018 inclusive**.',
       '',
@@ -174,6 +182,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-orders-per-customer',
     title: 'Completed orders per customer',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'For **every** customer, show their name and how many **completed** orders they have placed. Including customers with zero.',
       '',
@@ -202,6 +211,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-anti-join',
     title: 'Rows with no match (anti-join)',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'Three books have never been reviewed. List their titles.',
       '',
@@ -229,6 +239,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-having-avg',
     title: 'Filter on an aggregate',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'Show each book that has **3 or more reviews**, with its average rating.',
       '',
@@ -257,6 +268,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-coalesce-stock',
     title: 'Default a missing value',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'Three books have no row in `inventory` at all. List **every** book with its stock level, showing `0` for books with no inventory record.',
       '',
@@ -283,6 +295,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-self-join',
     title: 'Join a table to itself',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       "The `employees` table points at itself through `manager_id`. List every employee with their manager's name.",
       '',
@@ -309,6 +322,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-direct-reports',
     title: 'Count children per parent',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'For each employee who manages at least one person, show their name and how many **direct** reports they have, most reports first.',
       '',
@@ -337,6 +351,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-date-month',
     title: 'Group by month',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'Count **completed** orders per calendar month, oldest month first.',
       '',
@@ -365,6 +380,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-repeat-customers',
     title: 'Customers who came back',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'Find the customers who placed **more than one completed order**, with their order count.',
       '',
@@ -393,6 +409,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-subquery-above-avg',
     title: 'Compare against an aggregate',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'List the books priced **above the average price** of all books.',
       '',
@@ -418,6 +435,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-case-buckets',
     title: 'Bucket rows with CASE',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'Bucket every book by price and count each bucket:',
       '',
@@ -453,6 +471,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-order-totals',
     title: 'Total value per order',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'For every **completed** order, compute its total value (`quantity × unit_price` summed across its items). Highest total first.',
       '',
@@ -482,6 +501,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-not-exists',
     title: 'Customers who never bought Fantasy',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'Which customers have **never** ordered a Fantasy book? Count every order regardless of status.',
       '',
@@ -514,6 +534,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-union-cities',
     title: 'Combine two result sets',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'Produce one deduplicated list of every city that appears in **either** `customers` or `employees`.',
       '',
@@ -534,6 +555,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-conditional-aggregate',
     title: 'Pivot with conditional aggregation',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'For each genre, count how many order items belong to **completed** orders and how many to **cancelled** ones, as two columns on one row.',
       '',
@@ -564,6 +586,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-revenue-by-genre',
     title: 'Revenue by genre',
     difficulty: 'hard',
+    relevance: 'daily',
     prompt: md(
       'Compute total revenue per genre across **completed** orders only, highest revenue first.',
       '',
@@ -594,6 +617,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-window-rank',
     title: 'Rank within a group',
     difficulty: 'hard',
+    relevance: 'daily',
     prompt: md(
       'For each genre, find the **single highest-rated book** (by average review rating). Books with no reviews are excluded.',
       '',
@@ -629,6 +653,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-running-total',
     title: 'Running total over time',
     difficulty: 'hard',
+    relevance: 'occasional',
     prompt: md(
       'Show completed revenue per month **and** the cumulative revenue up to and including that month, oldest first.',
       '',
@@ -664,6 +689,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-cte-first-order',
     title: "Each customer's first order",
     difficulty: 'hard',
+    relevance: 'occasional',
     prompt: md(
       'For every customer who has completed at least one order, show the date of their **first** completed order.',
       '',
@@ -696,6 +722,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-percent-of-total',
     title: 'Share of total',
     difficulty: 'hard',
+    relevance: 'occasional',
     prompt: md(
       'What share of completed revenue does each genre represent? Show the genre, its revenue, and its percentage of the overall total rounded to 1 decimal place. Largest share first.',
       '',
@@ -732,6 +759,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-recursive-hierarchy',
     title: 'Walk a hierarchy (recursive CTE)',
     difficulty: 'hard',
+    relevance: 'foundational',
     prompt: md(
       'List every employee together with their **depth** in the org chart: the CEO is depth 0, their direct reports are depth 1, and so on.',
       '',
@@ -767,6 +795,7 @@ export const sqlProblems: ProblemDraft[] = [
     slug: 'sql-dedupe-keep-latest',
     title: 'Keep only the latest row per key',
     difficulty: 'hard',
+    relevance: 'daily',
     prompt: md(
       'For every book that has been reviewed, return only its **most recent** review: the book title, the rating and the review date.',
       '',

@@ -1,0 +1,1 @@
+ALTER TABLE `problems` ADD `relevance` text DEFAULT 'daily' NOT NULL;

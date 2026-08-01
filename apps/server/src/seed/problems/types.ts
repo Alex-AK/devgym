@@ -1,4 +1,4 @@
-import type { Category, Difficulty, ProblemType } from '@devgym/shared';
+import type { Category, Difficulty, ProblemType, Relevance } from '@devgym/shared';
 
 import type {
   CodeGraderConfig,
@@ -12,6 +12,12 @@ export interface ProblemSeed {
   title: string;
   category: Category;
   difficulty: Difficulty;
+  /**
+   * How often this comes up in real work, independent of difficulty. Author it
+   * honestly: `foundational` is not an insult, it's how you tell the morning
+   * reps that matter today from the ones that explain why things work.
+   */
+  relevance: Relevance;
   type: ProblemType;
   /** Assigned automatically in problems.seed.ts. Authors don't set it. */
   position: number;
@@ -44,6 +50,7 @@ export function sqlProblem(draft: {
   slug: string;
   title: string;
   difficulty: Difficulty;
+  relevance: Relevance;
   prompt: string;
   solutionSql: string;
   orderMatters: boolean;
@@ -57,6 +64,7 @@ export function sqlProblem(draft: {
     title: draft.title,
     category: 'sql',
     difficulty: draft.difficulty,
+    relevance: draft.relevance,
     type: 'sql',
     prompt: draft.prompt,
     graderConfig: {
@@ -79,6 +87,7 @@ export function codeProblem(draft: {
   title: string;
   category?: Category;
   difficulty: Difficulty;
+  relevance: Relevance;
   prompt: string;
   /** Prefilled into the editor: the signature, so the name matches the tests. */
   starter: string;
@@ -95,6 +104,7 @@ export function codeProblem(draft: {
     title: draft.title,
     category: draft.category ?? 'coding',
     difficulty: draft.difficulty,
+    relevance: draft.relevance,
     type: 'js-code',
     prompt: draft.prompt,
     graderConfig: {

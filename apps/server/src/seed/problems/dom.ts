@@ -6,6 +6,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'One listener for a growing list',
     category: 'dom',
     difficulty: 'medium',
+    relevance: 'foundational',
     type: 'explain',
     prompt: md(
       'A table gets new rows constantly, and attaching a click listener to every row is both slow and misses rows added later.',
@@ -52,6 +53,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'querySelectorAll does not return an array',
     category: 'dom',
     difficulty: 'easy',
+    relevance: 'foundational',
     type: 'short-text',
     prompt: md(
       'This throws `nodes.map is not a function`:',
@@ -99,6 +101,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'localStorage stores strings',
     category: 'dom',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'This reads back the string `"[object Object]"`:',
@@ -140,6 +143,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'preventDefault versus stopPropagation',
     category: 'dom',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'A form submit handler calls `event.stopPropagation()` and the page still reloads.',
@@ -186,6 +190,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'Rendering untrusted text',
     category: 'dom',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'You are inserting a user-supplied comment into the page:',
@@ -219,6 +224,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'Read a data attribute',
     category: 'dom',
     difficulty: 'easy',
+    relevance: 'foundational',
     type: 'short-text',
     prompt: md(
       'Given `<tr data-order-id="42">`, write the expression that reads `"42"` from the element `row`.'
@@ -251,6 +257,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'Debounce versus throttle',
     category: 'dom',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'You have two problems: a search box that fires a request per keystroke, and a scroll handler running hundreds of times a second.',
@@ -309,6 +316,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'Toggle a class conditionally',
     category: 'dom',
     difficulty: 'easy',
+    relevance: 'foundational',
     type: 'short-text',
     prompt: md(
       'Write the single call that adds the class `active` to `el` when `isActive` is true and removes it when false.'
@@ -337,6 +345,7 @@ export const domProblems: ProblemDraft[] = [
     title: 'Detect when an element scrolls into view',
     category: 'dom',
     difficulty: 'hard',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'You need to lazy-load images and trigger infinite scroll without running `getBoundingClientRect()` on every scroll event.',

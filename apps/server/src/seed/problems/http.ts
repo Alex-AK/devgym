@@ -6,6 +6,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'fetch does not throw on 500',
     category: 'http',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'This "works" even when the server returns `500`, and the catch block never runs:',
@@ -65,6 +66,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'Reading a response body twice',
     category: 'http',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'This throws `TypeError: body stream already read`:',
@@ -118,6 +120,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'POST a JSON body',
     category: 'http',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'The server rejects this with "unsupported media type" and an empty body:',
@@ -162,6 +165,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'PUT versus PATCH',
     category: 'http',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       "You are designing an endpoint to change just a user's email.",
@@ -206,6 +210,7 @@ export const httpProblems: ProblemDraft[] = [
     title: '401 versus 403',
     category: 'http',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'A logged-in user with a valid session requests an admin-only page.',
@@ -244,6 +249,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'What triggers a CORS preflight',
     category: 'http',
     difficulty: 'hard',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'Adding a `Content-Type: application/json` header to a cross-origin POST suddenly produces an extra `OPTIONS` request that fails.',
@@ -302,6 +308,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'Status codes for writes',
     category: 'http',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'A POST successfully creates a new resource and returns it in the body.',
@@ -341,6 +348,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'no-cache versus no-store',
     category: 'http',
     difficulty: 'hard',
+    relevance: 'foundational',
     type: 'explain',
     prompt: md(
       'A page containing personal data is set to `Cache-Control: no-cache` and it is still being written to disk.',
@@ -390,6 +398,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'Handling a rate limit',
     category: 'http',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'Your client starts getting `429 Too Many Requests`, and the naive retry loop makes it worse.',
@@ -443,6 +452,7 @@ export const httpProblems: ProblemDraft[] = [
     title: 'Double-charging on a retry',
     category: 'http',
     difficulty: 'hard',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'A payment `POST` times out. The client retries and the customer is charged twice. The first request had actually succeeded.',
@@ -498,5 +508,372 @@ export const httpProblems: ProblemDraft[] = [
     ),
     explanation:
       'A timeout tells you nothing about whether the server acted, so the client cannot know if retrying is safe, and `POST` carries no idempotency guarantee. The fix is to move the guarantee into the payload: the client generates a key **once per logical operation** (not per attempt) and the server records it alongside the outcome, returning the stored response for any repeat. Keys are held for a bounded window, typically 24 hours. This is exactly how Stripe and most payment APIs work, and it is the standard answer to "how do I make this safe to retry?".',
+  },
+
+  {
+    slug: 'http-pagination-cursor',
+    title: 'Offset pagination on a moving list',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A feed sorted newest-first is paginated with `?page=2&limit=20`. Users report seeing the same post twice and occasionally missing one.',
+      '',
+      'Explain the cause and name the alternative.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['insert', 'new row', 'new item', 'added', 'shift', 'moved', 'changes between'],
+          missingFeedback: 'What happens to the offsets between the two requests?',
+        },
+        {
+          synonyms: ['cursor', 'keyset', 'seek', 'after', 'since', 'last id'],
+          missingFeedback: 'Name the alternative.',
+        },
+        {
+          synonyms: [
+            'stable',
+            'position',
+            'anchor',
+            'where',
+            'from the row',
+            'not affected',
+            'relative to',
+            'index',
+          ],
+          missingFeedback: 'Why does that alternative avoid the problem?',
+        },
+      ],
+      hints: [
+        'The two requests are separated in time, and the list is not static.',
+        'A new post at the top pushes everything down one place.',
+        'Paginate from a position in the data rather than a count from the start.',
+      ],
+    },
+    canonicalAnswer:
+      'Offsets are positions in a list that keeps changing. A post inserted at the top between the two requests shifts everything down one, so the first item of page 2 is one the user already saw, and a deletion has the mirror effect of skipping one. Use cursor or keyset pagination instead, passing the sort key of the last row seen and asking for rows after it, which stays anchored to the data rather than to a count.',
+    solution: code(
+      'text',
+      'GET /posts?limit=20',
+      '  -> { items: [...], nextCursor: "2026-03-14T09:12:00Z_8f31" }',
+      '',
+      'GET /posts?limit=20&after=2026-03-14T09:12:00Z_8f31',
+      '',
+      '-- SQL: WHERE (created_at, id) < ($1, $2) ORDER BY created_at DESC, id DESC LIMIT 20'
+    ),
+    explanation:
+      'Cursor pagination is stable under inserts and deletes because the cursor names a row, not a count, and it is far faster at depth: `OFFSET 100000` makes the database walk and discard a hundred thousand rows, while a keyset comparison uses the index. The cost is that you lose random access to "page 47", which is usually fine for a feed and not for a data table with numbered pages. Include a tiebreaker like the id in both the cursor and the ORDER BY, or rows sharing a timestamp will be skipped or repeated.',
+  },
+
+  {
+    slug: 'http-etag-conditional',
+    title: 'Not sending a body you already have',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A client polls a large JSON resource that rarely changes, and downloads the whole thing every time.',
+      '',
+      'Name the response header that lets the server answer 304 Not Modified on the next request.'
+    ),
+    graderConfig: {
+      accept: ['etag', 'e-tag', 'last-modified'],
+      acceptPatterns: ['e-?tag', 'last-?modified'],
+      nearMisses: {
+        'cache-control':
+          'Cache-Control controls freshness. This is about revalidating what you have.',
+      },
+      hints: [
+        'The server sends a version identifier with the body.',
+        'The client sends it back on the next request to ask "has this changed?".',
+        '`ETag`, echoed back as `If-None-Match`.',
+      ],
+    },
+    canonicalAnswer: 'ETag',
+    solution: code(
+      'text',
+      'GET /report          ->  200  ETag: "a1b2c3"   [ 400 KB body ]',
+      'GET /report',
+      '  If-None-Match: "a1b2c3"',
+      '                     ->  304  (no body)'
+    ),
+    explanation:
+      'The server hashes or versions the representation, the client echoes it in `If-None-Match`, and an unchanged resource costs a round trip with no body. `Last-Modified` with `If-Modified-Since` is the older, second-resolution equivalent and is weaker for anything that can change twice in a second. The same mechanism has a second job: sending `If-Match` on a PUT gives you optimistic concurrency, so a write fails with 412 if someone else changed the resource since you read it, which is the HTTP-level fix for lost updates.',
+  },
+
+  {
+    slug: 'http-timeout-fetch',
+    title: 'The request that never comes back',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A hanging server leaves this promise pending forever, and the spinner never stops:',
+      '',
+      code('js', 'const res = await fetch(url);'),
+      '',
+      'Name the built-in that gives it a deadline.'
+    ),
+    graderConfig: {
+      accept: [
+        'abortsignal.timeout',
+        'abortsignal.timeout()',
+        'abortcontroller',
+        'abort controller',
+        'abortsignal',
+      ],
+      acceptPatterns: ['AbortSignal\\.timeout', 'AbortController', 'AbortSignal'],
+      nearMisses: {
+        'promise.race': 'Racing a timer settles the promise but leaves the request running.',
+        settimeout: 'A timer alone does not cancel anything.',
+      },
+      hints: [
+        'fetch has no timeout option of its own.',
+        'It does take a signal that can cancel it.',
+        '`AbortSignal.timeout(5000)`',
+      ],
+    },
+    canonicalAnswer: 'AbortSignal.timeout',
+    solution: code(
+      'js',
+      'try {',
+      '  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });',
+      '} catch (err) {',
+      "  if (err.name === 'TimeoutError') showRetry();",
+      '  else throw err;',
+      '}'
+    ),
+    explanation:
+      '`fetch` deliberately has no timeout option, so an unresponsive server hangs the promise until the browser gives up, which can be minutes. `AbortSignal.timeout` produces a signal that aborts itself, and it rejects with a `TimeoutError` you can distinguish from a user-initiated `AbortError`. `Promise.race` against a timer looks equivalent but is not: the request keeps running, keeps the connection open and still resolves into nothing. Use `AbortSignal.any` to combine a timeout with a cancel-on-unmount controller.',
+  },
+
+  {
+    slug: 'http-retry-safe-methods',
+    title: 'What is safe to retry',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A client library retries every failed request three times, including POSTs, and duplicate records appear.',
+      '',
+      'Explain which requests are safe to retry automatically and why.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['idempot', 'same effect', 'no additional', 'repeatable'],
+          missingFeedback: 'What property makes a retry safe?',
+        },
+        {
+          synonyms: ['get', 'head', 'put', 'delete', 'options'],
+          missingFeedback: 'Name methods that have that property.',
+        },
+        {
+          synonyms: ['post', 'creates', 'new resource', 'duplicate', 'not idempotent'],
+          missingFeedback: 'Which method does not, and why?',
+        },
+        {
+          synonyms: [
+            'idempotency key',
+            'unique',
+            'token',
+            'dedupe',
+            'make it idempotent',
+            'ask the user',
+            'do not retry',
+          ],
+          missingFeedback: 'What lets you retry the unsafe one anyway?',
+        },
+      ],
+      hints: [
+        'The question is whether doing it twice differs from doing it once.',
+        'GET, HEAD, PUT and DELETE are defined as idempotent; POST is not.',
+        'A POST can be made retry-safe with an idempotency key.',
+      ],
+    },
+    canonicalAnswer:
+      'Only idempotent requests are safe to retry blindly: repeating them has the same effect as doing them once. GET and HEAD change nothing, and PUT and DELETE are defined to be idempotent, since setting the same state twice or deleting the same resource twice leaves the same result. POST is not, because it creates a new resource each time, so a retry after a response was lost in transit creates a duplicate. To retry a POST safely, send an idempotency key the server can use to recognise and dedupe the repeat.',
+    solution: code(
+      'text',
+      'GET     retry freely',
+      'HEAD    retry freely',
+      'PUT     retry freely      (same state either way)',
+      'DELETE  retry freely      (already gone is the goal state)',
+      'POST    only with an Idempotency-Key the server honours',
+      '',
+      'and back off exponentially, with jitter'
+    ),
+    explanation:
+      'Idempotent does not mean "no effect", it means "no *additional* effect", which is why DELETE qualifies even though the second call returns 404. The dangerous case is the lost response rather than the lost request: the server did the work, the acknowledgement never arrived, and the client cannot tell the difference. That is exactly what an idempotency key resolves, and it is why payment APIs require one. Pair any retry policy with exponential backoff and jitter, or a struggling service gets a synchronised stampede the moment it wobbles.',
+  },
+
+  {
+    slug: 'http-content-type-charset',
+    title: 'The header that decides how a body is read',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A POST body arrives at the server as a string that no JSON parser will touch:',
+      '',
+      code('js', 'fetch(url, { method: "POST", body: JSON.stringify(payload) });'),
+      '',
+      'Name the request header that is missing.'
+    ),
+    graderConfig: {
+      accept: [
+        'content-type',
+        'content type',
+        'content-type: application/json',
+        'application/json',
+      ],
+      acceptPatterns: ['content-?type', 'application/json'],
+      nearMisses: {
+        accept: 'Accept says what you want back, not what you are sending.',
+      },
+      hints: [
+        'The server has to be told how to interpret the bytes you sent.',
+        'Without it, a body from fetch defaults to text/plain.',
+        '`Content-Type: application/json`',
+      ],
+    },
+    canonicalAnswer: 'Content-Type',
+    solution: code(
+      'js',
+      'fetch(url, {',
+      "  method: 'POST',",
+      "  headers: { 'Content-Type': 'application/json' },",
+      '  body: JSON.stringify(payload),',
+      '});'
+    ),
+    explanation:
+      'A string body with no explicit `Content-Type` is sent as `text/plain;charset=UTF-8`, and body-parsing middleware keyed on `application/json` skips it, leaving an empty `req.body` and a confusing "name is required" error. `Content-Type` describes what you are sending; `Accept` describes what you would like back. Note the deliberate exception from the file-upload case: with a `FormData` body you must **not** set it, because the browser needs to add the multipart boundary itself.',
+  },
+
+  {
+    slug: 'http-streaming-response',
+    title: 'Showing tokens as they arrive',
+    category: 'http',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'This waits for the entire response before rendering anything, which defeats a streaming endpoint:',
+      '',
+      code('js', 'const text = await res.text();'),
+      '',
+      'Name the property of the response that lets you consume it incrementally.'
+    ),
+    graderConfig: {
+      accept: ['body', 'res.body', 'response.body', 'readablestream', 'getreader'],
+      acceptPatterns: ['\\bres(ponse)?\\.body\\b', '\\bbody\\b', 'ReadableStream', 'getReader'],
+      nearMisses: {
+        json: 'json() also buffers the whole body first.',
+        blob: 'blob() buffers as well.',
+      },
+      hints: [
+        '`text()`, `json()` and `blob()` all buffer the whole body.',
+        'The response exposes the underlying stream directly.',
+        '`res.body`, a ReadableStream you can read chunk by chunk.',
+      ],
+    },
+    canonicalAnswer: 'res.body',
+    solution: code(
+      'js',
+      'const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();',
+      '',
+      'while (true) {',
+      '  const { value, done } = await reader.read();',
+      '  if (done) break;',
+      '  append(value); // render as it arrives',
+      '}'
+    ),
+    explanation:
+      'Every convenience method on `Response` buffers to completion first, which is exactly wrong for a long-running or token-by-token endpoint. `res.body` is a `ReadableStream` of `Uint8Array` chunks, and `TextDecoderStream` handles the awkward part: a multi-byte character can be split across two chunks, so decoding each chunk independently corrupts it. Chunk boundaries mean nothing semantically either, so a JSON-lines protocol needs you to buffer up to each newline yourself. For server-sent events, `EventSource` does all of this, at the cost of being GET-only.',
+  },
+
+  {
+    slug: 'http-status-choice-validation',
+    title: 'Picking a status for a rejected write',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A POST is well formed JSON but the email address in it is already registered.',
+      '',
+      'Which status code fits better than 400, and is the conventional choice for a conflict with existing state?'
+    ),
+    graderConfig: {
+      accept: ['409', '409 conflict', 'conflict'],
+      acceptPatterns: ['\\b409\\b', '\\bconflict\\b'],
+      nearMisses: {
+        '422': '422 is for a semantically invalid body. This body is valid; the state conflicts.',
+        '400': '400 is the one we are trying to improve on.',
+        '500': 'The server is fine. This is a client-visible, expected outcome.',
+      },
+      hints: [
+        'The request is syntactically fine and semantically meaningful.',
+        'What it clashes with is the current state of the resource.',
+        '409 Conflict',
+      ],
+    },
+    canonicalAnswer: '409',
+    solution: code(
+      'text',
+      '400 Bad Request           malformed: not parseable, wrong shape',
+      '401 Unauthorized          not authenticated',
+      '403 Forbidden             authenticated, not allowed',
+      '404 Not Found             no such resource',
+      '409 Conflict              clashes with current state (duplicate, stale version)',
+      '422 Unprocessable Content valid syntax, invalid semantics',
+      '429 Too Many Requests     rate limited'
+    ),
+    explanation:
+      'The distinction is worth getting right because clients branch on it: 400 says "fix your request", 409 says "your request is fine, the world is not what you assumed". A duplicate signup, an edit against a stale version, and a state machine transition that is not allowed from here are all 409. 422 covers a body that parses but violates the rules, such as an end date before the start date, though plenty of APIs use 400 for that and consistency within your own API matters more than the debate. Whatever the code, include a machine-readable body saying which field and why.',
+  },
+
+  {
+    slug: 'http-preflight-cache',
+    title: 'Two requests for every call',
+    category: 'http',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'The network tab shows an OPTIONS request before every single API call, doubling the request count on a chatty page.',
+      '',
+      'Name the response header that lets the browser reuse the preflight result.'
+    ),
+    graderConfig: {
+      accept: ['access-control-max-age', 'max-age', 'access control max age'],
+      acceptPatterns: ['access-control-max-age', 'max-?age'],
+      nearMisses: {
+        'cache-control': 'Cache-Control caches the resource, not the preflight decision.',
+      },
+      hints: [
+        'The preflight answer is cacheable, like any other answer.',
+        'The header goes on the OPTIONS response.',
+        '`Access-Control-Max-Age`',
+      ],
+    },
+    canonicalAnswer: 'Access-Control-Max-Age',
+    solution: code(
+      'text',
+      'OPTIONS /api/orders',
+      '  -> 204',
+      '     Access-Control-Allow-Origin: https://app.example.com',
+      '     Access-Control-Allow-Methods: GET, POST',
+      '     Access-Control-Allow-Headers: content-type, authorization',
+      '     Access-Control-Max-Age: 600'
+    ),
+    explanation:
+      'The browser caches the preflight decision per origin, method and header set for the lifetime you specify, so subsequent calls skip the OPTIONS round trip entirely. Browsers cap it well below what you ask for, and the caps differ, so treat the value as a hint. The other half of the fix is avoiding the preflight where you can: a request stays "simple" and skips it entirely if it uses GET, HEAD or POST with a body type of `text/plain`, `multipart/form-data` or `application/x-www-form-urlencoded` and no custom headers. In practice an `Authorization` header or JSON body means you will be preflighting.',
   },
 ];

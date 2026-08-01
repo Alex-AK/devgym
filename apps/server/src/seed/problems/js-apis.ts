@@ -6,6 +6,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'First element matching a predicate',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt:
       'Which array method returns the **first element** that matches a predicate function (the element itself, not its position)?',
@@ -32,6 +33,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Deduplicate an array',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Given:',
@@ -68,6 +70,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Iterate an object safely',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'You need to loop over an object and use both the key and the value:',
@@ -102,6 +105,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Safe deep property access',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Given:',
@@ -133,6 +137,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: '?? versus ||',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'A colleague writes `const pageSize = input || 20;` and a user who asks for `0` items gets 20.',
@@ -175,6 +180,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Last element of an array',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Given `const rows = [1, 2, 3];`, write the modern one-call expression that returns the **last** element using a negative index.'
@@ -204,6 +210,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Copy an object with an override',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'You must not mutate `settings`. Write an expression producing a **new** object identical to it but with `theme` set to `"dark"`.',
@@ -237,6 +244,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Total a field with reduce',
     category: 'js-apis',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Sum the `qty` of every line in one expression:',
@@ -272,6 +280,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Why sort() mangles numbers',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md('What exactly does this log?', '', code('js', 'console.log([10, 9, 1].sort());')),
     graderConfig: {
@@ -304,6 +313,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'sort() mutates its array',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'In a React component you write:',
@@ -347,6 +357,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Map then flatten',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Each order has an array of tags. Produce one flat array of every tag, in one call:',
@@ -377,6 +388,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Group records by a key',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Group these by `city` into `{ Bristol: [...], Lyon: [...] }`.',
@@ -429,6 +441,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Deep clone without a library',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'You need a genuine **deep** copy of a nested plain object, with no library. Which single built-in function does this in modern browsers and Node?'
@@ -459,6 +472,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Awaiting inside a loop',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'This takes 3 seconds for 3 independent requests that each take 1 second:',
@@ -500,6 +514,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'When Map beats a plain object',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'You are building a lookup keyed by DOM element, and entries are added and removed constantly.',
@@ -551,6 +566,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Every outcome from a batch of promises',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'You fire 3 fetches with `Promise.all` and one rejects. The whole thing rejects and you lose the other two results.',
@@ -604,6 +620,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Predict the event-loop order',
     category: 'js-apis',
     difficulty: 'hard',
+    relevance: 'foundational',
     type: 'short-text',
     prompt: md(
       'In what order do these log? Answer with the four letters.',
@@ -653,6 +670,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'var in a loop with a callback',
     category: 'js-apis',
     difficulty: 'hard',
+    relevance: 'foundational',
     type: 'short-text',
     prompt: md(
       'What does this log, and how many times?',
@@ -692,6 +710,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Time out a slow request',
     category: 'js-apis',
     difficulty: 'hard',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'You want `fetchUser()` to fail if it has not resolved within 2 seconds.',
@@ -744,6 +763,7 @@ export const jsApiProblems: ProblemDraft[] = [
     title: 'Cancelling an in-flight fetch',
     category: 'js-apis',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'Which web API lets you cancel an in-flight `fetch`, and how do you wire it up?',

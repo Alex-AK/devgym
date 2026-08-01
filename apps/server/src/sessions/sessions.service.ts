@@ -144,6 +144,7 @@ export class SessionsService {
         title: problems.title,
         category: problems.category,
         difficulty: problems.difficulty,
+        relevance: problems.relevance,
         position: sessionItems.position,
         solvedAt: problemProgress.solvedAt,
         lastSkippedAt: problemProgress.lastSkippedAt,
@@ -168,6 +169,7 @@ export class SessionsService {
       title: row.title,
       category: row.category,
       difficulty: row.difficulty,
+      relevance: row.relevance,
       position: row.position,
       status: outcomeFor(row),
     }));

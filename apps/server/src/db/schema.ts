@@ -4,6 +4,7 @@ import {
   PROBLEM_STATUSES,
   PROBLEM_TYPES,
   QUEUE_MODES,
+  RELEVANCES,
   VERDICTS,
 } from '@devgym/shared';
 import { sql } from 'drizzle-orm';
@@ -23,6 +24,8 @@ export const problems = sqliteTable('problems', {
   title: text('title').notNull(),
   category: text('category', { enum: CATEGORIES }).notNull(),
   difficulty: text('difficulty', { enum: DIFFICULTIES }).notNull(),
+  /** How often this comes up in real work. Orthogonal to difficulty. */
+  relevance: text('relevance', { enum: RELEVANCES }).notNull().default('daily'),
   type: text('type', { enum: PROBLEM_TYPES }).notNull(),
   position: integer('position').notNull(),
   /** Markdown. */

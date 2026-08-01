@@ -436,6 +436,7 @@ export class ProblemsService {
       title: entry.problem.title,
       category: entry.problem.category,
       difficulty: entry.problem.difficulty,
+      relevance: entry.problem.relevance,
       type: entry.problem.type,
       position: entry.problem.position,
       status: entry.progress.status,

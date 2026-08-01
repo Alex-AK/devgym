@@ -31,6 +31,7 @@ apps/server/src/
   cli/grade.ts                     `pnpm grade` grader-inspection tool
 apps/web/src/
   pages/                           Dashboard, Session, Practice, Problem, Problems
+  components/CodeEditor.tsx        CodeMirror 6 wrapper, used for sql and js-code answers
   components/ui/                   hand-written shadcn components
 ```
 
@@ -39,6 +40,13 @@ apps/web/src/
 - **Adding or editing problems** touches only `seed/problems/*.ts`. Problems upsert by slug, so an
   edit updates in place without wiping attempt history. `position` is generated in
   `problems.seed.ts`, never authored.
+- **Every problem declares a `relevance`**, which is a separate axis from difficulty: `daily` for
+  what you write in ordinary feature work, `occasional` for a bug or a perf pass or an edge case,
+  `foundational` for what you meet through a framework more often than you write. Author it
+  honestly. A hard problem can be daily bread and an easy one can be pure trivia, and the label is
+  what lets a 15-minute session be judged on what it is actually teaching.
+- **`js-code` tests take an `expression`, not statements.** It is evaluated after the submission, so
+  multi-step setup has to be wrapped in an IIFE. Use `expectedCode` for values JSON cannot hold.
 - **After editing problems, run `pnpm seed`.** Boot only auto-seeds an empty database.
 - **Schema changes** need `pnpm --filter @devgym/server db:generate` and the generated SQL
   committed. Migrations apply automatically at startup.

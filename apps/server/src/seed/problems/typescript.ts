@@ -6,6 +6,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Make every field optional',
     category: 'typescript',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'Your update endpoint accepts any subset of `User`:',
@@ -44,6 +45,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'A type minus one field',
     category: 'typescript',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'When creating a `User` the `id` does not exist yet:',
@@ -82,6 +84,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Type a lookup object',
     category: 'typescript',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'You want an object mapping each of these statuses to a display colour:',
@@ -120,6 +123,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'unknown versus any',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'A reviewer changes the type of a parsed JSON response from `any` to `unknown`.',
@@ -173,6 +177,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Exhaustive switch on a union',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'You have:',
@@ -227,6 +232,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Widening and const assertions',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'This fails because `method` is inferred as `string`, not `"GET"`:',
@@ -267,6 +273,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Optional property versus undefined',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'What is the practical difference between these two?',
@@ -316,6 +323,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'The non-null assertion operator',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'A teammate silences a strict-null error with a trailing `!`:',
@@ -367,6 +375,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Constrain a generic',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'This helper must accept an array of anything that has an `id`, and return a lookup keyed by it:',
@@ -408,6 +417,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Derive a type from a value',
     category: 'typescript',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'You want the type of whatever `buildConfig()` returns, without writing it out by hand:',
@@ -444,6 +454,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'satisfies versus a type annotation',
     category: 'typescript',
     difficulty: 'hard',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'Compare these two:',
@@ -491,6 +502,7 @@ export const typescriptProblems: ProblemDraft[] = [
     title: 'Write a user-defined type guard',
     category: 'typescript',
     difficulty: 'hard',
+    relevance: 'daily',
     type: 'short-text',
     prompt: md(
       'This helper checks the shape but the compiler still sees `unknown` at the call site:',
@@ -531,5 +543,533 @@ export const typescriptProblems: ProblemDraft[] = [
     ),
     explanation:
       'A **type predicate** return type, `param is Type`, tells the compiler that a `true` result means the argument has that type, so narrowing flows to the call site. A plain `boolean` carries no such information. The catch is that TypeScript takes your word for it: the predicate is only as sound as the checks inside, and a sloppy guard is as dangerous as a cast. For untrusted input, a schema validator that returns a parsed value is safer than a hand-written guard. The related `asserts value is Type` form narrows for the rest of the scope instead of inside an `if`.',
+  },
+
+  {
+    slug: 'ts-json-parse-any',
+    title: 'The any that walks in through the door',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'This compiles with no error, and blows up at runtime:',
+      '',
+      code(
+        'ts',
+        'const user: User = JSON.parse(body);',
+        'console.log(user.profile.name.toUpperCase());'
+      ),
+      '',
+      'Explain why the type annotation proves nothing, and what to do at this boundary.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['any', 'returns any'],
+          missingFeedback: 'What does JSON.parse return?',
+        },
+        {
+          synonyms: [
+            'no check',
+            'not checked',
+            'compile',
+            'runtime',
+            'assert',
+            'assumption',
+            'lie',
+            'erased',
+            'no validation',
+          ],
+          missingFeedback: 'Why does the annotation not protect you?',
+        },
+        {
+          synonyms: [
+            'validate',
+            'parse',
+            'schema',
+            'zod',
+            'valibot',
+            'type guard',
+            'narrow',
+            'check the shape',
+            'unknown',
+          ],
+          missingFeedback: 'What should happen at the boundary instead?',
+        },
+      ],
+      hints: [
+        'Types are erased at build time; nothing checks the shape at runtime.',
+        '`JSON.parse` is typed as returning `any`, which assigns to anything silently.',
+        'Validate the value at the boundary and let the type come from the validation.',
+      ],
+    },
+    canonicalAnswer:
+      'JSON.parse returns any, which assigns to any annotation without complaint, and types are erased at build time so nothing checks the real shape at runtime. The annotation is an assumption, not a check. Validate the value at the boundary with a schema or a type guard, and derive the type from the validation so the type and the runtime check cannot drift apart.',
+    solution: code(
+      'ts',
+      'const parsed = UserSchema.safeParse(JSON.parse(body));',
+      'if (!parsed.success) throw new BadRequest(parsed.error);',
+      'const user = parsed.data; // typed *because* it was checked',
+      '',
+      '// or, without a library, narrow from unknown',
+      'function isUser(value: unknown): value is User { … }'
+    ),
+    explanation:
+      'Every value entering your program from outside is `unknown` in reality, whatever the annotation claims: request bodies, `localStorage`, query strings, third-party responses. An annotation is a promise you are making to the compiler, and at a boundary it is a promise you cannot keep. Validating once at the edge means everything downstream is genuinely typed. The pattern is sometimes called "parse, don’t validate": produce a value whose type reflects the checking that has already happened, rather than checking and hoping.',
+  },
+
+  {
+    slug: 'ts-union-vs-enum',
+    title: 'Enum or union of literals',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A team is choosing between these two:',
+      '',
+      code(
+        'ts',
+        "enum Status { Active = 'active', Archived = 'archived' }",
+        '',
+        "type Status = 'active' | 'archived';"
+      ),
+      '',
+      'Give two reasons the union is usually preferred.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'no runtime',
+            'erased',
+            'zero',
+            'no javascript',
+            'no code',
+            'emit',
+            'bundle',
+            'type only',
+          ],
+          missingFeedback: 'What does the union cost at runtime?',
+        },
+        {
+          synonyms: [
+            'plain string',
+            'assign',
+            'literal',
+            'no import',
+            'directly',
+            'json',
+            'api',
+            'structural',
+            'interop',
+          ],
+          missingFeedback: 'How does each behave when a plain string arrives from an API?',
+        },
+      ],
+      hints: [
+        'One of them emits JavaScript, the other disappears entirely.',
+        'One of them refuses a plain string that happens to have the right value.',
+        'Think about what arrives from `JSON.parse`.',
+      ],
+    },
+    canonicalAnswer:
+      'The union is erased completely, so it adds no runtime code to the bundle, while an enum emits a real object. And a union accepts any plain string with the right value, so data coming from an API or JSON assigns directly, whereas an enum member has to be imported and used explicitly even though the underlying value is identical.',
+    solution: code(
+      'ts',
+      "export const STATUSES = ['active', 'archived'] as const;",
+      'export type Status = (typeof STATUSES)[number];',
+      '',
+      '// one source of truth: iterate STATUSES, type with Status'
+    ),
+    explanation:
+      'A `const` tuple plus an indexed access type gives you both halves from one declaration: a real array you can iterate, validate against or render as options, and a union type that stays in sync automatically. That pattern is exactly what this codebase uses for categories and difficulties. Numeric enums are worse still, since they allow any number in some positions and reverse-map at runtime. `const enum` avoids the emit but breaks under isolated module transpilation, which most modern build setups use.',
+  },
+
+  {
+    slug: 'ts-generic-component-props',
+    title: 'A component that keeps its item type',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'The callback loses the element type, so `item` is `any`:',
+      '',
+      code(
+        'ts',
+        'type Props = {',
+        '  items: unknown[];',
+        '  renderItem: (item: unknown) => React.ReactNode;',
+        '};'
+      ),
+      '',
+      'Name the TypeScript feature that lets `renderItem` receive the caller’s element type.'
+    ),
+    graderConfig: {
+      accept: ['generics', 'generic', 'a generic', 'type parameter', 'type parameters'],
+      acceptPatterns: ['generic', 'type param'],
+      nearMisses: {
+        any: 'any removes the error by removing the checking, which is the opposite of the goal.',
+        unknown: 'unknown is what it already is, and it is why the callback has no type.',
+      },
+      hints: [
+        'The type of `item` should be decided by whoever uses the component.',
+        'It is the same feature that makes `Array<T>` work.',
+        'A generic type parameter on the props.',
+      ],
+    },
+    canonicalAnswer: 'generics',
+    solution: code(
+      'ts',
+      'type Props<T> = {',
+      '  items: T[];',
+      '  renderItem: (item: T) => React.ReactNode;',
+      '};',
+      '',
+      'function List<T>({ items, renderItem }: Props<T>) {',
+      '  return <ul>{items.map(renderItem)}</ul>;',
+      '}',
+      '',
+      '// <List items={users} renderItem={(u) => u.name} />  u is User'
+    ),
+    explanation:
+      'The generic parameter is inferred from the `items` prop at each call site, so `renderItem` receives the real element type with no annotation from the caller. This is the single most useful generic pattern in application code: any component that takes a collection and a render callback wants it. Add constraints when you need a property, as in `<T extends { id: string }>`, which lets the component key the list itself. Arrow function components need `<T,>` with the trailing comma in `.tsx` files, since `<T>` alone parses as JSX.',
+  },
+
+  {
+    slug: 'ts-readonly-array',
+    title: 'Stopping a function mutating your array',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'This compiles, and the caller’s array is sorted in place as a side effect:',
+      '',
+      code(
+        'ts',
+        'function top(items: number[]) {',
+        '  return items.sort((a, b) => b - a)[0];',
+        '}'
+      ),
+      '',
+      'Name the type that would have made the compiler reject the `sort` call.'
+    ),
+    graderConfig: {
+      accept: [
+        'readonly number[]',
+        'readonlyarray',
+        'readonlyarray<number>',
+        'readonly array',
+        'readonly',
+      ],
+      acceptPatterns: ['readonly\\s*(number)?\\s*\\[\\]', 'ReadonlyArray'],
+      nearMisses: {
+        const: 'const stops reassignment of the binding, not mutation of the array.',
+      },
+      hints: [
+        '`sort` mutates, and the parameter type currently permits that.',
+        'There is a modifier that removes the mutating methods from the type.',
+        '`readonly number[]`, also written `ReadonlyArray<number>`.',
+      ],
+    },
+    canonicalAnswer: 'readonly number[]',
+    solution: code(
+      'ts',
+      'function top(items: readonly number[]) {',
+      '  return [...items].sort((a, b) => b - a)[0];',
+      '  // or, without the copy: items.toSorted((a, b) => b - a)[0]',
+      '}'
+    ),
+    explanation:
+      '`readonly T[]` removes `push`, `sort`, `splice` and the rest from the type, so an accidental in-place mutation of a caller’s data becomes a compile error rather than a bug hunted down weeks later. It costs nothing at runtime and documents intent at the same time: this function only reads. Taking `readonly` parameters is a good default for anything that does not deliberately mutate. The new non-mutating methods `toSorted`, `toReversed` and `toSpliced` exist precisely so this no longer requires a defensive copy.',
+  },
+
+  {
+    slug: 'ts-narrow-in-operator',
+    title: 'Narrowing a union without a tag',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'Neither member has a discriminant field:',
+      '',
+      code(
+        'ts',
+        'type Result = { data: string } | { error: string };',
+        '',
+        'function show(result: Result) {',
+        '  // narrow to the error case here',
+        '}'
+      ),
+      '',
+      'Name the operator that narrows this union by checking for a property.'
+    ),
+    graderConfig: {
+      accept: ['in', 'in operator', 'the in operator'],
+      acceptPatterns: ['\\bin\\b\\s*operator', "^'?in'?$"],
+      nearMisses: {
+        typeof: 'typeof narrows primitives. Both members here are objects.',
+        instanceof: 'instanceof needs a class. These are plain object types.',
+      },
+      hints: [
+        'You cannot use `typeof`, because both sides are objects.',
+        'You want to ask whether a property exists.',
+        '`if ("error" in result)`',
+      ],
+    },
+    canonicalAnswer: 'in',
+    solution: code(
+      'ts',
+      'function show(result: Result) {',
+      "  if ('error' in result) return renderError(result.error);",
+      '  return renderData(result.data);',
+      '}'
+    ),
+    explanation:
+      'The `in` operator is a narrowing check the compiler understands, so inside the branch the union collapses to the member that has the property. It is the right tool for unions you do not control, such as a third-party response shape. When you *do* control the shape, add a literal discriminant (`{ ok: true, data } | { ok: false, error }`) and switch on it: it reads better, it survives adding a third member, and `switch` on a discriminant gives you exhaustiveness checking with `never`.',
+  },
+
+  {
+    slug: 'ts-satisfies-keeps-literals',
+    title: 'Keeping literal types while checking a shape',
+    category: 'typescript',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'With the annotation, `config.env` is `string` and the key autocompletion is gone:',
+      '',
+      code(
+        'ts',
+        'const config: Record<string, string> = {',
+        "  env: 'production',",
+        "  region: 'eu-west-1',",
+        '};'
+      ),
+      '',
+      'Name the operator that validates the shape without widening, and explain the difference.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['satisfies'],
+          missingFeedback: 'Name the operator.',
+        },
+        {
+          synonyms: ['widen', 'widened', 'broaden', 'loses', 'lost', 'string instead', 'general'],
+          missingFeedback: 'What does the annotation do to the inferred type?',
+        },
+        {
+          synonyms: [
+            'narrow',
+            'literal',
+            'specific',
+            'keeps',
+            'preserve',
+            'inferred',
+            'actual type',
+            'exact',
+          ],
+          missingFeedback: 'What does satisfies keep that the annotation does not?',
+        },
+      ],
+      hints: [
+        'An annotation tells the compiler what the value *is*, discarding what it inferred.',
+        'You want the check without giving up the inference.',
+        '`satisfies Record<string, string>` after the literal.',
+      ],
+    },
+    canonicalAnswer:
+      'Use satisfies. An annotation replaces the inferred type with the declared one, so the values widen to string and the specific keys are lost. satisfies checks the literal against the type but keeps the narrow inferred type, so config.env stays the literal "production" and the keys stay known for autocompletion and exhaustiveness.',
+    solution: code(
+      'ts',
+      'const config = {',
+      "  env: 'production',",
+      "  region: 'eu-west-1',",
+      '} satisfies Record<string, string>;',
+      '',
+      "// config.env is 'production', not string",
+      '// a typo in a value type is still a compile error'
+    ),
+    explanation:
+      'The two do different jobs that look similar: an annotation is a downcast to the declared type, `satisfies` is an assertion that the inferred type is assignable to it. You get the error checking of the annotation with the precision of inference. It is most valuable for configuration objects, route tables and theme maps, where you want both "every value must be a valid colour" and "the caller should still know which keys exist". Reach for `as const satisfies …` when you also want deep readonly literals.',
+  },
+
+  {
+    slug: 'ts-noimplicit-index-access',
+    title: 'The array access that lied',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'This compiles cleanly and throws at runtime when the array is empty:',
+      '',
+      code('ts', 'const first: string = items[0];', 'first.toUpperCase();'),
+      '',
+      'Name the compiler flag that makes the index access return `string | undefined`.'
+    ),
+    graderConfig: {
+      accept: [
+        'nouncheckedindexedaccess',
+        'nouncheckedindexaccess',
+        '--nouncheckedindexedaccess',
+        'nouncheckedindexedaccess: true',
+      ],
+      acceptPatterns: ['noUnchecked\\s*Index(ed)?\\s*Access'],
+      nearMisses: {
+        strictnullchecks:
+          'strictNullChecks is necessary but does not cover index access on its own.',
+        strict: 'strict does not include this one; it has to be enabled separately.',
+      },
+      hints: [
+        'By default TypeScript assumes every index is in bounds.',
+        'The flag is not part of `strict`, so it has to be turned on deliberately.',
+        '`noUncheckedIndexedAccess`',
+      ],
+    },
+    canonicalAnswer: 'noUncheckedIndexedAccess',
+    solution: code(
+      'ts',
+      '// tsconfig.json',
+      '{ "compilerOptions": { "noUncheckedIndexedAccess": true } }',
+      '',
+      'const first = items[0]; // string | undefined',
+      'if (first) first.toUpperCase();',
+      '// or: items.at(0)?.toUpperCase()'
+    ),
+    explanation:
+      'Without the flag, `items[0]` is typed `string` even for an empty array, which is a documented unsoundness accepted for ergonomics. Turning it on catches a real and common class of crash, at the cost of more `?.` and early returns in loops and lookups. It is not included in `strict`, so most codebases never see it. Records get the same treatment: `record[key]` becomes possibly undefined, which is usually exactly what you want for a lookup by user-supplied key.',
+  },
+
+  {
+    slug: 'ts-exhaustive-never',
+    title: 'Catching the case you forgot',
+    category: 'typescript',
+    difficulty: 'hard',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A new member is added to a union and this switch silently falls through for it.',
+      '',
+      code(
+        'ts',
+        'switch (shape.kind) {',
+        "  case 'circle': return …;",
+        "  case 'square': return …;",
+        '  default: /* ? */',
+        '}'
+      ),
+      '',
+      'Name the type to assign the value to in the default branch so the compiler flags the missing case.'
+    ),
+    graderConfig: {
+      accept: ['never'],
+      acceptPatterns: ['\\bnever\\b'],
+      nearMisses: {
+        unknown: 'unknown accepts anything, so nothing would be flagged.',
+        void: 'void is about the absence of a return value, not an impossible value.',
+      },
+      hints: [
+        'In the default branch every handled case has been eliminated.',
+        'If all cases are handled, the remaining type is the empty one.',
+        '`const exhaustive: never = shape;`',
+      ],
+    },
+    canonicalAnswer: 'never',
+    solution: code(
+      'ts',
+      'default: {',
+      '  const exhaustive: never = shape;',
+      '  throw new Error(`Unhandled shape: ${JSON.stringify(exhaustive)}`);',
+      '}'
+    ),
+    explanation:
+      'Narrowing removes each handled member, so in the default branch the value should have no possible type left. Assigning it to `never` compiles only when that is true, which turns "someone added a variant" into a build failure at every switch that needs updating. It is the cheapest exhaustiveness check in the language and it scales: add a member to the union and the compiler walks you round the codebase. Keep the runtime `throw` as well, since types are erased and the value can still arrive from outside.',
+  },
+
+  {
+    slug: 'ts-await-typing',
+    title: 'The awaited value that is still a promise',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'The type of `user` here is `Promise<User>`, not `User`, and the property access fails:',
+      '',
+      code('ts', 'const user = api.getUser(id);', 'console.log(user.name);'),
+      '',
+      'Name the keyword that is missing.'
+    ),
+    graderConfig: {
+      accept: ['await'],
+      acceptPatterns: ['\\bawait\\b'],
+      nearMisses: {
+        async: 'async marks the enclosing function. The missing keyword is at the call site.',
+        then: '.then() works, but the question is about the keyword that unwraps it inline.',
+      },
+      hints: [
+        'The call returns a promise, and nothing unwraps it.',
+        'The enclosing function has to be async for this keyword to be allowed.',
+        '`await`',
+      ],
+    },
+    canonicalAnswer: 'await',
+    solution: code('ts', 'const user = await api.getUser(id);', 'console.log(user.name);'),
+    explanation:
+      'A forgotten `await` is one of the few async bugs TypeScript can catch for you, since `Promise<User>` has no `name` property. It gets dangerous when the property does exist on both, or when the result is only passed along, in which case the promise flows silently through the code and surfaces as `[object Promise]` in the UI. The `@typescript-eslint/no-floating-promises` rule covers the other half: a promise nobody awaits or catches, whose rejection becomes an unhandled rejection rather than an error you can see.',
+  },
+
+  {
+    slug: 'ts-partial-vs-optional-update',
+    title: 'Typing a partial update',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A PATCH handler takes any subset of the editable fields, but never the id or timestamps:',
+      '',
+      code(
+        'ts',
+        'type User = { id: string; name: string; email: string; createdAt: string };',
+        '',
+        'function update(id: string, changes: /* ? */) {}'
+      ),
+      '',
+      'Write the type for `changes` using two built-in utility types.'
+    ),
+    graderConfig: {
+      accept: [],
+      acceptPatterns: [
+        'Partial<\\s*Omit<\\s*User\\s*,',
+        'Omit<\\s*Partial<\\s*User\\s*>\\s*,',
+        'Partial<\\s*Pick<\\s*User\\s*,',
+      ],
+      closeSubstrings: {
+        'partial<user>': 'That allows changing the id and createdAt. Exclude them first.',
+        'omit<user': 'Right start. Now make the remaining fields optional.',
+      },
+      hints: [
+        'One utility removes the fields that must not change.',
+        'The other makes what is left optional.',
+        '`Partial<Omit<User, "id" | "createdAt">>`',
+      ],
+    },
+    canonicalAnswer: "Partial<Omit<User, 'id' | 'createdAt'>>",
+    solution: code(
+      'ts',
+      "function update(id: string, changes: Partial<Omit<User, 'id' | 'createdAt'>>) {}",
+      '',
+      '// or name the editable surface once and reuse it',
+      "type EditableUser = Omit<User, 'id' | 'createdAt'>;"
+    ),
+    explanation:
+      'Composing utility types keeps one source of truth: add a field to `User` and the update type follows, which a hand-written duplicate would not. `Omit` is subtraction and `Pick` is selection, and `Pick` is worth preferring when the editable set is small, because it fails loudly if a field is renamed while `Omit` silently keeps allowing it. Naming the composed type is usually better than inlining it, since the same shape is wanted by the form, the API client and the validator.',
   },
 ];

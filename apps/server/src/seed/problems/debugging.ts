@@ -7,6 +7,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'The loop that finished too early',
     category: 'debugging',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       '`done` logs before any save completes, and errors vanish:',
@@ -68,6 +69,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'The comparison that is never true',
     category: 'debugging',
     difficulty: 'easy',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md('What does this log?', '', code('js', 'console.log(0.1 + 0.2 === 0.3);')),
     graderConfig: {
@@ -100,6 +102,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'Three rows that change together',
     category: 'debugging',
     difficulty: 'medium',
+    relevance: 'occasional',
     type: 'explain',
     prompt: md(
       'Editing one row edits all three:',
@@ -147,6 +150,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'The catch block that never runs',
     category: 'debugging',
     difficulty: 'medium',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'The rejection escapes as an unhandled promise rejection instead of hitting the catch:',
@@ -210,6 +214,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'The date that became a string',
     category: 'debugging',
     difficulty: 'easy',
+    relevance: 'daily',
     type: 'explain',
     prompt: md(
       'After a round trip through the API, `order.createdAt.getFullYear()` throws "is not a function":',
@@ -256,6 +261,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'this is undefined in the callback',
     category: 'debugging',
     difficulty: 'medium',
+    relevance: 'foundational',
     type: 'explain',
     prompt: md(
       "This throws `Cannot read properties of undefined (reading 'prefix')`:",
@@ -321,6 +327,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'A comparison that lies',
     category: 'debugging',
     difficulty: 'easy',
+    relevance: 'occasional',
     type: 'short-text',
     prompt: md(
       'A form field returns the string `"0"`. What does this log?',
@@ -360,6 +367,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'Parsing a number from input',
     category: 'debugging',
     difficulty: 'medium',
+    relevance: 'foundational',
     type: 'short-text',
     prompt: md(
       'A quantity field yields `"12kg"` and a price field yields `"1e3"`. What do these produce?',
@@ -400,6 +408,7 @@ export const debuggingProblems: ProblemDraft[] = [
     title: 'State that leaks between calls',
     category: 'debugging',
     difficulty: 'hard',
+    relevance: 'foundational',
     type: 'explain',
     prompt: md(
       'The second call returns `["a", "b"]` instead of `["b"]`:',
@@ -449,5 +458,325 @@ export const debuggingProblems: ProblemDraft[] = [
     ),
     explanation:
       "JavaScript evaluates default parameter expressions on **every call**, which is better than Python's famous once-at-definition behaviour, but it does not help here, because the expression `cache` resolves to the same shared array each time. The mutation, not the default, is the bug. Defaulting to a fresh `[]` gives each call its own array. The safest habit is for functions like this not to mutate their argument at all: build and return a new array, and let the caller decide what to keep.",
+  },
+
+  {
+    slug: 'debug-array-sort-comparator',
+    title: 'The leaderboard in the wrong order',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'Scores come back in a stubbornly wrong order:',
+      '',
+      code('js', 'players.sort((a, b) => a.score > b.score);'),
+      '',
+      'The comparator returns a boolean. What must it return instead?'
+    ),
+    graderConfig: {
+      accept: [],
+      acceptPatterns: [
+        'negative[\\s\\S]*positive',
+        'positive[\\s\\S]*negative',
+        'a\\.score\\s*-\\s*b\\.score',
+        'b\\.score\\s*-\\s*a\\.score',
+        '\\bnumber\\b',
+      ],
+      closeSubstrings: {
+        boolean: 'Right diagnosis. What should it return instead?',
+        subtract: 'That is the fix. What kind of value does subtracting produce?',
+      },
+      hints: [
+        '`sort` interprets the return value as a number.',
+        '`true` becomes 1 and `false` becomes 0, so it never says "before".',
+        'Return a negative number, zero, or a positive number.',
+      ],
+    },
+    canonicalAnswer: 'a number: negative, zero or positive',
+    solution: code('js', 'players.sort((a, b) => a.score - b.score); // ascending'),
+    explanation:
+      'The comparator must return a negative number if `a` comes first, a positive number if `b` does, and zero if they tie. A boolean coerces to 1 or 0, so the sort is only ever told "swap" or "equal" and never "already in order", which produces an order that looks almost sorted and varies by engine and array length. Subtraction is the idiomatic form for numbers. For strings use `localeCompare`, which handles accents and case the way a human expects, and never `a - b`, which gives `NaN`.',
+  },
+
+  {
+    slug: 'debug-nan-comparison',
+    title: 'The check that never matches',
+    category: 'debugging',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'This branch never runs, even when the parse clearly failed:',
+      '',
+      code('js', 'const n = Number(input);', 'if (n === NaN) return fallback;'),
+      '',
+      'Name the check that works.'
+    ),
+    graderConfig: {
+      accept: [
+        'number.isnan',
+        'number.isnan()',
+        'isnan',
+        'isnan()',
+        'number.isfinite',
+        'number.isfinite()',
+      ],
+      acceptPatterns: ['Number\\.is(NaN|Finite)', '\\bisNaN\\b'],
+      nearMisses: {
+        'n !== n':
+          'That does work, and it is what Number.isNaN does internally. Name the function.',
+      },
+      hints: [
+        'NaN is the only value in JavaScript not equal to itself.',
+        'So no equality comparison can ever detect it.',
+        '`Number.isNaN(n)`, or `Number.isFinite(n)` if you also want to reject Infinity.',
+      ],
+    },
+    canonicalAnswer: 'Number.isNaN',
+    solution: code(
+      'js',
+      'const n = Number(input);',
+      'if (!Number.isFinite(n)) return fallback; // rejects NaN and both Infinities'
+    ),
+    explanation:
+      'IEEE 754 defines NaN as unequal to everything including itself, so `NaN === NaN` is false and every equality check against it fails silently. `Number.isNaN` is the reliable test; the older global `isNaN` coerces first, so `isNaN("hello")` is `true` and `isNaN("")` is `false`, which is rarely what anyone means. For input validation `Number.isFinite` is usually the better default, since it also rejects `Infinity`, and remember `Number("")` is `0` rather than `NaN`, which is how empty inputs quietly become zeroes.',
+  },
+
+  {
+    slug: 'debug-mutable-shared-default',
+    title: 'The cache everyone shares',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Two unrelated parts of the app start seeing each other’s data:',
+      '',
+      code(
+        'js',
+        'const DEFAULTS = { filters: [], page: 1 };',
+        '',
+        'function createView(overrides) {',
+        '  return { ...DEFAULTS, ...overrides };',
+        '}'
+      ),
+      '',
+      'Explain how the shared array leaks between views and how to fix it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['shallow', 'spread only copies', 'top level', 'same reference', 'same array'],
+          missingFeedback: 'What does the spread actually copy?',
+        },
+        {
+          synonyms: ['push', 'mutat', 'modif', 'change', 'affects', 'both', 'every view'],
+          missingFeedback: 'What happens when one view changes its filters?',
+        },
+        {
+          synonyms: [
+            'factory',
+            'function',
+            'new array',
+            'structuredclone',
+            'deep',
+            'per call',
+            'fresh',
+            'create',
+          ],
+          missingFeedback: 'How do you give each view its own?',
+        },
+      ],
+      hints: [
+        'Spread is a shallow copy.',
+        'The `filters` array is the same array in every view that did not override it.',
+        'Build the defaults per call rather than sharing one object.',
+      ],
+    },
+    canonicalAnswer:
+      'The spread is shallow, so every view that does not override filters holds a reference to the same array, not a copy. As soon as one of them pushes a filter, every other view sees it. Give each call its own by building the defaults in a factory function that returns a fresh object with a new array, or deep clone the defaults.',
+    solution: code(
+      'js',
+      'const makeDefaults = () => ({ filters: [], page: 1 });',
+      '',
+      'function createView(overrides) {',
+      '  return { ...makeDefaults(), ...overrides };',
+      '}'
+    ),
+    explanation:
+      'Spread and `Object.assign` copy one level deep, so nested objects and arrays are shared by reference. A module-level constant holding a mutable value is shared for the lifetime of the process, which is why this bug is much worse on a server than in a browser tab: one user’s filters can leak into another’s request. `Object.freeze` on the constant turns the mutation into a visible error, and a factory removes the shared state entirely. The same trap explains `Array(3).fill([])`, where all three slots are one array.',
+  },
+
+  {
+    slug: 'debug-event-listener-leak',
+    title: 'The handler that runs five times',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'After navigating between pages a few times, one click fires the handler several times over:',
+      '',
+      code('js', 'function mount() {', "  window.addEventListener('resize', onResize);", '}'),
+      '',
+      'Explain the cause and the two things a correct removal needs.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['never removed', 'not removed', 'accumulat', 'stack', 'each mount', 'again'],
+          missingFeedback: 'What happens on each mount?',
+        },
+        {
+          synonyms: ['removeeventlistener', 'remove', 'cleanup', 'abort', 'unsubscribe'],
+          missingFeedback: 'What has to happen on unmount?',
+        },
+        {
+          synonyms: [
+            'same reference',
+            'same function',
+            'identity',
+            'not inline',
+            'named',
+            'same options',
+            'exact',
+          ],
+          missingFeedback: 'What must the removal be given to work?',
+        },
+      ],
+      hints: [
+        'Nothing removes the listener, so each mount adds another.',
+        'Removal needs the *same function reference* that was added.',
+        'An inline arrow function can never be removed, because it is a new function every time.',
+      ],
+    },
+    canonicalAnswer:
+      'The listener is added on every mount and never removed, so they accumulate and one event calls the handler once per past mount. Removal needs removeEventListener given the same function reference that was added, with the same options, which is why an inline arrow function can never be removed. An AbortController signal is the easier modern route.',
+    solution: code(
+      'js',
+      'const controller = new AbortController();',
+      "window.addEventListener('resize', onResize, { signal: controller.signal });",
+      '',
+      '// removes every listener registered with this signal',
+      'controller.abort();'
+    ),
+    explanation:
+      'Listeners are keyed by target, type, function identity and the capture flag, so all four have to match to remove one. That is why `addEventListener("resize", () => …)` is unremovable: the arrow is a fresh function each call. Passing a `signal` sidesteps the whole problem and removes many listeners at once, which is why it pairs so well with a React effect cleanup or a component teardown. Beyond duplicate handlers, an accumulating listener keeps its closure alive, so it is a memory leak as well as a correctness bug.',
+  },
+
+  {
+    slug: 'debug-number-money',
+    title: 'The total that is a penny out',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'An invoice total shows 0.30000000000000004 and a rounding fix makes it wrong somewhere else.',
+      '',
+      'Explain the root cause and the standard way to store money.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['binary', 'float', 'ieee', 'base 2', 'cannot represent', 'approximat'],
+          missingFeedback: 'Why can 0.1 not be stored exactly?',
+        },
+        {
+          synonyms: ['integer', 'cents', 'smallest unit', 'minor unit', 'pennies', 'whole number'],
+          missingFeedback: 'What should money be stored as?',
+        },
+        {
+          synonyms: ['decimal', 'bigint', 'library', 'numeric', 'exact', 'fixed point'],
+          missingFeedback: 'Name an alternative for values that need more than an integer.',
+        },
+      ],
+      hints: [
+        'JavaScript numbers are binary floating point.',
+        '0.1 and 0.2 have no exact binary representation, so the sum drifts.',
+        'Store money as an integer count of the smallest unit.',
+      ],
+    },
+    canonicalAnswer:
+      'JavaScript numbers are IEEE 754 binary floating point, and 0.1 and 0.2 have no exact representation in base 2, so the sum is very slightly off and rounding at the end only hides it. Store money as an integer number of cents or the smallest currency unit and do the arithmetic in integers, or use a decimal type such as a database NUMERIC column, BigInt, or a decimal library where an integer is not enough.',
+    solution: code(
+      'js',
+      '// store and calculate in minor units',
+      'const cents = items.reduce((sum, i) => sum + i.priceCents * i.qty, 0);',
+      '',
+      '// format only at the edge',
+      "new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' })",
+      '  .format(cents / 100);'
+    ),
+    explanation:
+      'The problem is representation, not addition: 0.1 in binary is a repeating fraction, so it is stored as the nearest double and the error surfaces when you add. Integers up to 2^53 are exact, so counting cents removes the class of bug entirely, and division only happens at the moment of display. The same reasoning applies in the database: `NUMERIC`/`DECIMAL` is exact, `FLOAT` is not, and a money column typed `FLOAT` is a bug waiting for an auditor. Currencies with three minor digits, or none at all, are why the unit belongs in the column name.',
+  },
+
+  {
+    slug: 'debug-async-stack-lost',
+    title: 'The error with no useful stack',
+    category: 'debugging',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A production error arrives as "Cannot read properties of undefined" with a stack containing only framework frames:',
+      '',
+      code(
+        'js',
+        'try {',
+        '  await save();',
+        '} catch (err) {',
+        '  throw new Error("Save failed");',
+        '}'
+      ),
+      '',
+      'Explain what was lost and how to keep it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'original',
+            'underlying',
+            'discard',
+            'swallow',
+            'lost',
+            'replaced',
+            'thrown away',
+          ],
+          missingFeedback: 'What happened to the original error?',
+        },
+        {
+          synonyms: ['cause', '{ cause', 'cause option', 'chain', 'wrap'],
+          missingFeedback: 'What preserves it when rethrowing?',
+        },
+        {
+          synonyms: ['stack', 'message', 'context', 'where', 'root cause', 'trace'],
+          missingFeedback: 'What does keeping it give you?',
+        },
+      ],
+      hints: [
+        'The new Error replaces the old one entirely.',
+        'Error has had a second argument since ES2022.',
+        '`throw new Error("Save failed", { cause: err })`',
+      ],
+    },
+    canonicalAnswer:
+      'The original error is discarded: the new Error carries a fresh stack pointing at the catch block, so the real message and the frames where it actually happened are gone. Rethrow with the cause option, new Error("Save failed", { cause: err }), which chains the underlying error so its message and stack are still reachable for logging and root-cause analysis.',
+    solution: code(
+      'js',
+      'try {',
+      '  await save();',
+      '} catch (err) {',
+      "  throw new Error('Save failed', { cause: err });",
+      '}',
+      '',
+      '// logger walks the chain',
+      'console.error(error.message, error.cause);'
+    ),
+    explanation:
+      'Wrapping an error to add context is good practice; replacing it is not. The `cause` option keeps the chain intact so a logger can walk down to the root, and Node prints the chain automatically for uncaught errors. Two related habits help as much: never `catch` without either handling or rethrowing, and remember that a caught value is not guaranteed to be an `Error` at all, since any value can be thrown. Checking `err instanceof Error` before touching `.message` avoids a second error inside your error handler.',
   },
 ];

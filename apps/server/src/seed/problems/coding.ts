@@ -9,6 +9,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-chunk',
     title: 'Chunk an array',
     difficulty: 'easy',
+    relevance: 'occasional',
     prompt: md(
       'Split an array into groups of at most `size`, preserving order.',
       '',
@@ -55,6 +56,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-unique-by',
     title: 'Deduplicate by a key',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Remove duplicates from an array of objects, comparing by the value a key function returns.',
       '',
@@ -97,6 +99,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-count-by',
     title: 'Tally by a key',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Count how many items fall into each bucket, returning a plain object of counts.',
       '',
@@ -136,6 +139,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-flatten',
     title: 'Flatten to a depth',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'Flatten a nested array by `depth` levels, without using `Array.prototype.flat`.',
       '',
@@ -172,6 +176,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-group-sort',
     title: 'Group, total, and rank',
     difficulty: 'medium',
+    relevance: 'daily',
     prompt: md(
       'The bread-and-butter data question. Given line items, return total revenue per category, highest first.',
       '',
@@ -216,6 +221,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-debounce',
     title: 'Implement debounce',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'Return a function that delays calling `fn` until `ms` have passed with no further calls.',
       '',
@@ -257,6 +263,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-memoize',
     title: 'Implement memoize',
     difficulty: 'medium',
+    relevance: 'occasional',
     prompt: md(
       'Wrap a function so repeated calls with the same arguments return a cached result instead of recomputing.',
       '',
@@ -303,6 +310,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-retry',
     title: 'Retry with backoff',
     difficulty: 'hard',
+    relevance: 'occasional',
     prompt: md(
       'Call an async `fn`, retrying on rejection up to `attempts` times in total.',
       '',
@@ -349,6 +357,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-promise-pool',
     title: 'Limit concurrency',
     difficulty: 'hard',
+    relevance: 'occasional',
     prompt: md(
       'Run async tasks with at most `limit` in flight at once, resolving with the results **in input order**.',
       '',
@@ -390,6 +399,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-event-emitter',
     title: 'A tiny event emitter',
     difficulty: 'medium',
+    relevance: 'foundational',
     prompt: md(
       'Implement `createEmitter()` returning an object with `on(event, fn)`, `off(event, fn)` and `emit(event, ...args)`.',
       '',
@@ -442,6 +452,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-deep-equal',
     title: 'Implement deep equality',
     difficulty: 'hard',
+    relevance: 'foundational',
     prompt: md(
       'Compare two values structurally: primitives by value, arrays and plain objects by their contents.',
       '',
@@ -493,6 +504,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-paginate',
     title: 'Paginate a list',
     difficulty: 'easy',
+    relevance: 'daily',
     prompt: md(
       'Return one page of results plus the metadata a UI needs.',
       '',
@@ -541,6 +553,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-parse-query',
     title: 'Parse a query string by hand',
     difficulty: 'medium',
+    relevance: 'foundational',
     prompt: md(
       'Parse a query string into an object, without using `URL` or `URLSearchParams`.',
       '',
@@ -595,6 +608,7 @@ export const codingProblems: ProblemDraft[] = [
     slug: 'code-lru-cache',
     title: 'An LRU cache',
     difficulty: 'hard',
+    relevance: 'foundational',
     prompt: md(
       'Implement `createCache(capacity)` with `get(key)` and `set(key, value)`.',
       '',
@@ -640,5 +654,338 @@ export const codingProblems: ProblemDraft[] = [
     ],
     explanation:
       'The trick is that `Map` already guarantees insertion order, so "delete then re-insert" moves an entry to the most-recent end and the oldest key is simply the first one the iterator yields. That gives O(1) for both operations without hand-rolling a doubly linked list, which is the answer this question is usually expecting. Note that `set` on an existing key must delete first, otherwise the value updates but its position, and therefore its recency, does not.',
+  }),
+
+  codeProblem({
+    slug: 'code-group-by-key',
+    title: 'Index a list for lookup',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      'Write `indexBy(items, key)` returning an object keyed by each item’s `key` property, so a list from an API can be looked up by id in constant time.',
+      '',
+      'Later items win on a duplicate key. An empty list gives an empty object.'
+    ),
+    starter: 'function indexBy(items, key) {\n  \n}',
+    tests: [
+      {
+        name: 'indexes by the given key',
+        expression: "indexBy([{ id: 'a', n: 1 }, { id: 'b', n: 2 }], 'id')",
+        expected: { a: { id: 'a', n: 1 }, b: { id: 'b', n: 2 } },
+      },
+      {
+        name: 'later duplicates win',
+        expression: "indexBy([{ id: 'a', n: 1 }, { id: 'a', n: 2 }], 'id').a.n",
+        expected: 2,
+      },
+      { name: 'handles an empty list', expression: "indexBy([], 'id')", expected: {} },
+      {
+        name: 'works with a numeric key',
+        expression: "Object.keys(indexBy([{ code: 404 }], 'code'))",
+        expected: ['404'],
+      },
+    ],
+    reference: [
+      'function indexBy(items, key) {',
+      '  const out = {};',
+      '  for (const item of items) {',
+      '    out[item[key]] = item;',
+      '  }',
+      '  return out;',
+      '}',
+    ].join('\n'),
+    hints: [
+      'One pass, building an object as you go.',
+      'The key is a property name held in a variable, so use bracket access.',
+      'Assigning the same key twice naturally lets the later item win.',
+    ],
+    explanation:
+      'This turns an O(n) `find` in a render loop into an O(1) lookup, which is the difference between a list of 20 and a list of 5,000 feeling the same. Two details are worth knowing: object keys are always strings, so a numeric id comes back as `"404"`, and a key of `"__proto__"` from untrusted data does not behave like an ordinary property. A `Map` avoids both, preserves insertion order and accepts any key type, which makes it the better default when the keys come from outside.',
+  }),
+
+  codeProblem({
+    slug: 'code-truncate-words',
+    title: 'Truncate without cutting a word',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'Write `truncate(text, max)` returning `text` unchanged when it is `max` characters or fewer, and otherwise a cut-down version ending in a single `…`.',
+      '',
+      'The whole returned string must be at most `max` characters, and it must not end mid-word when a word boundary is available.'
+    ),
+    starter: 'function truncate(text, max) {\n  \n}',
+    tests: [
+      {
+        name: 'leaves a short string alone',
+        expression: "truncate('hello', 10)",
+        expected: 'hello',
+      },
+      {
+        name: 'leaves an exactly-max string alone',
+        expression: "truncate('hello', 5)",
+        expected: 'hello',
+      },
+      {
+        name: 'cuts at a word boundary',
+        expression: "truncate('the quick brown fox', 12)",
+        expected: 'the quick…',
+      },
+      {
+        name: 'never exceeds max',
+        expression: "truncate('the quick brown fox', 12).length <= 12",
+        expected: true,
+      },
+      {
+        name: 'falls back to a hard cut with no boundary',
+        expression: "truncate('supercalifragilistic', 6)",
+        expected: 'super…',
+      },
+    ],
+    reference: [
+      'function truncate(text, max) {',
+      '  if (text.length <= max) return text;',
+      '  const slice = text.slice(0, max - 1);',
+      "  const boundary = slice.lastIndexOf(' ');",
+      '  const cut = boundary > 0 ? slice.slice(0, boundary) : slice;',
+      "  return cut + '…';",
+      '}',
+    ].join('\n'),
+    hints: [
+      'The ellipsis counts towards the budget, so slice to `max - 1` first.',
+      'Look backwards for the last space inside that slice.',
+      'When there is no space, fall back to the hard cut rather than returning nothing.',
+    ],
+    explanation:
+      'The interesting cases are the boundaries, as usual: exactly `max`, one over, and a single word longer than the budget. Forgetting that the ellipsis itself takes a character is the classic off-by-one here, and it only shows up when the caller is counting. Real text has more traps: `length` counts UTF-16 code units, so an emoji is 2 and a family emoji considerably more, and slicing blindly can split a surrogate pair into a replacement character. `Intl.Segmenter` is the correct tool when user-visible characters matter.',
+  }),
+
+  codeProblem({
+    slug: 'code-safe-get',
+    title: 'Read a nested path safely',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'Write `get(object, path, fallback)` reading a dotted `path` like `"user.address.city"`.',
+      '',
+      'Return `fallback` when any step is missing or nullish. A stored `undefined` counts as missing; a stored `null`, `0`, `false` or `""` does not.'
+    ),
+    starter: 'function get(object, path, fallback) {\n  \n}',
+    tests: [
+      {
+        name: 'reads a nested value',
+        expression: "get({ user: { address: { city: 'Cork' } } }, 'user.address.city')",
+        expected: 'Cork',
+      },
+      {
+        name: 'falls back on a missing branch',
+        expression: "get({ user: {} }, 'user.address.city', 'unknown')",
+        expected: 'unknown',
+      },
+      {
+        name: 'does not fall back on a falsy value',
+        expression: "get({ count: 0 }, 'count', 99)",
+        expected: 0,
+      },
+      {
+        name: 'keeps a stored null',
+        expression: "get({ a: { b: null } }, 'a.b', 'fallback')",
+        expectedCode: 'null',
+      },
+      {
+        name: 'handles a nullish root',
+        expression: "get(null, 'a.b', 'fallback')",
+        expected: 'fallback',
+      },
+      {
+        name: 'reads a single segment',
+        expression: "get({ a: 1 }, 'a')",
+        expected: 1,
+      },
+    ],
+    reference: [
+      'function get(object, path, fallback) {',
+      "  const parts = path.split('.');",
+      '  let current = object;',
+      '  for (const part of parts) {',
+      '    if (current == null) return fallback;',
+      '    current = current[part];',
+      '  }',
+      '  return current === undefined ? fallback : current;',
+      '}',
+    ].join('\n'),
+    hints: [
+      'Split the path and walk one segment at a time.',
+      'Bail out as soon as the current value is null or undefined.',
+      'Only substitute the fallback for `undefined` at the end, so a stored null survives.',
+    ],
+    explanation:
+      'The distinction between "missing" and "falsy" is the whole exercise, and getting it wrong is how `0` and `""` silently turn into defaults. `== null` is the one place loose equality earns its keep: it matches `null` and `undefined` and nothing else. Optional chaining covers the same ground natively when the path is known at author time (`object?.user?.address?.city ?? fallback`), so this shape is only needed for a path that arrives as data, such as a column key in a configurable table.',
+  }),
+
+  codeProblem({
+    slug: 'code-partition',
+    title: 'Split a list in one pass',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    prompt: md(
+      'Write `partition(items, predicate)` returning `[matching, notMatching]`.',
+      '',
+      'Both arrays keep the original order, and an empty input gives two empty arrays.'
+    ),
+    starter: 'function partition(items, predicate) {\n  \n}',
+    tests: [
+      {
+        name: 'splits on the predicate',
+        expression: 'partition([1, 2, 3, 4], (n) => n % 2 === 0)',
+        expected: [
+          [2, 4],
+          [1, 3],
+        ],
+      },
+      {
+        name: 'keeps everything when all match',
+        expression: 'partition([2, 4], (n) => n % 2 === 0)',
+        expected: [[2, 4], []],
+      },
+      {
+        name: 'handles an empty list',
+        expression: 'partition([], () => true)',
+        expected: [[], []],
+      },
+      {
+        name: 'passes the index to the predicate',
+        expression: 'partition([9, 9, 9], (_, i) => i === 1)',
+        expected: [[9], [9, 9]],
+      },
+    ],
+    reference: [
+      'function partition(items, predicate) {',
+      '  const yes = [];',
+      '  const no = [];',
+      '  items.forEach((item, index) => {',
+      '    (predicate(item, index) ? yes : no).push(item);',
+      '  });',
+      '  return [yes, no];',
+      '}',
+    ].join('\n'),
+    hints: [
+      'Two arrays, one loop.',
+      'Pick which array to push into rather than branching around two pushes.',
+      'Pass the index through, the way the built-in array methods do.',
+    ],
+    explanation:
+      'Two `filter` calls read fine and are usually fast enough, but they evaluate the predicate twice per item, which matters when it is expensive or has a side effect such as logging. The version that ternaries on the *target array* rather than the statement keeps the loop body to one line. Matching the built-in signature by passing the index is a small thing that makes a utility feel native and saves the caller reaching for a counter.',
+  }),
+
+  codeProblem({
+    slug: 'code-once',
+    title: 'Run it exactly once',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'Write `once(fn)` returning a wrapped function that calls `fn` on the first invocation only, and returns that first result on every later call.',
+      '',
+      'Arguments from the first call are passed through. Later arguments are ignored.'
+    ),
+    starter: 'function once(fn) {\n  \n}',
+    tests: [
+      {
+        name: 'calls through the first time',
+        expression: 'once((n) => n * 2)(21)',
+        expected: 42,
+      },
+      {
+        name: 'returns the first result afterwards',
+        expression: '(() => { const f = once((n) => n * 2); f(21); return f(1); })()',
+        expected: 42,
+      },
+      {
+        name: 'invokes the underlying function only once',
+        expression:
+          '(() => { let calls = 0; const f = once(() => { calls += 1; }); f(); f(); f(); return calls; })()',
+        expected: 1,
+      },
+      {
+        name: 'caches an undefined result too',
+        expression:
+          '(() => { let calls = 0; const f = once(() => { calls += 1; return undefined; }); f(); f(); return calls; })()',
+        expected: 1,
+      },
+    ],
+    reference: [
+      'function once(fn) {',
+      '  let called = false;',
+      '  let result;',
+      '  return function (...args) {',
+      '    if (!called) {',
+      '      called = true;',
+      '      result = fn.apply(this, args);',
+      '    }',
+      '    return result;',
+      '  };',
+      '}',
+    ].join('\n'),
+    hints: [
+      'The wrapper needs to remember both whether it ran and what it returned.',
+      'A separate boolean is safer than checking whether the result is undefined.',
+      'Set the flag before calling, so a throwing function cannot be retried into a second call.',
+    ],
+    explanation:
+      'The `called` flag has to be separate from the cached value, or a function returning `undefined` runs every time, which is exactly the case for the initialisers this is usually wrapped around. Setting the flag before invoking is a deliberate choice: it means a throw does not leave the wrapper ready to run again, which matches "exactly once" but is worth documenting since some implementations prefer the opposite. Using `function` rather than an arrow, plus `apply`, keeps `this` working when the wrapped function is used as a method.',
+  }),
+
+  codeProblem({
+    slug: 'code-sort-by-multiple',
+    title: 'Sort by several keys',
+    difficulty: 'medium',
+    relevance: 'daily',
+    prompt: md(
+      'Write `sortBy(items, comparators)` where `comparators` is an array of functions, each returning a negative, zero or positive number.',
+      '',
+      'Use each in turn to break ties. Do not mutate the input array.'
+    ),
+    starter: 'function sortBy(items, comparators) {\n  \n}',
+    tests: [
+      {
+        name: 'sorts by the first comparator',
+        expression: 'sortBy([{ a: 2 }, { a: 1 }], [(x, y) => x.a - y.a]).map((o) => o.a)',
+        expected: [1, 2],
+      },
+      {
+        name: 'breaks ties with the second',
+        expression:
+          "sortBy([{ a: 1, b: 'z' }, { a: 1, b: 'a' }], [(x, y) => x.a - y.a, (x, y) => x.b.localeCompare(y.b)]).map((o) => o.b)",
+        expected: ['a', 'z'],
+      },
+      {
+        name: 'does not mutate the input',
+        expression:
+          '(() => { const input = [{ a: 2 }, { a: 1 }]; sortBy(input, [(x, y) => x.a - y.a]); return input[0].a; })()',
+        expected: 2,
+      },
+      {
+        name: 'handles no comparators',
+        expression: 'sortBy([3, 1, 2], []).length',
+        expected: 3,
+      },
+    ],
+    reference: [
+      'function sortBy(items, comparators) {',
+      '  return [...items].sort((a, b) => {',
+      '    for (const compare of comparators) {',
+      '      const result = compare(a, b);',
+      '      if (result !== 0) return result;',
+      '    }',
+      '    return 0;',
+      '  });',
+      '}',
+    ].join('\n'),
+    hints: [
+      'Copy first, because `sort` mutates in place.',
+      'Walk the comparators and return the first non-zero result.',
+      'Returning 0 at the end means "tied on every key".',
+    ],
+    explanation:
+      'Returning the first non-zero comparison is the whole trick, and it composes: reverse a direction by wrapping one comparator, add a key by pushing another. The copy matters because `sort` sorts in place and returns the same array, so sorting props or state directly is a mutation bug that often shows up as a list that will not rerender. `toSorted` does the copy for you where it is available. Sorting has been stable since ES2019, so items tied on every comparator keep their original relative order.',
   }),
 ];
