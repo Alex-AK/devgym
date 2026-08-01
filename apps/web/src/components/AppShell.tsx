@@ -1,6 +1,6 @@
 import { Dumbbell } from 'lucide-react';
 import * as React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 
@@ -9,13 +9,18 @@ const LINKS = [
   { to: '/session', label: 'Session', end: false },
   { to: '/practice', label: 'Practice', end: false },
   { to: '/problems', label: 'Problems', end: false },
+  { to: '/workouts', label: 'Workouts', end: false },
 ];
 
 export function AppShell(): React.ReactElement {
+  // The workout IDE needs the room: editor and checkpoints side by side.
+  const wide = /^\/workouts\/[^/]+/.test(useLocation().pathname);
+  const container = wide ? 'max-w-[100rem]' : 'max-w-5xl';
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b bg-card/85 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
+        <div className={cn('mx-auto flex h-14 items-center gap-6 px-4', container)}>
           <NavLink to="/" className="flex items-center gap-2 font-semibold tracking-tight">
             <Dumbbell className="size-5 text-primary" />
             devgym
@@ -41,7 +46,7 @@ export function AppShell(): React.ReactElement {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className={cn('mx-auto px-4 py-8', container)}>
         <Outlet />
       </main>
     </div>

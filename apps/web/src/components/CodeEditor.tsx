@@ -1,5 +1,4 @@
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { javascript } from '@codemirror/lang-javascript';
 import { sql, SQLite } from '@codemirror/lang-sql';
 import {
   bracketMatching,
@@ -11,6 +10,8 @@ import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, placeholder as placeholderExt } from '@codemirror/view';
 import * as React from 'react';
 
+import { type EditorLanguage, LANGUAGE_MODES } from '@/lib/editor-language';
+
 export interface CodeEditorHandle {
   focus: () => void;
 }
@@ -18,7 +19,7 @@ export interface CodeEditorHandle {
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  language: 'javascript' | 'sql';
+  language: EditorLanguage;
   placeholder: string;
   /** Cmd/Ctrl+Enter, matching the textarea it replaces. */
   onSubmit: () => void;
@@ -57,7 +58,9 @@ export const CodeEditor = React.forwardRef<CodeEditorHandle, CodeEditorProps>(fu
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         placeholderExt(placeholder),
         EditorView.lineWrapping,
-        language === 'sql' ? sql({ dialect: SQLite, upperCaseKeywords: true }) : javascript(),
+        language === 'sql'
+          ? sql({ dialect: SQLite, upperCaseKeywords: true })
+          : LANGUAGE_MODES[language](),
         keymap.of([
           {
             key: 'Mod-Enter',

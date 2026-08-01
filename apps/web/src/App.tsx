@@ -7,6 +7,8 @@ import { PracticePage } from '@/pages/PracticePage';
 import { ProblemPage } from '@/pages/ProblemPage';
 import { ProblemsPage } from '@/pages/ProblemsPage';
 import { SessionPage } from '@/pages/SessionPage';
+import { WorkoutPage } from '@/pages/WorkoutPage';
+import { WorkoutsPage } from '@/pages/WorkoutsPage';
 
 export function App(): React.ReactElement {
   return (
@@ -16,6 +18,8 @@ export function App(): React.ReactElement {
         <Route path="session" element={<SessionPage />} />
         <Route path="practice" element={<PracticePage />} />
         <Route path="problems" element={<ProblemsPage />} />
+        <Route path="workouts" element={<WorkoutsPage />} />
+        <Route path="workouts/:slug" element={<WorkoutPage />} />
         <Route path="problems/:slug" element={<ProblemPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

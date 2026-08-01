@@ -11,6 +11,10 @@ import type {
   ResetAllResponse,
   RevealSolutionResponse,
   SessionResponse,
+  WorkoutDetail,
+  WorkoutFile,
+  WorkoutRun,
+  WorkoutSummary,
 } from '@devgym/shared';
 
 export class ApiError extends Error {
@@ -53,6 +57,33 @@ export const api = {
   problems: (): Promise<ProblemSummary[]> => request('/problems'),
   problem: (slug: string): Promise<ProblemDetail> => request(`/problems/${slug}`),
   practiceSchema: (): Promise<PracticeSchemaResponse> => request('/practice-schema'),
+
+  workouts: (): Promise<WorkoutSummary[]> => request('/workouts'),
+  workout: (slug: string): Promise<WorkoutDetail> => request(`/workouts/${slug}`),
+  startWorkout: (slug: string): Promise<WorkoutDetail> =>
+    request(`/workouts/${slug}/start`, { method: 'POST' }),
+  saveWorkoutFile: (
+    slug: string,
+    path: string,
+    contents: string
+  ): Promise<{ files: WorkoutFile[] }> =>
+    request(`/workouts/${slug}/files`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path, contents }),
+    }),
+  resetWorkoutFile: (slug: string, path: string): Promise<{ files: WorkoutFile[] }> =>
+    request(`/workouts/${slug}/files/reset`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path }),
+    }),
+  runWorkout: (slug: string): Promise<WorkoutRun> =>
+    request(`/workouts/${slug}/run`, { method: 'POST' }),
+  finishWorkout: (slug: string): Promise<WorkoutDetail> =>
+    request(`/workouts/${slug}/finish`, { method: 'POST' }),
+  revealWorkoutSolution: (slug: string): Promise<{ files: WorkoutFile[] }> =>
+    request(`/workouts/${slug}/reveal-solution`, { method: 'POST' }),
 
   next: (
     after?: string,
@@ -102,4 +133,6 @@ export const queryKeys = {
   practiceSchema: ['practice-schema'] as const,
   activeSession: ['session', 'active'] as const,
   latestSession: ['session', 'latest'] as const,
+  workouts: ['workouts'] as const,
+  workout: (slug: string) => ['workout', slug] as const,
 };
