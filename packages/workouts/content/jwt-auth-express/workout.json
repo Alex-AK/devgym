@@ -1,0 +1,41 @@
+{
+  "slug": "jwt-auth-express",
+  "title": "Login and a protected route",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express",
+    "database": "in-memory users"
+  },
+  "summary": "Issue a signed JWT on login and gate a route behind it: sign with an expiry, verify properly, and turn every bad token into a 401.",
+  "focus": ["auth", "jwt", "middleware", "error handling"],
+  "editable": ["src/server/auth.ts", "src/server/app.ts"],
+  "checkpoints": [
+    {
+      "id": "login-issues-token",
+      "title": "A correct login gets a signed token back",
+      "testFile": "tests/checkpoints/01-login-issues-token.test.ts",
+      "hint": "jose signs through a builder: new SignJWT(claims).setProtectedHeader({ alg: 'HS256' }).setSubject(...).setExpirationTime(...).sign(SECRET_KEY). A token with no expiry does not count."
+    },
+    {
+      "id": "login-rejects-bad-credentials",
+      "title": "Bad credentials get 401 and no token",
+      "testFile": "tests/checkpoints/02-login-rejects-bad-credentials.test.ts",
+      "hint": "Wrong password and unknown email have to look identical from outside, or the endpoint tells an attacker which addresses are registered. A body with missing fields is a 401, not a crash."
+    },
+    {
+      "id": "protected-route-requires-token",
+      "title": "The protected route refuses everything that is not a live token",
+      "testFile": "tests/checkpoints/03-protected-route-requires-a-valid-token.test.ts",
+      "hint": "jwtVerify, never decodeJwt: decoding reads the claims of any token at all, including one you did not sign. Its rejection is a promise rejection, so catch it and answer 401 rather than letting it become a 500."
+    },
+    {
+      "id": "protected-route-returns-user",
+      "title": "The protected route answers with the user behind the token",
+      "testFile": "tests/checkpoints/04-protected-route-returns-the-user.test.ts",
+      "hint": "The subject claim is a string, and findUserById takes a number. Return the profile fields one at a time; spreading the user sends the password hash with it."
+    }
+  ]
+}

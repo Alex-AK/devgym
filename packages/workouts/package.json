@@ -7,11 +7,16 @@
   "dependencies": {
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/express": "^5.0.0",
+    "@types/supertest": "^6.0.2",
     "better-sqlite3": "^12.11.1",
     "drizzle-orm": "^0.45.2",
+    "express": "^5.1.0",
+    "jose": "^6.0.11",
     "jsdom": "^28.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "supertest": "^7.1.1",
     "vitest": "^3.2.7"
   }
 }

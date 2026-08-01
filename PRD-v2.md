@@ -1,7 +1,8 @@
 # devgym — PRD v2: the practice platform
 
-> **Status: in progress.** Phase 0 and phase 1 have landed. Everything below phase 1 is planned, not
-> built. [PRD.md](./PRD.md) is the historical v1 spec; this is the live one.
+> **Status: in progress.** Phase 0 and phase 1 have landed, and phase 2 is underway. Everything
+> below phase 2 is planned, not built. [PRD.md](./PRD.md) is the historical v1 spec; this is the
+> live one.
 
 ## Why a v2
 
@@ -13,7 +14,7 @@ v2 adds that, and keeps the queue exactly as it is. Two modes, one app:
 
 - **Problems** — 225 short problems, 15-minute morning reps. Recall and recognition. Built.
 - **Workouts** — 15-30 minute builds against a real toolchain: read a brief, edit real files in a
-  real project, run checkpoints, see how far you got. Built (one workout).
+  real project, run checkpoints, see how far you got. Built, and the library is filling up.
 - **Handbook** — short foundational reference for frontend, backend, database and infrastructure.
   Planned.
 
@@ -91,17 +92,26 @@ paginated employee list. Checkpoints: the handler accepts sort/dir; the ordering
 rather than after pagination; an unknown column is rejected rather than interpolated; the client
 toggles direction and returns to page 1.
 
+**Workout 2: `jwt-auth-express`** (20 min, Express + jose). Issue a token on login and gate a route
+behind it. Checkpoints: login returns a token signed with the app secret, carrying the user id and
+an expiry; bad credentials get 401 with no token and answer identically whether or not the address
+exists; the protected route refuses a forged, expired, malformed or unknown-subject token with a 401
+rather than a 500; and it answers with the token holder, password hash left out.
+
+The second workout is what proved the format: it added Express, jose and supertest to
+`packages/workouts/package.json` and touched no application source at all.
+
 ---
 
 ## 2. Roadmap
 
 ### Phase 2 — the workout library
 
-Port the accumulated briefs. Each is full stack, because that is the level being practised.
+Port the accumulated briefs. Each is full stack, because that is the level being practised. JWT login
+is done; the rest are still to write.
 
 | Workout                             | Stack                          | Shape    |
 | ----------------------------------- | ------------------------------ | -------- |
-| JWT login and a protected route     | Express + jose                 | feature  |
 | Search with pagination              | Drizzle + PGlite               | feature  |
 | Search with pagination              | Prisma + PGlite                | feature  |
 | Rate limiting middleware            | Express + fake Redis           | feature  |
