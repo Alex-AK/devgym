@@ -6,7 +6,10 @@ does and how to run it. This file covers what an agent needs to change it safely
 `PRD.md` is the original v1 spec and is now **historical**. Where it disagrees with the code, the
 code wins: sessions, spaced repetition and executable code problems were all v1 non-goals that were
 added later. `PRD-v2.md` is the **live** spec: it covers workouts, the planned workout library, and
-the handbook. Read it before starting anything in that area.
+the handbook. Read it before starting anything in that area. The three `PRD-v3-*.md` documents
+extend it rather than replace it: the learning guide's curriculum map, the problem and workout
+roadmap, and the open-sourcing work (about page, citation policy). Read the relevant one before
+starting content, handbook or about-page work.
 
 ## Hard constraints
 
@@ -70,12 +73,10 @@ apps/web/src/
 
 ## Conventions
 
-- User-facing copy follows the project's writing voice: direct, plain English, contractions,
-  sentence-case headings, and em dashes kept rare (commas for dependent clauses, colons for list
-  introductions, parentheses or a second sentence for asides). This applies to problem prompts,
-  hints, explanations, grader feedback and UI strings.
-- Never bulk-regex prose to strip em dashes. It mangles dual-dash asides and questions. Rewrite by
-  hand, or diff against the original for sentences containing a _pair_ of dashes afterwards.
+- All user-facing copy follows `WRITING.md`. Read it before writing or editing any prose: problem
+  prompts, hints, explanations, grader feedback, briefs, handbook pages, UI strings and repo docs.
+  The em-dash rules are the ones that bite, and never bulk-regex dashes out of prose: it mangles
+  dual-dash asides. Rewrite by hand and diff sentences that contained a pair.
 - Commit in meaningful increments with plain descriptive messages.
 - Prettier owns formatting: single quotes, 100 columns, semicolons. Never hand-format to fight it.
 - ESLint runs type-aware. When a rule fires on something deliberate, prefer an inline disable with a
