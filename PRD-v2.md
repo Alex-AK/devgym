@@ -12,15 +12,28 @@ for, means sitting inside an unfamiliar codebase and making it do something new 
 
 v2 adds that, and keeps the queue exactly as it is. Two modes, one app:
 
-- **Problems** — 225 short problems, 15-minute morning reps. Recall and recognition. Built.
+- **Problems** — 225 short problems, 15-minute morning reps. Recall and recognition. Built, and
+  growing continuously.
 - **Workouts** — 15-30 minute builds against a real toolchain: read a brief, edit real files in a
   real project, run checkpoints, see how far you got. Built, and the library is filling up.
 - **Handbook** — short foundational reference for frontend, backend, database and infrastructure.
-  Planned.
+  Planned, and specified in phase 4 below.
 
 Framing note: this is **practice**, not interview prep. Interviews are one thing the practice is
 good for. The vocabulary in the UI and the content stays "workout", "checkpoint", "run" — never
 "candidate", "grade", "score".
+
+**Content is the product, and it is never finished.** Both the problem set and the workout library
+grow indefinitely, and breadth of stack is an explicit goal rather than a consequence: exposure to
+tools you have not used is worth as much as depth in the ones you have. That has three standing
+implications, which is why it is stated here rather than left as a habit.
+
+- Adding content must stay cheap. A problem is an entry in a seed file; a workout is a directory.
+  Anything that makes either of those require application changes is a bug in the design.
+- The safety net is what makes volume safe. Every canonical answer grades correct, every workout
+  solution passes and every starter fails, and that runs in `pnpm verify` rather than by inspection.
+- New stacks are additions to one `package.json`, and the finding of what does or does not fit is
+  worth writing down. Prisma did not fit, and why is recorded in phase 2.
 
 ---
 
@@ -138,6 +151,32 @@ checkpoint can hold the answer to "bra" back until after the answer to "brac" ha
 matches two products and "brac" matches one, so whose answer is on screen is a visible fact rather
 than a timing guess.
 
+**Workout 7: `orders-report-typeorm`** (25 min, TypeORM + SQLite). A bug-hunt with two bugs stacked:
+the report runs two extra queries per order, and the obvious fix — join everything in — trades eighty
+round trips for one query that ships every line item to JavaScript to be added up. Checkpoints: the
+figures are unchanged; the statement count is the same for five orders and sixty; no query returns
+more rows than the report has; and an order with nothing on it still appears, at zero, rather than
+being dropped by an inner join.
+
+**Workout 8: `auth-guard-nestjs`** (20 min, NestJS). The ownership check on `GET /reports/:id` was
+written when that was the only route. There are four now and three of them are open. Checkpoints:
+nobody reads or exports somebody else's report; nobody deletes one, and the refusal happens before
+the row is gone; anonymous is 401 and missing is 404, in that order, so a stranger cannot learn which
+ids exist; and the check is applied to the controller rather than copied into each handler.
+
+That last checkpoint reads the controller's metadata rather than its behaviour, which is the one
+place in the library where that is the right call: four correct copies of the same `if` still leave
+the fifth route uncovered, and covering the route nobody has written yet is the entire lesson.
+
+**Decorator metadata, and why the scaffold uses SWC.** Nest and TypeORM both read constructor
+parameter types back at runtime through `design:paramtypes`. esbuild does not emit decorator metadata
+at all, so dependency injection silently resolves to `undefined` under it — the failure is a
+confusing null, not a build error. The scaffold's server project therefore transforms with SWC
+(`legacyDecorator` plus `decoratorMetadata`); the client project stays on esbuild, which is faster and
+handles JSX without any of it. All six earlier workouts pass unchanged under the switch. This is what
+makes any decorator-based stack — Nest, TypeORM, TypeGraphQL, class-validator — available to future
+workouts.
+
 The second workout is what proved the format: it added Express, jose and supertest to
 `packages/workouts/package.json` and touched no application source at all. The third is what proved
 the format can carry a whole database engine.
@@ -164,16 +203,36 @@ actually varies, not before.
 
 ### Phase 2 — the workout library
 
-Port the accumulated briefs. Each is full stack, because that is the level being practised. Five are
-done: JWT login, the slow list endpoint, search on Drizzle, rate limiting and the autocomplete. The
-rest are still to write.
+Port the accumulated briefs, then keep going. Each is full stack, because that is the level being
+practised. Seven are done: JWT login, the slow list endpoint, search on Drizzle, rate limiting, the
+autocomplete, the orders report on TypeORM and the Nest guard.
 
-| Workout                           | Stack                     | Shape    |
-| --------------------------------- | ------------------------- | -------- |
-| Infinite scroll with retry        | React + local fixture API | feature  |
-| Drag-and-drop ordering, persisted | React + Zustand + API     | feature  |
-| N+1 in the orders report          | TypeORM                   | bug-hunt |
-| Auth check on the wrong layer     | NestJS guards             | bug-hunt |
+| Workout                           | Stack                     | Shape   |
+| --------------------------------- | ------------------------- | ------- |
+| Infinite scroll with retry        | React + local fixture API | feature |
+| Drag-and-drop ordering, persisted | React + Zustand + API     | feature |
+
+**Breadth of stack is a goal in itself, not a side effect.** The original list was a set of briefs
+that happened to use different tools. It is now the other way round: the library should cover the
+ground a working developer actually walks across, and the brief is chosen to suit the stack rather
+than the other way round. Two workouts on the same tool are worth less than the same two spread
+across tools, even when the second brief is weaker, because the thing being practised is reading an
+unfamiliar codebase under time pressure.
+
+What is covered so far, and what is not:
+
+| Area           | Covered                            | Missing                                       |
+| -------------- | ---------------------------------- | --------------------------------------------- |
+| Query builders | Drizzle, Kysely, TypeORM           | Sequelize, Mongoose, raw SQL                  |
+| Databases      | SQLite, Postgres (PGlite)          | Mongo, Redis as a store rather than a counter |
+| HTTP servers   | Express, NestJS                    | Fastify, Hono, plain `node:http`              |
+| Client         | React                              | state libraries, forms, tables, routing       |
+| Transport      | request/response JSON              | SSE, WebSockets, file upload, streaming       |
+| Cross-cutting  | auth, rate limiting, N+1, indexing | caching, retries, background jobs, uploads    |
+
+The transport row is the widest gap and the one the handbook work below feeds directly: a workout
+that streams results over SSE and one that keeps two clients in sync over a WebSocket would cover a
+kind of code the library has none of.
 
 **Prisma is off the list.** The plan was the same search brief on a second ORM, which is exactly the
 "practise against a stack you do not know" case. It does not fit: Prisma generates its client with
@@ -217,10 +276,142 @@ Three adaptations the offline constraint forces, all of which improve the exerci
 
 ### Phase 4 — the handbook
 
-Short foundational reference, deliberately not exhaustive. Sections for frontend, backend, database
-and infrastructure. Each page is one concept, a worked example, and a link to the problems and
-workouts that exercise it. The `relevance` axis already carries the right signal: a `foundational`
-problem is a handbook page waiting to be written.
+Short foundational reference, deliberately not exhaustive. Each page is one concept, a worked
+example, and a link to the problems and workouts that exercise it. The `relevance` axis already
+carries the right signal: a `foundational` problem is a handbook page waiting to be written.
+
+#### What a page is
+
+A page is not an article. It is the thing you would want open beside you while doing the workout, and
+it has a fixed shape:
+
+1. **The question it answers**, in one sentence, phrased the way you would ask it at the moment you
+   needed it. "Why did my cache not invalidate" beats "Cache invalidation".
+2. **The mental model** — a paragraph and, where it earns its place, one diagram. What is actually
+   happening, not the API surface.
+3. **A worked example** you can read in under a minute. Real code, and where possible lifted straight
+   out of a workout so the two reinforce each other.
+4. **The traps** — the two or three things that are actually got wrong, stated as symptoms first,
+   because that is how you meet them.
+5. **Where to practise it** — links to the problems and workouts that exercise it. This is what stops
+   the handbook becoming a wiki nobody opens.
+
+A page that cannot fill section 4 honestly is a page nobody needed.
+
+#### 4a. Moving data between machines
+
+The largest gap in both the problem set and the workout library, and the section to build first. The
+organising idea is not a list of protocols but the four questions that pick one:
+
+- **Who starts it?** The client, the server, or a schedule.
+- **How many messages, and in which direction?** One-shot, one-to-many, or a genuine conversation.
+- **What has to be true about delivery?** Order, exactly-once, durability if nobody is listening.
+- **What does it cost?** Connections held open, infrastructure that has to be sticky, what breaks
+  behind a corporate proxy.
+
+Pages, each answering those four for one option:
+
+| Page                       | The thing it is actually for                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Request/response over HTTP | The default. Why it is the default, and what it cannot do                                                                                        |
+| HTTP/1.1 vs 2 vs 3         | Head-of-line blocking, multiplexing, why "bundle everything" advice expired                                                                      |
+| REST in practice           | Resources, verbs, status codes, and where the purity argument stops paying                                                                       |
+| GraphQL                    | One round trip for a screen's worth of data, and the N+1 it invites on the server                                                                |
+| tRPC                       | Types across the wire without codegen, and what you give up (it is not an API for anyone else)                                                   |
+| gRPC                       | Binary, schema-first, service-to-service; why it is rare in the browser                                                                          |
+| Long polling               | The fallback that still underpins a lot of "realtime"                                                                                            |
+| Server-Sent Events         | Server pushes, one direction, plain HTTP, automatic reconnect. The one people skip past to WebSockets and should not                             |
+| WebSockets                 | A real two-way conversation, and everything that gets harder: auth, scaling, reconnect, backpressure                                             |
+| WebRTC                     | Peer to peer, media and data, and why there is still a server (signalling, STUN, TURN)                                                           |
+| Webhooks                   | Somebody else's server starting the conversation; retries, replay, signature verification                                                        |
+| Queues and background jobs | Deliberately not answering now; at-least-once, idempotency, dead letters                                                                         |
+| Batch and ETL              | Bulk movement on a schedule. A different axis from everything above, and the honest answer to a surprising number of "we need realtime" requests |
+
+The last two are not transports in the same sense, and that is the point of including them: a good
+share of the time the right answer to "how should these systems talk" is "they should not, in real
+time".
+
+**A decision page** ties it together: a table of the above against the four questions, plus the three
+cases worth memorising — a dashboard that updates (SSE), a chat or a collaborative editor
+(WebSockets), a file that has to move (HTTP, and then a queue for what happens next).
+
+#### 4b. Headers
+
+Headers are where a surprising amount of production behaviour actually lives, and they are almost
+never taught directly.
+
+- **The model** — request and response metadata, case-insensitive, and what a proxy is allowed to do
+  to them on the way through.
+- **Content negotiation** — `Accept`, `Content-Type`, `Content-Encoding`, and why the server picking
+  wrong is usually a `Vary` problem.
+- **Authentication** — `Authorization`, bearer tokens, cookies, and why `Set-Cookie` behaves unlike
+  every other header.
+- **Caching** — `Cache-Control`, `ETag`, `If-None-Match`, `Last-Modified`, `Age`, `Vary`. Shares a
+  page with 4c.
+- **CORS** — preflight, `Origin`, `Access-Control-Allow-*`, credentials, and why "it works in curl"
+  proves nothing.
+- **Security** — `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`,
+  `Referrer-Policy`. What each actually stops.
+- **Proxies and identity** — `X-Forwarded-For`, `Forwarded`, why trusting it blindly is a rate limiter
+  that anyone can bypass. This connects straight to workout 5.
+- **Conditional requests and ranges** — 304, 206, resumable downloads.
+
+#### 4c. Caching, client and server
+
+The user asked for the basics across stacks, and the basics are less about any one cache than about
+knowing how many of them a single response passes through. The spine page is a diagram of exactly
+that: browser memory, browser disk, service worker, CDN, reverse proxy, application, ORM, database
+buffer pool. A stale value is always one of those, and naming which one is most of the fix.
+
+**Client**
+
+- The browser HTTP cache, and the difference between a reload, a hard reload and a fresh visit.
+- `Cache-Control` from the consumer's side: `no-store` vs `no-cache` vs `max-age=0`, which are three
+  different things and are used interchangeably by people who have not read this page.
+- Application caches — React Query, SWR, Apollo. Staleness, revalidation, and why they mostly
+  reimplement HTTP caching in JavaScript.
+- Local storage as a cache, and why it usually should not be.
+- Service workers and offline, briefly.
+
+**Server**
+
+- Reverse proxy and CDN caching; cache keys, and how a careless `Vary: Cookie` reduces the hit rate to
+  nothing.
+- Application-level memoisation, and its lifetime problem the moment there are two processes.
+- Redis or memcached as a shared cache: TTL against event-driven invalidation, and the cache
+  stampede when a popular key expires.
+- What the database caches on your behalf — the buffer pool, prepared statements, and why "the second
+  run is always faster" makes benchmarks lie. This one connects to workout 3.
+
+**The hard parts**, which get their own page because they are the same three every time: choosing a
+key, invalidating without a list of everything that depends on the value, and deciding whether stale
+is worse than slow. `stale-while-revalidate` is the answer often enough to be worth knowing by name.
+
+#### 4d. The rest
+
+Roughly in build order, after the three above:
+
+- **What happens on a request**, DNS to response. The spine everything else hangs from.
+- **Auth vs authz**, sessions vs tokens, where the check belongs. Two workouts already point here.
+- **How an index actually gets used**, and why the planner sometimes refuses one. Workout 3 is the
+  practical half.
+- **N+1, and how to see it** — the query log, not the stopwatch.
+- **The event loop**, and what "blocking" means in a runtime with one thread.
+- **Failure and retries** — timeouts, backoff, jitter, idempotency keys, at-least-once. Pairs with the
+  queues page in 4a.
+- **Load balancers and what they change** — sticky sessions, health checks, and why in-process state
+  stops working the day there are two instances.
+- **Where state lives on the client** — URL, server cache, component. Deciding this correctly removes
+  most state-management arguments.
+
+#### How it connects to the rest of the app
+
+Two links, both cheap and both the reason to build it at all:
+
+- Every handbook page lists the problems and workouts that exercise it, drawn from the existing
+  `relevance` and `focus` fields rather than a hand-maintained list.
+- Every workout brief links back to the pages behind it, so the review after the timer has somewhere
+  to go. A workout you failed is the best possible moment to read the page.
 
 Candidate first pages, from the study list: how an index actually gets used, what happens on a
 request from DNS to response, the event loop, N+1 and how to see it, auth vs authz, caching layers,
