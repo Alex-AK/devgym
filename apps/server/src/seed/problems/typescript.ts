@@ -1072,4 +1072,721 @@ export const typescriptProblems: ProblemDraft[] = [
     explanation:
       'Composing utility types keeps one source of truth: add a field to `User` and the update type follows, which a hand-written duplicate would not. `Omit` is subtraction and `Pick` is selection, and `Pick` is worth preferring when the editable set is small, because it fails loudly if a field is renamed while `Omit` silently keeps allowing it. Naming the composed type is usually better than inlining it, since the same shape is wanted by the form, the API client and the validator.',
   },
+
+  {
+    slug: 'ts-keyof',
+    title: 'The key list that went stale',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'The setting names are maintained by hand, and they stopped matching the interface the moment someone added a field:',
+      '',
+      code(
+        'ts',
+        'interface Settings { theme: string; fontSize: number; autosave: boolean }',
+        '',
+        "type SettingName = 'theme' | 'fontSize';"
+      ),
+      '',
+      'Write the type that derives the names from `Settings` instead.'
+    ),
+    graderConfig: {
+      accept: ['keyof settings', 'keyof'],
+      acceptPatterns: ['keyof\\s+Settings'],
+      nearMisses: {
+        'typeof settings':
+          'typeof goes from a value to a type. `Settings` is already a type, and you want its key names.',
+        'object.keys(settings)': 'That is a runtime array of strings. This has to be a type.',
+        string: 'string allows any key, including typos. You want exactly the three that exist.',
+      },
+      hints: [
+        'The names already exist in the interface. The type should follow it rather than repeat it.',
+        'One operator turns an object type into the union of its property names.',
+        '`keyof Settings`',
+      ],
+    },
+    canonicalAnswer: 'keyof Settings',
+    solution: code(
+      'ts',
+      'type SettingName = keyof Settings;',
+      "// 'theme' | 'fontSize' | 'autosave'",
+      '',
+      'function reset(name: SettingName) {}',
+      "reset('colour'); // error, and it stays right when Settings changes"
+    ),
+    explanation:
+      '`keyof T` gives the union of the property names of `T` as literal types, so the list is generated instead of maintained. Two details that come up in practice. On a type with an index signature, `keyof { [k: string]: number }` is `string | number`, because numeric keys are stringified at runtime. And `keyof` over a union yields only the keys the members share, since those are the only ones you can safely read. Its partner is the indexed access: `Settings[keyof Settings]` gives you the union of value types.',
+  },
+
+  {
+    slug: 'ts-indexed-access',
+    title: 'A getter that keeps the property type',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'The constraint on `K` is right, but the result comes back as `unknown` so every call site has to annotate it:',
+      '',
+      code(
+        'ts',
+        'function get<T, K extends keyof T>(obj: T, key: K): unknown {',
+        '  return obj[key];',
+        '}',
+        '',
+        "const size = get(settings, 'fontSize'); // unknown, want number"
+      ),
+      '',
+      'Write the return type meaning "the type of the property that `K` names".'
+    ),
+    graderConfig: {
+      accept: ['t[k]'],
+      acceptPatterns: ['\\bT\\s*\\[\\s*K\\s*\\]'],
+      nearMisses: {
+        any: 'any removes the error by removing the checking. The signature already knows which key was asked for.',
+        'keyof t': 'That is the union of key names. You want the type of the value stored at one.',
+        t: 'T is the whole object. You want one property out of it.',
+      },
+      hints: [
+        'The compiler already knows `K` is one of the keys of `T`. Use that.',
+        'You index a type with square brackets, the same way you index a value.',
+        '`T[K]`',
+      ],
+    },
+    canonicalAnswer: 'T[K]',
+    solution: code(
+      'ts',
+      'function get<T, K extends keyof T>(obj: T, key: K): T[K] {',
+      '  return obj[key];',
+      '}',
+      '',
+      "const size = get(settings, 'fontSize'); // number",
+      "const theme = get(settings, 'theme');   // string",
+      "get(settings, 'colour');                // error: not a key of Settings"
+    ),
+    explanation:
+      'An indexed access type reads a property type out of an object type, and it is resolved per call: ask for `fontSize` and you get `number`, ask for `theme` and you get `string`. Hand it a union of keys and you get a union of value types, so `Settings["theme" | "fontSize"]` is `string | number`. The array case is the one you will meet most often: `T[number]` is the element type, which is what makes `(typeof STATUSES)[number]` turn a const tuple into a union.',
+  },
+
+  {
+    slug: 'ts-awaited',
+    title: 'The derived type that is still a promise',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'Deriving the type from the loader gives you the promise, not the user:',
+      '',
+      code(
+        'ts',
+        'async function loadUser() {',
+        '  return db.users.findOne(id);',
+        '}',
+        '',
+        'type LoadedUser = ReturnType<typeof loadUser>; // Promise<User>'
+      ),
+      '',
+      'Write the type of the resolved value.'
+    ),
+    graderConfig: {
+      accept: ['awaited', 'awaited<returntype<typeof loaduser>>'],
+      acceptPatterns: ['Awaited\\s*<'],
+      nearMisses: {
+        await:
+          '`await` is the runtime keyword and cannot appear in a type. The utility type is one letter away.',
+        'returntype<typeof loaduser>':
+          'That is what it already is. The function is async, so its return type is the promise.',
+        'typeof loaduser':
+          'That is the type of the function itself. You still have to go through its return type.',
+      },
+      hints: [
+        'An async function returns a promise, so the derived type is a promise too.',
+        'There is a utility type for the value a promise resolves to, and it composes with `ReturnType`.',
+        '`Awaited<ReturnType<typeof loadUser>>`',
+      ],
+    },
+    canonicalAnswer: 'Awaited<ReturnType<typeof loadUser>>',
+    solution: code(
+      'ts',
+      'type LoadedUser = Awaited<ReturnType<typeof loadUser>>; // User',
+      '',
+      'const user: LoadedUser = await loadUser();'
+    ),
+    explanation:
+      '`Awaited<T>` models what `await` really does, which is more than peeling off one `Promise`. It recurses, so `Awaited<Promise<Promise<string>>>` is `string`. It leaves a non-promise alone, so `Awaited<number>` is `number`, and it distributes across a union. A hand-rolled `T extends Promise<infer U> ? U : T` handles the easy case and misses the nested one. The idiom worth keeping is `Awaited<ReturnType<typeof fn>>`, which ties a client type to the function that produces it.',
+  },
+
+  {
+    slug: 'ts-catch-unknown',
+    title: 'The error you are not allowed to read',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'Under `strict`, this does not compile:',
+      '',
+      code(
+        'ts',
+        'try {',
+        '  await save();',
+        '} catch (error) {',
+        '  logger.error(error.message);',
+        "  // TS18046: 'error' is of type 'unknown'",
+        '}'
+      ),
+      '',
+      'Anything can be thrown, so the compiler will not assume there is a `message`. Name the check that lets you read it.'
+    ),
+    graderConfig: {
+      accept: ['instanceof error', 'error instanceof error', 'instanceof'],
+      acceptPatterns: ['instanceof\\s+Error'],
+      nearMisses: {
+        'error as error':
+          'A cast asserts without checking. Throw a string and you read `.message` off a string.',
+        'typeof error':
+          'typeof reports "object" for every thrown object. It cannot tell an Error from a plain one.',
+        "'message' in error":
+          'Close, but `in` needs an object on its right. Applied to a bare `unknown` that line is itself an error.',
+      },
+      hints: [
+        'The compiler is right to refuse: a `throw` can carry a string, a number, or anything else.',
+        'You need a runtime check that proves the value is an `Error` before touching its properties.',
+        '`if (error instanceof Error) logger.error(error.message);`',
+      ],
+    },
+    canonicalAnswer: 'error instanceof Error',
+    solution: code(
+      'ts',
+      '} catch (error) {',
+      '  logger.error(error instanceof Error ? error.message : String(error));',
+      '}'
+    ),
+    explanation:
+      '`useUnknownInCatchVariables` turns the old `any` into `unknown`, and unlike `noUncheckedIndexedAccess` it is part of `strict`, so you already have it. It is being honest: `throw` accepts any value, a rejected promise carries whatever was passed to `reject`, and plenty of libraries reject with a plain object. `instanceof Error` is the usual narrowing, with one caveat. It compares against the `Error` constructor of the current realm, so an error crossing an iframe, a worker or a `node:vm` context fails the check while still being an error. Code that has to survive that checks for a `message` property instead.',
+  },
+
+  {
+    slug: 'ts-as-vs-annotation',
+    title: 'The cast that was never checked',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'One of these lines is checked. The other is believed:',
+      '',
+      code(
+        'ts',
+        'interface User { id: string; name: string; email: string }',
+        '',
+        "const a = { id: '1' } as User; // compiles",
+        "const b: User = { id: '1' };   // TS2739: missing name, email",
+        '',
+        'a.name.toUpperCase();          // TypeError at runtime'
+      ),
+      '',
+      'Explain what `as` did here, and why an annotation is the better default.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'assert',
+            'cast',
+            'overrid',
+            'no check',
+            'not checked',
+            'nothing is checked',
+            'no checking',
+            'without checking',
+            'unchecked',
+            'tells the compiler',
+            'trust',
+            'silenc',
+            'suppress',
+          ],
+          missingFeedback: 'What does `as` do to the check on that object?',
+        },
+        {
+          synonyms: [
+            'annotation',
+            'annotated',
+            'compile error',
+            'caught',
+            'catches',
+            'flag',
+            'missing',
+            'rejected',
+            'verif',
+          ],
+          missingFeedback: 'What does the annotated line do that the cast does not?',
+        },
+        {
+          synonyms: ['runtime', 'crash', 'undefined', 'typeerror', 'blow up', 'not really a user'],
+          missingFeedback: 'What is the cost when the claim turns out to be false?',
+        },
+      ],
+      hints: [
+        'One line asks the compiler to check a value. The other tells it what to believe.',
+        'The cast is allowed because `User` is assignable to `{ id: string }`, so the two overlap enough for an assertion. Nothing verifies the two missing fields.',
+        '`as` silences the check and emits nothing; the annotation performs it, which is why only `b` reports the missing properties, and why only `a` reaches a runtime TypeError.',
+      ],
+    },
+    canonicalAnswer:
+      'as is an assertion, not a conversion: it overrides the inferred type and the compiler stops checking, so an object with no name and no email is accepted as a User. The annotation checks the literal against User instead, and the missing properties are a compile error. The cast only moves the failure to runtime, where name is undefined and toUpperCase throws a TypeError.',
+    solution: code(
+      'ts',
+      '// Annotate, and let the compiler check the value:',
+      "const b: User = { id: '1', name: 'Ada', email: 'ada@example.com' };",
+      '',
+      '// Where the value genuinely comes from outside, start at unknown and validate:',
+      'const parsed: unknown = JSON.parse(body);',
+      'if (!isUser(parsed)) throw new BadRequest();'
+    ),
+    explanation:
+      'Three tools that look interchangeable and are not. An annotation checks the value against the type and then treats it as that type. `as` asserts a type the compiler cannot verify and performs no check at all: like `!`, it emits nothing and is a promise rather than a guarantee. `satisfies` checks without widening. `as` is not unlimited, and refuses when neither type is assignable to the other, which is why the `as unknown as X` double cast exists. What it always allows is a subset, because `User` is assignable to `{ id: string }`, and a missing field is exactly the shape of the casts that blow up. Keep `as` for the cases where you know something the compiler cannot, and write down what you know.',
+  },
+
+  {
+    slug: 'ts-excess-property',
+    title: 'Same object, two verdicts',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'The same object, the same parameter, and only one of these is an error:',
+      '',
+      code(
+        'ts',
+        'interface Options { retries: number }',
+        'declare function createClient(options: Options): void;',
+        '',
+        'createClient({ retries: 3, timeout: 1000 });',
+        "// TS2353: 'timeout' does not exist in type 'Options'",
+        '',
+        'const opts = { retries: 3, timeout: 1000 };',
+        'createClient(opts); // fine'
+      ),
+      '',
+      'Explain why.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['literal', 'inline', 'fresh', 'written directly', 'straight into'],
+          missingFeedback: 'What is different about the first argument compared with the variable?',
+        },
+        {
+          synonyms: [
+            'excess propert',
+            'excess',
+            'extra propert',
+            'extra key',
+            'extra field',
+            'unknown propert',
+          ],
+          missingFeedback: 'Name the check that only fires on one of the two.',
+        },
+        {
+          synonyms: [
+            'structural',
+            'assignab',
+            'compatible',
+            'has everything',
+            'more than',
+            'superset',
+            'satisfies the shape',
+          ],
+          missingFeedback: 'Why is the variable version legal at all?',
+        },
+      ],
+      hints: [
+        'The type of `opts` is not `Options`. It is `{ retries: number; timeout: number }`, and that is assignable to `Options`.',
+        'Structural typing allows extra properties, so the second call is following the normal rule. The first error comes from a rule that applies to something narrower.',
+        'It is the excess property check, and it only fires on a fresh object literal, which is why naming the value gets it past.',
+      ],
+    },
+    canonicalAnswer:
+      'TypeScript runs an excess property check on an object literal written straight into a typed position, so timeout is reported as a key that does not exist in Options. Once the literal is stored in a variable it is no longer fresh, and only the ordinary structural rule applies: the object has everything Options requires, so the extra property is still assignable and the call is fine.',
+    solution: code(
+      'ts',
+      '// The check follows the literal, so keep the literal at the typed position:',
+      'createClient({ retries: 3 });',
+      '',
+      '// or put the check back on a named value, without widening it:',
+      'const opts = { retries: 3, timeout: 1000 } satisfies Options; // now an error'
+    ),
+    explanation:
+      'Structural typing says an object with extra properties is assignable, and that is the rule the language actually runs on. The excess property check is a deliberate exception layered over it: a literal written directly into a typed position is treated as fresh, and a key the target does not declare is almost always a typo or a dead config option. Freshness is lost the moment the value is named, spread, or returned through a wider type, which is why extracting a variable can quietly stop catching typos. `satisfies` puts the check back without widening the value.',
+  },
+
+  {
+    slug: 'ts-template-literal-type',
+    title: 'Build the names from the parts',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'The route keys are maintained by hand and drift from the two lists they come from:',
+      '',
+      code(
+        'ts',
+        "type Method = 'get' | 'post';",
+        "type Resource = 'users' | 'orders';",
+        '',
+        "type Route = 'get:users' | 'get:orders' | 'post:users' | 'post:orders';"
+      ),
+      '',
+      'Write the type that produces all four from `Method` and `Resource`.'
+    ),
+    graderConfig: {
+      accept: ['`${Method}:${Resource}`'],
+      acceptPatterns: ['\\$\\{\\s*Method\\s*\\}\\s*:\\s*\\$\\{\\s*Resource\\s*\\}'],
+      nearMisses: {
+        'method | resource': 'That is a union of the four individual values, not of the pairs.',
+        'method + resource':
+          'Types are not concatenated with `+`. The syntax mirrors a JavaScript template literal.',
+        'record<method, resource>': 'Record builds an object type. You want a union of strings.',
+      },
+      hints: [
+        'The four names are every `Method` paired with every `Resource`.',
+        'A string type can be written with template literal syntax, and interpolating a union expands to every combination.',
+        'Backticks in type position: `` `${Method}:${Resource}` ``.',
+      ],
+    },
+    canonicalAnswer: '`${Method}:${Resource}`',
+    solution: code(
+      'ts',
+      'type Route = `${Method}:${Resource}`;',
+      "// 'get:users' | 'get:orders' | 'post:users' | 'post:orders'",
+      '',
+      '// add a method, and every route type follows'
+    ),
+    explanation:
+      'Interpolating a union into a template literal type expands to the cross product, so the names are generated from the lists they depend on rather than restated. The same feature drives key remapping in mapped types, where `` `on${Capitalize<K & string>}` `` turns field names into handler names, and it ships with four intrinsics: `Uppercase`, `Lowercase`, `Capitalize` and `Uncapitalize`. Interpolate an unbounded `string` and you get a pattern instead of a list: `` type Hex = `#${string}` `` rejects the literal `"ff0000"` at compile time, though it can say nothing about a string computed at runtime.',
+  },
+
+  {
+    slug: 'ts-overload-signature',
+    title: 'The overload that will not take the union',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'The implementation handles both, and the call still fails:',
+      '',
+      code(
+        'ts',
+        'function load(source: string): Promise<string>;',
+        'function load(source: URL): Promise<string>;',
+        'function load(source: string | URL): Promise<string> {',
+        "  return readFile(typeof source === 'string' ? source : source.pathname);",
+        '}',
+        '',
+        'declare const input: string | URL;',
+        'load(input); // TS2769: No overload matches this call'
+      ),
+      '',
+      'Explain why, and what the third signature is actually for.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'implementation',
+            'not callable',
+            'not visible',
+            'not part of',
+            'hidden',
+            'type-check the body',
+            'typecheck the body',
+          ],
+          missingFeedback: 'Which signatures can a caller see?',
+        },
+        {
+          synonyms: ['overload', 'declared signature', 'the list', 'one of the two'],
+          missingFeedback: 'What does the compiler match the call against?',
+        },
+        {
+          synonyms: [
+            'union',
+            'third',
+            'add',
+            'single signature',
+            'one signature',
+            'string | url',
+            'widen',
+          ],
+          missingFeedback: 'What would let a `string | URL` value through?',
+        },
+      ],
+      hints: [
+        'At a call site the compiler only ever sees the two declared signatures.',
+        'A `string | URL` value has to satisfy one signature on its own, and neither of the two accepts both.',
+        'The implementation signature is not callable; it exists to type-check the body. Add an overload for the union, or drop the overloads and take `string | URL` in one signature.',
+      ],
+    },
+    canonicalAnswer:
+      'Only the two overload signatures are visible to callers. The implementation signature is not callable and exists to type-check the body. The compiler resolves each call against the overload list and needs one entry that accepts the argument on its own, and neither string nor URL accepts a value that could be either. Adding a third overload for string | URL, or dropping the overloads for a single signature taking the union, fixes it.',
+    solution: code(
+      'ts',
+      '// Either declare the union as a third overload…',
+      'function load(source: string): Promise<string>;',
+      'function load(source: URL): Promise<string>;',
+      'function load(source: string | URL): Promise<string>;',
+      '',
+      '// …or drop the overloads, because one signature already describes it',
+      'function load(source: string | URL): Promise<string> { … }'
+    ),
+    explanation:
+      'An overload set is two things at once: a public list of signatures, and one implementation signature that callers never see. Resolution walks the list top to bottom and takes the first signature that accepts the arguments, so order them most specific first, and the return type you get is whatever that signature declares. TypeScript checks the implementation against each overload, so they cannot contradict each other outright, but the check is loose about return types: an implementation returning `string | number` satisfies an overload promising `number`, and nothing notices when it returns the wrong one. A union parameter or a generic is usually the better tool. Overloads earn their place when the return type depends on which arguments were passed.',
+  },
+
+  {
+    slug: 'ts-branded-type',
+    title: 'Two ids that are the same type',
+    category: 'typescript',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'Both ids are strings, so nothing stops you passing the wrong one:',
+      '',
+      code(
+        'ts',
+        'type UserId = string;',
+        'type OrderId = string;',
+        '',
+        'declare function cancel(id: OrderId): void;',
+        '',
+        "const userId: UserId = '42';",
+        'cancel(userId); // compiles, and cancels an order that does not exist'
+      ),
+      '',
+      'Name the technique that keeps the two apart at compile time while they stay plain strings at runtime.'
+    ),
+    graderConfig: {
+      accept: [
+        'branded type',
+        'branded types',
+        'brand',
+        'branding',
+        'nominal type',
+        'nominal types',
+        'nominal typing',
+        'opaque type',
+        'opaque types',
+      ],
+      acceptPatterns: ['brand', 'nominal', 'opaque'],
+      nearMisses: {
+        'type alias':
+          'That is what they already are, and an alias is transparent: both are string.',
+        'as const': 'That pins literal types. It does not keep two string types apart.',
+        enum: 'A string enum does refuse a plain string, but it fixes the values in advance. Ids are not a known set.',
+      },
+      hints: [
+        'The two types are identical, so the compiler is right to allow it. You have to make them structurally different.',
+        'Add something to each type that exists only in the type system and never in the emitted JavaScript.',
+        'A branded (nominal) type: `type UserId = string & { readonly __brand: "UserId" }`.',
+      ],
+    },
+    canonicalAnswer: 'branded type',
+    solution: code(
+      'ts',
+      'declare const brand: unique symbol;',
+      'type Brand<T, B extends string> = T & { readonly [brand]: B };',
+      '',
+      "type UserId = Brand<string, 'UserId'>;",
+      "type OrderId = Brand<string, 'OrderId'>;",
+      '',
+      'const toUserId = (raw: string): UserId => {',
+      "  if (!/^\\d+$/.test(raw)) throw new Error('bad id');",
+      '  return raw as UserId; // the one place a cast is allowed',
+      '};',
+      '',
+      'cancel(toUserId(input)); // error: UserId is not assignable to OrderId'
+    ),
+    explanation:
+      'TypeScript compares structure, not names, so `UserId` and `OrderId` are both just `string` and an alias is a nickname rather than a new type. A brand adds a phantom property that no real value carries, which makes the two mutually unassignable while the values stay strings at runtime, since the brand is erased with everything else. The cost is that a value needs a cast to enter the branded type, and that is the point: one function validates and casts, and everything downstream is trusted. Use a `unique symbol` for the key so nothing can produce the property by accident. The same trick types `Email`, `Cents` and `SafeHtml`.',
+  },
+
+  {
+    slug: 'ts-mapped-key-remap',
+    title: 'Generate the handler names',
+    category: 'typescript',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'Every field needs a handler, and the names are being maintained one by one:',
+      '',
+      code(
+        'ts',
+        'type Fields = { id: string; name: string };',
+        '',
+        'type Handlers = {',
+        '  onId: (value: string) => void;',
+        '  onName: (value: string) => void;',
+        '};'
+      ),
+      '',
+      'Fill in the clause that renames each key as the mapped type produces it:',
+      '',
+      code('ts', 'type Handlers<T> = {', '  [K in keyof T ???]: (value: T[K]) => void;', '};')
+    ),
+    graderConfig: {
+      accept: [],
+      acceptPatterns: ['as\\s*`?on\\$\\{\\s*Capitalize\\s*<'],
+      closeSubstrings: {
+        capitalize:
+          'Right helper. It belongs in a clause on the key itself, straight after `in keyof T`.',
+        '${': 'Template literal syntax is right. The key also has to be capitalised, so `id` becomes `onId`.',
+      },
+      hints: [
+        'A mapped type can rewrite the key it produces, not only reuse it.',
+        'The clause goes after `in keyof T`, and the new name is built with a template literal type.',
+        'The clause is `as` plus a template literal: `` as `on${Capitalize<K & string>}` ``. The `K & string` is what keeps `Capitalize` happy.',
+      ],
+    },
+    canonicalAnswer: 'as `on${Capitalize<K & string>}`',
+    solution: code(
+      'ts',
+      'type Handlers<T> = {',
+      '  [K in keyof T as `on${Capitalize<K & string>}`]: (value: T[K]) => void;',
+      '};',
+      '',
+      '// Handlers<Fields> = {',
+      '//   onId: (value: string) => void;',
+      '//   onName: (value: string) => void;',
+      '// }'
+    ),
+    explanation:
+      'The `as` clause in a mapped type has nothing to do with a type assertion. It rewrites each key on the way out, and a template literal type builds the new name. `K & string` is needed because `keyof T` also covers `number | symbol` while `Capitalize` only accepts strings. The clause has a second use that is just as valuable: map a key to `never` and it drops out of the result, so `[K in keyof T as T[K] extends string ? K : never]` keeps only the string-valued properties. Between renaming and filtering, most bespoke utility types are one mapped type.',
+  },
+
+  {
+    slug: 'ts-conditional-infer',
+    title: 'Pull the element type out',
+    category: 'typescript',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'Your API client types every list response as an array, and each screen needs the type of a single row without restating it:',
+      '',
+      code(
+        'ts',
+        'type ElementOf<T> = ???;',
+        '',
+        'type A = ElementOf<User[]>; // want User',
+        'type B = ElementOf<string>; // want never'
+      ),
+      '',
+      'Write the conditional type.'
+    ),
+    graderConfig: {
+      accept: [],
+      acceptPatterns: [
+        'extends\\s+(?:readonly\\s+)?\\(\\s*infer\\s+(\\w+)\\s*\\)\\s*\\[\\s*\\]\\s*\\?\\s*\\1\\b',
+        'extends\\s+(?:Readonly)?Array\\s*<\\s*infer\\s+(\\w+)\\s*>\\s*\\?\\s*\\1\\b',
+      ],
+      closeSubstrings: {
+        infer:
+          'Right keyword. It goes inside the pattern on the right of `extends`, and the true branch returns what it captured.',
+        extends:
+          'A conditional type needs `extends`, a `?` branch and a `:` branch. What pattern matches an array of anything?',
+      },
+      hints: [
+        'A type can branch: `T extends Something ? X : Y`.',
+        'You need to capture the element type while the match happens, rather than name it in advance.',
+        '`type ElementOf<T> = T extends (infer U)[] ? U : never;`',
+      ],
+    },
+    canonicalAnswer: 'T extends (infer U)[] ? U : never',
+    solution: code(
+      'ts',
+      'type ElementOf<T> = T extends (infer U)[] ? U : never;',
+      '',
+      'type A = ElementOf<User[]>; // User',
+      'type B = ElementOf<string>; // never'
+    ),
+    explanation:
+      '`infer` declares a type variable inside the pattern being matched and binds whatever lands in that position, and it exists only in the true branch. The built-ins are written this way: `ReturnType<T>` is `T extends (...args: any) => infer R ? R : any`, and `Awaited` is the same idea applied recursively. One behaviour to know before you rely on it. A conditional whose left side is a bare type parameter distributes over unions, so `ElementOf<string[] | number[]>` is `string | number` rather than one branch winning, and `ElementOf<never>` is `never` because distributing over an empty union produces nothing. Wrap both sides in a tuple, `[T] extends [X]`, when you want the union treated as one type.',
+  },
+
+  {
+    slug: 'ts-assertion-function',
+    title: 'Narrowing without an if',
+    category: 'typescript',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Two ways from `unknown` to `User`:',
+      '',
+      code(
+        'ts',
+        'function isUser(value: unknown): value is User { … }',
+        'function assertIsUser(value: unknown): asserts value is User { … }'
+      ),
+      '',
+      'The second one is used like this, and `data.id` compiles:',
+      '',
+      code('ts', 'const data: unknown = JSON.parse(body);', 'assertIsUser(data);', 'data.id;'),
+      '',
+      'Explain how the assertion form differs from the predicate.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['throw', 'exception', 'raises', 'never returns normally'],
+          missingFeedback: 'What does the assertion do when the value fails the check?',
+        },
+        {
+          synonyms: [
+            'rest of',
+            'from then on',
+            'after the call',
+            'onward',
+            'whole scope',
+            'without an if',
+            'no branch',
+            'every line after',
+          ],
+          missingFeedback: 'Where does the narrowing apply in each case?',
+        },
+        {
+          synonyms: ['boolean', 'true or false', 'returns nothing', 'returns void', 'no return'],
+          missingFeedback: 'What does each of the two return?',
+        },
+      ],
+      hints: [
+        'One gives you a value to branch on. The other gives you a guarantee, provided the next line runs at all.',
+        'The assertion never returns `false`. Reaching the line after the call already means the check passed.',
+        'A predicate returns a boolean and narrows inside an `if`. An assertion returns nothing, throws on failure, and narrows everything after the call.',
+      ],
+    },
+    canonicalAnswer:
+      'The predicate returns a boolean, so it only narrows inside a branch you write around it: if (isUser(data)) { … }. The assertion function returns nothing and throws when the check fails, so the compiler treats reaching the next line as proof and the value stays narrowed for the rest of the scope, with no if at all.',
+    solution: code(
+      'ts',
+      'function assertIsUser(value: unknown): asserts value is User {',
+      "  if (typeof value !== 'object' || value === null || !('id' in value)) {",
+      "    throw new Error('Not a user');",
+      '  }',
+      '}',
+      '',
+      'assertIsUser(data);',
+      'data.id; // User for the rest of the scope'
+    ),
+    explanation:
+      '`asserts value is User` describes an effect on control flow rather than a value: if the call returns at all, the narrowing holds from there on. Two things to remember before using it. TypeScript requires the call target to have an explicit type annotation, so `const assertIsUser = (v: unknown): asserts v is User => { … }` fails at every call site with TS2775 until you annotate the const, which is why these are usually written as function declarations. And, exactly like a predicate, the compiler takes the signature on trust: a body that checks the wrong thing narrows to a lie. The related `asserts value` form, with no `is T`, narrows the argument to truthy, which is how `node:assert` is typed.',
+  },
 ];
