@@ -19,6 +19,7 @@ export const CATEGORIES = [
   'debugging',
   'coding',
   'systems',
+  'html',
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -72,6 +73,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   debugging: 'Debugging',
   coding: 'Coding',
   systems: 'Systems',
+  html: 'HTML & Semantics',
 };
 
 /** Row in the problem list (`GET /api/problems`). */

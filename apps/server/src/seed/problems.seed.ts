@@ -7,6 +7,7 @@ import { dateProblems } from './problems/dates';
 import { debuggingProblems } from './problems/debugging';
 import { domProblems } from './problems/dom';
 import { formProblems } from './problems/forms';
+import { htmlProblems } from './problems/html';
 import { httpProblems } from './problems/http';
 import { jsApiProblems } from './problems/js-apis';
 import { queryParamProblems } from './problems/query-params';
@@ -37,6 +38,7 @@ const drafts: ProblemDraft[] = [
   ...debuggingProblems,
   ...codingProblems,
   ...systemsProblems,
+  ...htmlProblems,
 ];
 
 /**
