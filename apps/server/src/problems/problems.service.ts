@@ -182,7 +182,9 @@ export class ProblemsService {
 
     return {
       status: this.progressFor(userId, problem.id).status,
-      next: this.pickNext(userId, slug, 'next', scope),
+      // Take the head of the queue, not a step from `slug` — the skip just sent
+      // it to the back, so stepping forward from it would land on itself.
+      next: this.pickNext(userId, undefined, 'next', scope),
     };
   }
 
@@ -345,7 +347,9 @@ export class ProblemsService {
     const index = queue.findIndex((entry) => entry.problem.slug === afterSlug);
     if (index >= 0) {
       const delta = direction === 'next' ? 1 : -1;
-      const target = queue[(index + delta + queue.length) % queue.length] as QueueEntry;
+      // Clamp rather than wrap: the queue runs easy to hard, so wrapping off the
+      // front landed you on the hardest problem in the app.
+      const target = queue[clamp(index + delta, queue.length)] as QueueEntry;
       return toNext(target);
     }
 
@@ -358,12 +362,13 @@ export class ProblemsService {
       .all();
     const position = anchor?.position ?? 0;
 
+    // Same clamping rule: fall back to the nearest end of the queue, never across it.
     if (direction === 'next') {
       const forward = queue.find((entry) => entry.problem.position > position);
-      return toNext(forward ?? (queue[0] as QueueEntry));
+      return toNext(forward ?? (queue[queue.length - 1] as QueueEntry));
     }
     const backward = [...queue].reverse().find((entry) => entry.problem.position < position);
-    return toNext(backward ?? (queue[queue.length - 1] as QueueEntry));
+    return toNext(backward ?? (queue[0] as QueueEntry));
   }
 
   private ensureProgressRow(userId: number, problemId: number): void {
@@ -460,6 +465,11 @@ export class ProblemsService {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+/** Hold an index inside `[0, length - 1]` so stepping off either end stays put. */
+function clamp(index: number, length: number): number {
+  return Math.min(Math.max(index, 0), length - 1);
 }
 
 /**

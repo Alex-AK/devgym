@@ -141,12 +141,26 @@ describe('practice queue', () => {
     expect(problems.next()?.queueSize).toBe(before - 1);
   });
 
-  it('wraps around with next and prev', async () => {
+  it('steps forward and back without wrapping past the ends', async () => {
     const scope = { category: 'dom' } as const;
     const first = problems.next(undefined, 'next', scope)?.slug ?? '';
-    const back = problems.next(first, 'prev', scope)?.slug;
-    const forwardAgain = problems.next(back, 'next', scope)?.slug;
-    expect(forwardAgain).toBe(first);
+    const second = problems.next(first, 'next', scope)?.slug ?? '';
+    expect(second).not.toBe(first);
+    expect(problems.next(second, 'prev', scope)?.slug).toBe(first);
+
+    // prev at the front stays put rather than jumping to the hardest problem.
+    expect(problems.next(first, 'prev', scope)?.slug).toBe(first);
+  });
+
+  it('does not send you to the end of the queue after solving the problem you were on', async () => {
+    const seed = problemSeeds.find((entry) => entry.slug === 'js-find');
+    await problems.submitAttempt('js-find', seed?.canonicalAnswer ?? 'find');
+
+    // The anchor has left the queue, so this takes the position fallback path.
+    const back = problems.next('js-find', 'prev');
+    const last = problemSeeds[problemSeeds.length - 1];
+    expect(back?.slug).not.toBe(last?.slug);
+    expect(back?.difficulty).toBe('easy');
   });
 });
 

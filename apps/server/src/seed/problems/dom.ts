@@ -73,6 +73,8 @@ export const domProblems: ProblemDraft[] = [
         'Array\\.from\\(\\s*document\\.querySelectorAll',
       ],
       closeSubstrings: {
+        'array(':
+          '`Array(x)` wraps x in a one-element array rather than converting it. Use `Array.from(x)` or `[...x]`.',
         foreach: 'NodeList does have forEach, but the question asks to make `map` work.',
         nodelist: 'Right diagnosis. Now convert it to a real array.',
       },
