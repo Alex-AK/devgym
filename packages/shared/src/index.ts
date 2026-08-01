@@ -18,6 +18,7 @@ export const CATEGORIES = [
   'security',
   'debugging',
   'coding',
+  'systems',
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -70,6 +71,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   security: 'Auth & Security',
   debugging: 'Debugging',
   coding: 'Coding',
+  systems: 'Systems',
 };
 
 /** Row in the problem list (`GET /api/problems`). */
