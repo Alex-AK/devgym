@@ -1,0 +1,41 @@
+{
+  "slug": "autocomplete-react",
+  "title": "Autocomplete that behaves itself",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "hard",
+  "relevance": "daily",
+  "stack": {
+    "client": "react",
+    "server": "local fixture API"
+  },
+  "summary": "A search-as-you-type box that works with a mouse and nothing else. Debounce the typing, call off the search nobody wants, drive it from the keyboard, and give it the roles a combobox is supposed to have.",
+  "focus": ["react effects", "race conditions", "keyboard", "aria"],
+  "editable": ["src/client/Autocomplete.tsx"],
+  "checkpoints": [
+    {
+      "id": "waits-for-typing-to-stop",
+      "title": "It waits for the typing to stop",
+      "testFile": "tests/checkpoints/01-waits-for-the-typing-to-stop.test.tsx",
+      "hint": "Start a timer in the effect and clear it in the cleanup, so each keystroke replaces the pending search instead of adding one. The component is handed a debounceMs, so use it rather than a number of your own."
+    },
+    {
+      "id": "late-answer-cannot-win",
+      "title": "A late answer cannot overwrite a newer one",
+      "testFile": "tests/checkpoints/02-a-late-answer-cannot-win.test.tsx",
+      "hint": "Two searches in flight will land in whatever order they like. An AbortController per effect, aborted in the cleanup, settles it. Remember that an abort rejects, and that rejection is not a failure worth showing anyone."
+    },
+    {
+      "id": "keyboard-drives-the-list",
+      "title": "The keyboard drives the list",
+      "testFile": "tests/checkpoints/03-the-keyboard-drives-the-list.test.tsx",
+      "hint": "Hold the highlighted index in state and move it on ArrowDown and ArrowUp. Enter takes the highlighted one and only that one; Escape closes the list and chooses nothing."
+    },
+    {
+      "id": "screen-reader-can-follow",
+      "title": "A screen reader can follow it",
+      "testFile": "tests/checkpoints/04-a-screen-reader-can-follow-it.test.tsx",
+      "hint": "role=combobox on the input with aria-expanded and aria-controls, role=listbox on the list, role=option on each row. Focus stays in the input the whole time, so aria-activedescendant is what says which option is highlighted."
+    }
+  ]
+}

@@ -127,6 +127,17 @@ keeps pushing the window out so a busy client never gets back in. The checkpoint
 allowance, advances the fake clock into the window, spends the rest, then advances past where the
 window should have closed. Only the correct version is let back in.
 
+**Workout 6: `autocomplete-react`** (25 min, React + a fixture API). The first client-side workout.
+The starter searches, shows results and lets you click one, which is fine if every user has a mouse,
+a fast connection and their sight. Checkpoints: it waits for the typing to stop; a late answer cannot
+overwrite a newer one; arrow keys, Enter and Escape drive the list; and the combobox roles are there
+with `aria-activedescendant` naming the highlighted option.
+
+The second checkpoint is a race made deterministic. The fixture API takes a per-query delay, so a
+checkpoint can hold the answer to "bra" back until after the answer to "brac" has landed. "bra"
+matches two products and "brac" matches one, so whose answer is on screen is a visible fact rather
+than a timing guess.
+
 The second workout is what proved the format: it added Express, jose and supertest to
 `packages/workouts/package.json` and touched no application source at all. The third is what proved
 the format can carry a whole database engine.
@@ -153,17 +164,16 @@ actually varies, not before.
 
 ### Phase 2 — the workout library
 
-Port the accumulated briefs. Each is full stack, because that is the level being practised. Four are
-done: JWT login, the slow list endpoint, search on Drizzle and rate limiting. The rest are still to
-write.
+Port the accumulated briefs. Each is full stack, because that is the level being practised. Five are
+done: JWT login, the slow list endpoint, search on Drizzle, rate limiting and the autocomplete. The
+rest are still to write.
 
-| Workout                             | Stack                     | Shape    |
-| ----------------------------------- | ------------------------- | -------- |
-| Infinite scroll with retry          | React + local fixture API | feature  |
-| Drag-and-drop ordering, persisted   | React + Zustand + API     | feature  |
-| Autocomplete: debounce, abort, a11y | React + API               | feature  |
-| N+1 in the orders report            | TypeORM                   | bug-hunt |
-| Auth check on the wrong layer       | NestJS guards             | bug-hunt |
+| Workout                           | Stack                     | Shape    |
+| --------------------------------- | ------------------------- | -------- |
+| Infinite scroll with retry        | React + local fixture API | feature  |
+| Drag-and-drop ordering, persisted | React + Zustand + API     | feature  |
+| N+1 in the orders report          | TypeORM                   | bug-hunt |
+| Auth check on the wrong layer     | NestJS guards             | bug-hunt |
 
 **Prisma is off the list.** The plan was the same search brief on a second ORM, which is exactly the
 "practise against a stack you do not know" case. It does not fit: Prisma generates its client with
@@ -175,7 +185,12 @@ second ORM is wanted, TypeORM and Sequelize both connect without codegen.
 Three adaptations the offline constraint forces, all of which improve the exercise:
 
 - **jsonplaceholder → a local fixture endpoint** with the same response shape, plus fault injection
-  so "handle failures and allow retry" is actually testable.
+  so "handle failures and allow retry" is actually testable. Done, in workout 6, as a module the
+  component imports rather than a stubbed `fetch`: it records every call with its signal and takes a
+  per-query delay, which is what turns a race into something a checkpoint can assert on. It also
+  rejects with a real `AbortError` when the signal fires, so handling that properly is part of the
+  exercise. Client checkpoints use real timers throughout — vitest's fake ones fight `userEvent`, and
+  a fixture with its own latency knob is both simpler and closer to the real failure.
 - **Redis → a small in-repo fake** with the real `ioredis` surface (`incr`, `expire`, `ttl`), so the
   code written is real Redis code. Done, in workout 5. Keeping the awkward semantics is what makes it
   worth using: `incr` creating a key with no deadline is the whole lesson, and `ttl` answering -1 for
