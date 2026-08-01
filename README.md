@@ -7,7 +7,7 @@ feedback (correct / close / not close), come back to it on a spaced-repetition s
 checkpoints, see how far you got. You write every answer yourself and a deterministic grader marks
 it, so the reps stay yours. No AI in the loop, fully offline, single user, no accounts.
 
-**Status:** built and in daily use. 225 problems across 15 categories, and 8 workouts spanning
+**Status:** built and in daily use. 229 problems across 15 categories, and 8 workouts spanning
 Express, NestJS, Drizzle, Kysely, TypeORM and React. Deterministic grading, executable code
 problems, spaced repetition, pinned daily sessions.
 [PRD-v2.md](./PRD-v2.md) is the live spec; [PRD.md](./PRD.md) is the original v1 one, kept for
@@ -74,7 +74,7 @@ where today stopped. Only one session runs at a time; starting a new one closes 
 | TypeScript         |       22 | utility types, narrowing, generics, discriminated unions, `satisfies`, exhaustiveness        |
 | JS APIs            |       20 | array/object methods, promises, the event loop, closures, cloning, `AbortController`         |
 | Coding             |       20 | **write the function**: chunk, debounce, memoize, LRU, retry, concurrency pool, deep equal   |
-| HTTP & Fetch       |       18 | status codes, `response.ok`, CORS preflight, caching, ETags, idempotency, cursors            |
+| HTTP & Fetch       |       22 | status codes, `response.ok`, CORS preflight, caching, ETags, SSE, the WebSocket handshake    |
 | Debugging          |       15 | spot-the-bug snippets: async `forEach`, `this`, floats, shared references                    |
 | CSS & Layout       |       12 | box sizing, specificity, flex and grid, margin collapse, stacking and container queries      |
 | Accessibility      |       12 | accessible names, heading order, focus management, live regions, reduced motion              |
@@ -85,7 +85,7 @@ where today stopped. Only one session runs at a time; starting a new one closes 
 | Testing            |        8 | query priority, what to mock, testing behaviour over implementation, flaky timing            |
 | Auth & Security    |        8 | XSS sources, injection, token storage, password hashing, open redirects                      |
 
-73 easy / 114 medium / 38 hard. The queue runs easy → medium → hard and round-robins across
+74 easy / 117 medium / 38 hard. The queue runs easy → medium → hard and round-robins across
 categories, so you never get twenty SQL questions in a row.
 
 ## How grading works
@@ -99,10 +99,10 @@ All grading is deterministic and local. No LLM, no network.
 - **Coding** (23) runs your function against real assertions and reports per-test pass/fail with
   expected vs actual. Console output from a failing test is attached to the diff. The editor
   prefills the signature so your function name matches the tests.
-- **Short-text** (93) normalises both sides (case, whitespace, quotes, code fences, trailing
+- **Short-text** (96) normalises both sides (case, whitespace, quotes, code fences, trailing
   punctuation), then checks exact matches, regex patterns, known near-misses, and finally fuzzy
   matching for typos.
-- **Explain** (80) scores keyword groups: every idea must appear, half of them earns a "close".
+- **Explain** (81) scores keyword groups: every idea must appear, half of them earns a "close".
 
 Every non-correct attempt reveals the next hint. After three attempts you can reveal the solution,
 which marks the problem skipped rather than solved.

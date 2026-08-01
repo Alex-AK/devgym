@@ -876,4 +876,219 @@ export const httpProblems: ProblemDraft[] = [
     explanation:
       'The browser caches the preflight decision per origin, method and header set for the lifetime you specify, so subsequent calls skip the OPTIONS round trip entirely. Browsers cap it well below what you ask for, and the caps differ, so treat the value as a hint. The other half of the fix is avoiding the preflight where you can: a request stays "simple" and skips it entirely if it uses GET, HEAD or POST with a body type of `text/plain`, `multipart/form-data` or `application/x-www-form-urlencoded` and no custom headers. In practice an `Authorization` header or JSON body means you will be preflighting.',
   },
+
+  {
+    slug: 'http-sse-content-type',
+    title: 'The stream the browser buffers anyway',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'An endpoint writes updates as they happen and flushes each one, but `EventSource` fires no `message` events and the browser shows nothing until the handler returns:',
+      '',
+      code(
+        'js',
+        "res.setHeader('Content-Type', 'application/json');",
+        "res.write('data: 12\\n\\n');"
+      ),
+      '',
+      'Name the media type the response has to declare.'
+    ),
+    graderConfig: {
+      accept: ['text/event-stream', 'event-stream', 'text/event stream'],
+      acceptPatterns: ['text\\s*/\\s*event-?stream'],
+      nearMisses: {
+        'text/plain': 'Plain text is still a document the browser waits to finish.',
+        'application/x-ndjson': 'That is a streaming format, but not the one EventSource reads.',
+        'text/stream': 'Close. The registered type names the events.',
+      },
+      hints: [
+        'EventSource only parses one media type.',
+        'It is a text type, and it names the thing it carries.',
+        '`text/event-stream`.',
+      ],
+    },
+    canonicalAnswer: 'text/event-stream',
+    solution: code(
+      'js',
+      "res.setHeader('Content-Type', 'text/event-stream');",
+      "res.setHeader('Cache-Control', 'no-store');",
+      "res.write('data: 12\\n\\n');"
+    ),
+    explanation:
+      'The HTML specification requires an event stream to be served as `text/event-stream`, encoded as UTF-8, and `EventSource` refuses anything else: the connection errors rather than delivering events. The framing matters as much as the type. A blank line dispatches the event, so `data: 12` on its own is a message nobody has finished writing yet, which is why the two newlines are not optional. Send `Cache-Control: no-store` alongside it, because a proxy that decides to cache or buffer a response it thinks is a document turns a live stream into one long silence.',
+  },
+
+  {
+    slug: 'http-sse-resume',
+    title: 'Picking the stream back up',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A dashboard on `EventSource` drops its connection for eight seconds. The browser reconnects on its own, but the events sent during the gap are gone for good.',
+      '',
+      'The server sends an `id:` with every event. Name the request header the browser sends on reconnect so the server knows where to resume.'
+    ),
+    graderConfig: {
+      accept: ['last-event-id', 'last event id', 'lasteventid'],
+      acceptPatterns: ['last-?\\s*event-?\\s*id'],
+      nearMisses: {
+        'if-none-match': 'That is conditional caching, not stream position.',
+        range: 'Range asks for bytes of a resource, not events since a marker.',
+        'if-modified-since': 'A timestamp, and not the one the stream is keyed by.',
+      },
+      hints: [
+        'The browser remembers the last `id:` it saw.',
+        'It sends that value back as a request header when it reconnects.',
+        '`Last-Event-ID`.',
+      ],
+    },
+    canonicalAnswer: 'Last-Event-ID',
+    solution: code(
+      'text',
+      'id: 41',
+      'data: {"cpu":38}',
+      '',
+      '   [ connection drops, browser waits, reconnects ]',
+      '',
+      'GET /events',
+      '  Last-Event-ID: 41       <- server replays 42 onward'
+    ),
+    explanation:
+      'Automatic reconnection is the part of server-sent events people quote, and it is only half the mechanism. The browser stores the last `id:` field it saw and sends it as `Last-Event-ID` on the next connection; a server that ignores that header reconnects the client to the present and silently loses the gap. The other half is yours to build: the server needs to be able to answer "everything after 41", which means events have to be retained somewhere long enough to replay. Without an `id:` there is nothing to resume from, so reconnection means "start again", which is fine for a live gauge and wrong for anything you are counting.',
+  },
+
+  {
+    slug: 'http-websocket-upgrade',
+    title: 'The handshake that stops being HTTP',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'A WebSocket connection starts as an ordinary HTTP request:',
+      '',
+      code(
+        'text',
+        'GET /chat HTTP/1.1',
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==',
+        'Sec-WebSocket-Version: 13'
+      ),
+      '',
+      'Name the status code the server answers with when it agrees.'
+    ),
+    graderConfig: {
+      accept: ['101', '101 switching protocols', 'switching protocols'],
+      acceptPatterns: ['\\b101\\b', 'switching\\s+protocols'],
+      nearMisses: {
+        '200': '200 means "here is a response body", which ends the exchange.',
+        '204': 'No content still completes the request as HTTP.',
+        '426': '426 Upgrade Required is the server refusing and asking you to upgrade.',
+        '100': '100 Continue is about request bodies.',
+      },
+      hints: [
+        'It is a 1xx-style handoff, not a success code.',
+        'The connection stays open and stops speaking HTTP.',
+        '`101 Switching Protocols`.',
+      ],
+    },
+    canonicalAnswer: '101 Switching Protocols',
+    solution: code(
+      'text',
+      'HTTP/1.1 101 Switching Protocols',
+      'Upgrade: websocket',
+      'Connection: Upgrade',
+      'Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo='
+    ),
+    explanation:
+      "The handshake is HTTP and everything after it is not. The server proves it understood the request by hashing the client's `Sec-WebSocket-Key` with a fixed GUID from RFC 6455 and returning it as `Sec-WebSocket-Accept`, which is what stops a cache or an unaware proxy from replying 101 by accident. Once the 101 lands, the same TCP connection carries WebSocket frames in both directions, and none of the HTTP machinery applies to them: no status codes, no caching, no per-message headers, and no method to look at. That is exactly why the things HTTP gave you for free (a load balancer that can route by path, a proxy that can retry) become your problem the moment you upgrade.",
+  },
+
+  {
+    slug: 'http-sse-vs-websocket',
+    title: 'Picking a direction',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A dashboard shows figures that the server recalculates every few seconds. The browser never sends anything back; it only displays.',
+      '',
+      'A colleague proposes a WebSocket. Argue for server-sent events instead, and name the one limit of SSE that could change your mind.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'one direction',
+            'one-way',
+            'one way',
+            'unidirectional',
+            'server to client',
+            'only the server',
+            'never sends',
+            'no client messages',
+          ],
+          missingFeedback: 'What does the traffic actually look like here?',
+        },
+        {
+          synonyms: [
+            'plain http',
+            'ordinary http',
+            'still http',
+            'over http',
+            'no upgrade',
+            'reconnect',
+            'reconnects automatically',
+            'automatic reconnect',
+            'last-event-id',
+            'resume',
+          ],
+          missingFeedback: 'What do you get for free from SSE that you would write yourself?',
+        },
+        {
+          synonyms: [
+            'connection limit',
+            'six connections',
+            '6 connections',
+            'per domain',
+            'per origin',
+            'http/1.1',
+            'http 1.1',
+            'binary',
+            'text only',
+            'utf-8',
+          ],
+          missingFeedback: 'Name a limit of SSE: what it cannot carry, or how many can be open.',
+        },
+      ],
+      hints: [
+        'Count the directions the messages actually travel.',
+        'SSE is an ordinary HTTP response that stays open, so proxies, auth and load balancing work the way they already do, and the browser reconnects and resumes on its own.',
+        'The limits: SSE carries UTF-8 text only, and over HTTP/1.1 a browser will hold about six connections per domain, so a stream costs one of them.',
+      ],
+    },
+    canonicalAnswer:
+      'The traffic is one-directional: the server pushes and the client never sends. SSE is an ordinary HTTP response that stays open, so proxies, auth and load balancers behave as they already do, and the browser reconnects on its own and resumes with Last-Event-ID. A WebSocket buys two-way traffic nobody needs and makes reconnection your job. The limits that would change my mind: SSE carries UTF-8 text only, so binary needs encoding, and over HTTP/1.1 a browser holds only about six connections per domain, so several open streams starve the page.',
+    solution: md(
+      'One direction, so use the one-directional transport.',
+      '',
+      '| | SSE | WebSocket |',
+      '| --- | --- | --- |',
+      '| Direction | server to client | both |',
+      '| Wire | an HTTP response that stays open | a TCP connection after a 101 |',
+      '| Reconnect | automatic, resumes via `Last-Event-ID` | yours to write |',
+      '| Payload | UTF-8 text | text or binary |',
+      '| Cost | one of ~6 HTTP/1.1 connections per domain | one connection, outside HTTP |',
+      '',
+      'Switch to a WebSocket when the client starts talking back, when the payload is binary, or when one page needs more streams than HTTP/1.1 will give it.'
+    ),
+    explanation:
+      'The four questions that pick a transport answer themselves here: the server starts it, the messages go one way, nothing needs a reply, and the cost is one held-open connection. SSE is the option people skip past, and skipping it means reimplementing reconnection, resumption and backoff by hand, because the WebSocket API gives you none of them. The honest limits are worth knowing before you commit: an event stream is UTF-8 text by specification, so binary has to be encoded into it; `EventSource` cannot set request headers, so bearer-token auth needs a cookie or a query parameter; and over HTTP/1.1 the six-connections-per-domain cap is per browser rather than per tab, so a handful of open dashboards will hang the seventh. Over HTTP/2 the streams are multiplexed and that particular cap stops mattering.',
+  },
 ];
