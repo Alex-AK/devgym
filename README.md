@@ -208,6 +208,23 @@ The test suite enforces the things that are easy to get wrong: every canonical a
 keyword synonym may normalise to an empty string, and every coding problem's reference
 implementation must pass its own tests while its starter must not.
 
+## About and credits
+
+Two things worth saying plainly, and there is a fuller version at `/about` in the app.
+
+**This content was largely written by an LLM, and is largely unreviewed.** The test suite guarantees
+that every canonical answer grades correctly and every workout solution passes its checkpoints. It
+cannot guarantee that an explanation or a handbook page is true. Treat the prose the way you would
+treat any unreviewed technical writing: useful, probably right, worth checking against the cited
+sources when it matters. Corrections are welcome and easy to make; every piece of content is a small
+file in this repo.
+
+**It owes nearly everything to other people.** Open source software, freely shared writing, and the
+people who teach: course authors, documentation writers, bloggers, and the maintainers of every
+library in the lockfile. Handbook pages cite their sources in a footnote, and `pnpm verify` refuses
+a page that cites nothing or cites through a link shortener. If something should be credited and
+isn't, that's a bug worth an issue.
+
 ## Contributing
 
 Issues and pull requests are both welcome. The bar is `pnpm verify` passing, which is one command

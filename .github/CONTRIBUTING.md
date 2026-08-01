@@ -33,7 +33,33 @@ own tests while its starter must not.
 which is the fastest way to tell whether a grader is too strict.
 
 Prompts, hints, explanations and grader feedback follow the project's voice: direct, plain English,
-contractions, sentence-case headings, and em dashes kept rare.
+contractions, sentence-case headings, and em dashes kept rare. [WRITING.md](../WRITING.md) is the
+full version, and it governs everything a user reads.
+
+## Adding handbook pages
+
+A page is a markdown file with frontmatter under `packages/handbook/content/<section>/`, and adding
+one touches no application code. `packages/handbook/README.md` is the authoring contract: the
+five-part page shape, the frontmatter fields, and what the safety net checks.
+
+The bar for content is the citation policy, and `pnpm verify` enforces the mechanical half of it:
+
+- **Every page cites at least one source**, with an author, a title and a canonical URL, rendered as
+  a footnote. "Common knowledge" still cites the official docs it was checked against.
+- **No link shorteners.** `lnkd.in`, `bit.ly`, `t.co` and friends are rejected outright. Resolve a
+  shortlink to its real target before citing it; if it's dead or the author can't be identified,
+  re-source the claim or drop it.
+- **Every `practise` slug resolves** to a real problem or workout.
+
+Two rules the tests can't check, so review does:
+
+- **Name inspirations, don't reproduce them.** Where material traces to a course or a book, credit
+  it and link it, then write the page fresh in this project's own words. No course text, exercises
+  or structure gets copied.
+- **Paywalled sources are inspiration, never the load-bearing citation.** A paid course gets credit
+  for shaping the material, but every claim on the page must be checkable against an open reference:
+  official docs, or something freely readable. If no open reference exists for a claim, the claim
+  doesn't ship.
 
 ## Changing behaviour
 

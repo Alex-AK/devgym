@@ -50,6 +50,13 @@ export function AppShell(): React.ReactElement {
       <main className={cn('mx-auto px-4 py-8', container)}>
         <Outlet />
       </main>
+      <footer className={cn('mx-auto px-4 pt-4 pb-8 text-xs text-muted-foreground', container)}>
+        Content here is largely machine-written and largely unreviewed.{' '}
+        <NavLink to="/about" className="underline underline-offset-2 hover:text-foreground">
+          What this is, and what it owes to other people
+        </NavLink>
+        .
+      </footer>
     </div>
   );
 }
