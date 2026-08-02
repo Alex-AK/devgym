@@ -7,10 +7,11 @@
 > Shipped so far: the `systems` and `html` categories, the TypeScript, React, JavaScript
 > mental-models and headers/security waves, and two workouts (the SSE dashboard and the
 > `json-parser` pilot). Still queued: the `sql-performance`, `api-design`, `node`, `dsa-patterns`
-> and `ai-engineering` categories, and the workout list below, which has since grown by ten.
+> and `ai-engineering` categories, and the workout list below, which has grown twice since.
 > `dsa-patterns` remains the one item here that needs an application change, for the queue opt-out
 > flag. `ai-engineering` is the one with a deadline attached, because guide section 13 cannot ship a
-> page until it exists. Siblings:
+> page until it exists. The two systems workouts are the top of the queue, because that section
+> shipped thirteen pages with nothing to build against. Siblings:
 > [PRD-v3-learning-guide](./PRD-v3-learning-guide.md),
 > [PRD-v3-open-source](./PRD-v3-open-source.md), and
 > [PRD-v4-modules](./PRD-v4-modules.md) for the fourth content type.
@@ -147,6 +148,32 @@ handbook column is what each one is the practical half of.
 Every one of these runs on infrastructure that already exists (PGlite, the fake Redis and its clock,
 the fixture API, testing-library) except where noted below.
 
+### The systems section has no workout, and that is now the top of this queue
+
+A pairing audit found the inversion. Guide section 9 shipped thirteen cards, every one of them paired
+with an explain-graded problem, and not one workout points at it. By this document's own rule that is
+the worst state in the library: a section with no workout is reading that has never been tested under
+time pressure, and systems is the material where knowing the words and being able to build the thing
+diverge most.
+
+Two, and they are deliberately the two concepts that are code rather than architecture:
+
+| Workout                  | Stack             | Shape   | Pairs with       | The lesson                                                                                       |
+| ------------------------ | ----------------- | ------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| Build a circuit breaker  | Node + fake clock | feature | circuit breakers | Closed, open, half-open, and the timeout without which the counter never trips. No dependencies  |
+| One recompute, not fifty | Node + fake clock | feature | caching patterns | Single-flight: concurrent callers for a cold key wait on one computation. The dedupe is the test |
+
+Both follow the build-your-own recipe the `json-parser` pilot proved: zero dependencies, checkpoints
+that map to stages, and a clock the real thing does not have, which is what makes a timing-dependent
+lesson deterministic to grade. The second overlaps the queued "Cache the expensive report" on
+purpose and from the other side: that one is cache-aside in an Express app, this one is the primitive
+underneath it in isolation. If writing them proves that is one workout rather than two, merge them
+and say so here.
+
+**`json-parser` is the one workout no page cites**, which is the same gap pointing the other way. It
+gets a `practise` line on the data structures section's parsing material when section 15 lands, or an
+honest note here that a build-your-own workout is allowed to be its own reward.
+
 **The dependency decision is taken.** Three queued workouts named new dependencies, and they were
 raised together rather than one at a time: `graphql` for the N+1 bug-hunt (deferred in this document
 until the transport pages existed, which they now do), `react-window` for the windowed list, and
@@ -191,8 +218,13 @@ easiest to add to:
 - **A handbook section with no workout** is the strongest signal, because a workout is the only place
   the reading gets tested under time pressure. Caching, the browser material and dates all have or
   will have pages with nothing to build against.
-- **A problem category with no pages** is the next strongest. React, systems, TypeScript and the
-  HTML/a11y/CSS/forms block are all in that state, and the guide now owes sections for each.
+- **A problem category with no pages** is the next strongest. React and systems have since been
+  written; TypeScript, the HTML/a11y/CSS/forms block, SQL and security are still in that state, and
+  the guide owes sections for each.
+- **A category can be paired by a module rather than a page**, which is new with
+  [PRD-v4](./PRD-v4-modules.md). `query-params` and `dates` are both satisfied that way, because both
+  are one API met edge by edge rather than a model to explain. The test is in that document: a model
+  is a page, an API is a module.
 - **A page with no problems** cannot ship at all: `pnpm verify` rejects an empty `practise` list.
   That direction is already solved and needs no policy.
 

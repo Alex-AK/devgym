@@ -4,10 +4,12 @@
 > `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 2 (React), 3
 > (moving data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases), 8 (the server runtime) and 9
 > (systems) are underway; every concept section 9's card list names now has a card, though its
-> case-study shelf does not exist yet. Section 10 (trade-offs) is not started. Five further sections
-> have been added since the first draft: TypeScript and the browser you are writing for, both by the
-> pairing rule, then AI engineering, running it in production, and data structures, which came from a
-> topic pass and moved the scope once, deliberately and by decision.
+> case-study shelf does not exist yet, and it has no workout. Section 10 (trade-offs) is not started.
+> Seven further sections have been added since the first draft: TypeScript and the browser you are
+> writing for, both by the pairing rule; AI engineering, running it in production, and data
+> structures, from a topic pass that moved the scope once, deliberately and by decision; then writing
+> SQL and security past the headers, from an audit that checked every problem against every page's
+> `practise` list instead of trusting the section titles.
 >
 > This extends [PRD-v2](./PRD-v2.md), which remains the live spec for the workout platform and for
 > what a handbook page is (its phase 4). This document is the map
@@ -131,16 +133,42 @@ so it earned an Express page in section 8 rather than a shrug.
 
 Where it stands, and it is lopsided in one direction:
 
+The audit that produced the bottom half of this table counted, for every problem, whether any page's
+`practise` list names it. That is a sharper instrument than reading section titles, and it found four
+areas nothing was tracking.
+
 | Area                                                           | Practice                  | Pages | Gap                            |
 | -------------------------------------------------------------- | ------------------------- | ----- | ------------------------------ |
 | Moving data, headers, caching, APIs, databases, server runtime | yes                       | yes   | paired                         |
-| JavaScript under the hood                                      | yes                       | yes   | no workout yet                 |
 | React                                                          | 30+ problems, one workout | yes   | paired                         |
-| Systems                                                        | ~19 cards                 | yes   | paired                         |
+| JavaScript under the hood                                      | yes                       | yes   | no workout yet                 |
+| Systems                                                        | ~19 cards                 | yes   | **no workout, and 13 pages**   |
+| **Writing SQL**                                                | 25 uncited of 29          | none  | **section owed, below**        |
+| **Security past the headers**                                  | 14 uncited of 18          | none  | **section owed, below**        |
+| **The DOM you still write**                                    | 8 uncited of 9            | none  | **pages owed in section 12**   |
+| **`URL` and `URLSearchParams`**                                | 10 uncited of 10          | none  | **a module, not a section**    |
 | **TypeScript**                                                 | 30+ problems              | none  | **decision to revisit, below** |
 | **HTML, accessibility, CSS, forms**                            | ~48 problems              | none  | **section owed**               |
-| **Dates and time, testing**                                    | ~18 problems              | none  | thinner, but unexplained       |
+| **Dates and time**                                             | 10 problems               | none  | **a module, not a section**    |
+| Testing                                                        | 8 problems                | none  | deferred, threshold below      |
 | Trade-offs and architecture                                    | none                      | none  | neither half exists            |
+
+Three of those four resolve into new pages, and one does not, which is the interesting result.
+**`URL` and `URLSearchParams` is an API, not a concept**: repeated keys, `set` against `append`, the
+plus-sign space trap, and when `encodeURIComponent` is the wrong tool. A page explaining a mental
+model is the wrong shape for that; a module you sit down with is the right one, so it moves to
+[PRD-v4](./PRD-v4-modules.md). **Dates goes the same way**, to the `js-date` module already specified
+there. Both were being counted as handbook debt when the handbook was never the right home.
+
+**Systems is the strongest signal in the table now**, and it inverted while nobody was looking.
+Thirteen cards, every one paired with an explain-graded problem, and not a single workout. The
+content roadmap's own rule says a section with no workout is the worst case, because a workout is the
+only place the reading gets tested under time pressure. The roadmap now carries one.
+
+**Testing is deferred, with the threshold stated** so it is a decision rather than an oversight. Eight
+problems, all of them about testing-library and React, is the thinnest case in the table. It earns a
+section when the category grows past the JavaScript section's size or when a workout's checkpoints
+are about the tests themselves, whichever lands first.
 
 **The TypeScript decision is revisited.** This document originally put TypeScript under
 "deliberately absent" on the grounds that the vault had only stubs and the existing problems carried
@@ -333,6 +361,14 @@ already validates; and what the platform gives you free that people reach for a 
 (`<dialog>`, `<details>`, `popover`, `inputmode`). Credits: MDN, the WHATWG HTML Standard, the ARIA
 Authoring Practices Guide, web.dev.
 
+Two pages added by the audit, because the `dom` category sat outside all six of those. The
+through-line still holds, it just points at JavaScript rather than markup: **events, and where they
+actually go** (capture and bubble, delegation for a list that grows, `preventDefault` against
+`stopPropagation`, and debounce against throttle), and **the DOM API's sharp edges** (a `NodeList` is
+not an array, `dataset`, `classList.toggle` with a force argument, `IntersectionObserver` instead of
+a scroll handler, and `innerHTML` with anything a user typed). That last one is also practice for
+section 17, which is exactly the kind of overlap the pairing rule permits.
+
 ### 13. AI engineering, for people who ship web apps
 
 The scope moved here, deliberately and once. devgym is web-first and stays web-first, but the things
@@ -387,6 +423,42 @@ database rather than a data structure. Credits: MDN, the V8 blog, open algorithm
 It pairs with the `dsa-patterns` problem category in the content roadmap, which stays the place the
 patterns themselves get practised.
 
+### 16. Writing SQL
+
+Found by the audit, and the largest single miss in it. `sql` is the second-biggest category in the
+repo and almost none of it is explained anywhere, because section 7 turned out to be about
+performance rather than about SQL: indexes, plans, N+1 and pagination, all of which assume you can
+already write the query being made slow.
+
+Pages: what a join actually does (the row multiplication people meet as duplicate rows, and why
+`LEFT` changes the answer and not just the row count); `NULL` is not a value (three-valued logic,
+`IS NULL`, and why `NOT IN` with a null in the list returns nothing); grouping, and what you are
+allowed to select; `HAVING` against `WHERE`, which is a question about when each one runs;
+subqueries, CTEs and when the database stops caring which you wrote; window functions (the one
+feature that turns a loop in application code into a line of SQL, and the frame clause nobody reads);
+set operations and de-duplication. Engine honesty carries over from section 7 unchanged: the problems
+run SQLite, so a page says which engine it means. Credits: the PostgreSQL and SQLite documentation,
+and Markus Winand's writing on window functions.
+
+This section is the reason section 7 keeps its name. Databases is where a query goes wrong; this is
+where a query gets written.
+
+### 17. Security, past the headers
+
+Also found by the audit. The headers section owns the header-shaped half and section 4 already has a
+security-headers page owed to it; everything else in the `security` category has no home at all.
+
+Pages: where untrusted input becomes code (XSS in its three sites, and why `innerHTML` with user text
+is the same bug as string-concatenated SQL); parameterised queries, and what an ORM does and does not
+promise; storing a password (why a hash is not enough and what a work factor is for); storing a token
+(cookie flags against local storage, and what each one exposes you to); the redirect you did not
+validate; and secrets, and why a key in the frontend bundle is a published key. Credits: the OWASP
+Cheat Sheet Series, MDN, and the specifications for the headers the section borrows from section 4.
+
+**The scope line, stated so it does not drift**: this is what a web engineer builds and reviews, not
+offensive security. No exploitation technique gets a page it does not need for the defence to make
+sense.
+
 ### Deliberately absent
 
 - **Mobile and desktop**: the stated priority is web. The vault's React Native vs Flutter notes
@@ -416,14 +488,23 @@ reader.
 Moving data, databases, JavaScript, APIs, headers, caching, the server runtime, React and systems
 have all landed. What remains, ordered by how much unexplained practice is sitting behind each:
 
-1. **The browser you are writing for** — now the largest unpaired block by some distance
-2. **TypeScript, at the type level**
-3. **AI engineering** — new, and the only section here with no practice behind it yet, so it ships
-   alongside its problems rather than ahead of them (see the pairing rule; a page with an empty
-   `practise` list cannot ship at all)
-4. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
-5. **Running it in production**
-6. **Trade-offs and architecture** — last, as before, because it resists the page shape
+1. **The browser you are writing for** — now the largest unpaired block by some distance, and the
+   audit added two DOM pages to it without changing that
+2. **Writing SQL** — the audit's biggest find, and unblocked: 29 problems are already sitting there
+3. **TypeScript, at the type level**
+4. **Security, past the headers** — takes the security-headers page owed to section 4 with it, since
+   they are one afternoon together and two afternoons apart
+5. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
+   its problems rather than ahead of them (see the pairing rule; a page with an empty `practise` list
+   cannot ship at all)
+6. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
+7. **Running it in production**
+8. **Trade-offs and architecture** — last, as before, because it resists the page shape
+
+**On the numbers**: these are the map's, and `section.json` owns what a reader sees. Sections 16 and
+17 belong next to databases and headers in reading order, not at the end, so the display orders get
+resolved once when the second of them lands rather than renumbered per section. The test only asserts
+the orders are unique, so nothing breaks in the meantime.
 
 The single-page additions do not wait their turn, because each one slots into a section that already
 exists: SOAP into moving data, Express middleware and the three-framework comparison into the server

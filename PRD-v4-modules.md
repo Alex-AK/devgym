@@ -122,29 +122,49 @@ conversation with a migration attached, not something to build speculatively.
 
 ## The first modules
 
-Six, in build order. Each is an API that is used daily and understood shallowly, which is the entry
+In build order. Each is an API that is used daily and understood shallowly, which is the entry
 requirement.
 
-| Module              | The wrong model it corrects                                                          |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| `js-date`           | That a `Date` is a date. It is an instant, months count from zero, parsing is a trap |
-| `promises`          | That `await` in a loop and `Promise.all` differ only in style                        |
-| `json`              | That `JSON.stringify` round-trips your object                                        |
-| `js-errors`         | That `catch` catches what you think, and that a thrown thing is an `Error`           |
-| `tokens-and-crypto` | That a signed token is an encrypted one, and that comparing strings is safe          |
-| `node-fs`           | That reading a file is one call and writing one is atomic                            |
+| Module                 | The wrong model it corrects                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `js-date`              | That a `Date` is a date. It is an instant, months count from zero, parsing is a trap |
+| `url-and-searchparams` | That a query string is a string you can build by hand                                |
+| `promises`             | That `await` in a loop and `Promise.all` differ only in style                        |
+| `json`                 | That `JSON.stringify` round-trips your object                                        |
+| `js-errors`            | That `catch` catches what you think, and that a thrown thing is an `Error`           |
+| `tokens-and-crypto`    | That a signed token is an encrypted one, and that comparing strings is safe          |
+| `node-fs`              | That reading a file is one call and writing one is atomic                            |
 
 Notes on the harder two. `js-date` must say plainly where `Temporal` stands rather than teach an API
 that is not everywhere yet. `tokens-and-crypto` is the one module where a wrong model is a
 vulnerability rather than a bug, so it stays on `node:crypto` and `jose`, which the workouts already
 depend on, and it does not invent its own primitives.
 
-**A seventh, on my recommendation: `regex`.** Universal, universally shaky, deterministic to grade,
+**An eighth, on my recommendation: `regex`.** Universal, universally shaky, deterministic to grade,
 and catastrophic backtracking is a production outage rather than a curiosity. It fits the format
 exactly.
 
 Everything past that waits for these to land. Content is never finished, and modules are more
 expensive per unit than problems, so the queue stays short on purpose.
+
+### Two of these close a handbook gap, which is why the format earns its place
+
+A pairing audit against the learning guide found four areas with real practice volume and no page.
+Two of them turned out not to want a page at all, and finding that out is what made the distinction
+in this document concrete rather than theoretical.
+
+- **`url-and-searchparams`** pairs with the whole `query-params` category, every problem of which was
+  cited by nothing. Read the list and the shape is obvious: repeated keys and `getAll`, `set` against
+  `append`, the plus-sign space trap, `encodeURIComponent` against the wrong target, resolving a
+  relative URL. Not one of those is a mental model. They are the edges of one API, met one at a time,
+  which is the definition of a module and the opposite of a page.
+- **`js-date`** does the same for the `dates` category, which the learning guide had been carrying as
+  a debt owed by a section that was never going to be written.
+
+**So a category's pairing can be satisfied by a module.** That is a rule this document is adding, and
+it is worth stating plainly because the guide's version of the rule predates modules existing: an
+area is unexplained when nothing explains it, not when no _page_ explains it. The test is whether the
+thing being taught is a model or an API. A model is a page. An API is a module.
 
 ## Build order
 
@@ -155,9 +175,11 @@ Sized to land one at a time, each leaving the repo green.
 2. The `modules` Nest module and the run endpoint over the existing code runner.
 3. The web list and step view.
 4. `js-date` in full, which is the format's real test: if the shape survives timezones it survives
-   anything.
-5. `promises`, `json`, `js-errors`, one at a time.
-6. `tokens-and-crypto`, `node-fs`, `regex`.
+   anything. It also clears the `dates` category's pairing debt on landing.
+5. `url-and-searchparams`, which clears `query-params` entirely and is the cheapest of the eight, so
+   it is the one to write second while the format is still being argued with.
+6. `promises`, `json`, `js-errors`, one at a time.
+7. `tokens-and-crypto`, `node-fs`, `regex`.
 
 Items 1 to 3 are the whole application cost. Everything after is content.
 
