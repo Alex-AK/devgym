@@ -448,3 +448,100 @@ export interface WorkoutDetail extends WorkoutSummary {
   /** Revealed once every checkpoint passes, or on request. */
   solution: WorkoutFile[] | null;
 }
+
+/* --------------------------------------------------------------------- paths */
+
+/**
+ * The essentials path: a curated route through content that already exists.
+ * One path is one hour on one slice of the work, read then proved then built,
+ * and the deliberate opposite of the daily queue's interleaving. Content lives
+ * in `packages/paths/content/<slug>/path.json`, so adding an hour touches no
+ * code.
+ */
+export const PATH_STEP_KINDS = ['page', 'problem', 'workout', 'module'] as const;
+export type PathStepKind = (typeof PATH_STEP_KINDS)[number];
+
+/**
+ * What a session may author today. `module` is in `PathStepKind` already and
+ * refused by the loader until modules exist, so adding it later is one case in
+ * a switch rather than a change to the shape.
+ */
+export const AUTHORED_PATH_STEP_KINDS = ['page', 'problem', 'workout'] as const;
+export type AuthoredPathStepKind = (typeof AUTHORED_PATH_STEP_KINDS)[number];
+
+/** A step as authored: a kind, what it points at, and why it is here. */
+export interface PathStep {
+  kind: PathStepKind;
+  /** `section/slug` for a page, a bare slug for anything else. */
+  ref: string;
+  note?: string;
+}
+
+interface PathStepBase {
+  /** Position in the session, from 0. */
+  index: number;
+  ref: string;
+  note: string | null;
+  /** Whether the rep behind this step has been done. A page carries no
+   * progress and is never done: that is the standing non-goal, not an omission. */
+  done: boolean;
+}
+
+export interface PathPageStep extends PathStepBase {
+  kind: 'page';
+  section: string;
+  sectionTitle: string;
+  slug: string;
+  title: string;
+  question: string;
+}
+
+export interface PathProblemStep extends PathStepBase {
+  kind: 'problem';
+  slug: string;
+  title: string;
+  category: Category;
+  difficulty: Difficulty;
+  relevance: Relevance;
+  status: ProblemStatus;
+}
+
+export interface PathWorkoutStep extends PathStepBase {
+  kind: 'workout';
+  slug: string;
+  title: string;
+  workoutKind: WorkoutKind;
+  minutes: number;
+  summary: string;
+  checkpointCount: number;
+  /** Best result so far, or null if never attempted. */
+  bestCheckpointsPassed: number | null;
+}
+
+export type PathStepDetail = PathPageStep | PathProblemStep | PathWorkoutStep;
+
+/** Row in the path list (`GET /api/paths`). */
+export interface PathSummary {
+  slug: string;
+  title: string;
+  /** The question the hour answers, and the test of whether the slice holds. */
+  question: string;
+  summary: string;
+  order: number;
+  /** The budget the session was written against. */
+  minutes: number;
+  stepCount: number;
+  /** Steps that carry progress: the problems and workouts, never the pages. */
+  provable: number;
+  done: number;
+}
+
+export interface PathDetail extends PathSummary {
+  steps: PathStepDetail[];
+  /**
+   * Where you left off: the first step carrying progress that is not done, or
+   * null once they all are. Derived from the reps, so nothing is stored and
+   * there is no migration.
+   */
+  resumeIndex: number | null;
+}

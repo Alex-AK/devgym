@@ -1,0 +1,29 @@
+{
+  "slug": "where-state-lives",
+  "title": "Where state lives",
+  "question": "Where should this piece of state actually live?",
+  "summary": "Most React state questions are placement questions wearing a disguise. Which component owns it, what should have been derived instead of stored, and what a context costs everyone reading it.",
+  "order": 3,
+  "minutes": 45,
+  "steps": [
+    {
+      "kind": "page",
+      "ref": "react/where-state-lives",
+      "note": "The four places it can go, and the question that picks between them."
+    },
+    { "kind": "page", "ref": "react/context-and-rerender-scope" },
+    { "kind": "problem", "ref": "react-lifting-state" },
+    { "kind": "problem", "ref": "react-state-colocation" },
+    { "kind": "problem", "ref": "react-derived-state" },
+    { "kind": "problem", "ref": "react-unnecessary-effect" },
+    { "kind": "problem", "ref": "react-reset-state-key" },
+    { "kind": "problem", "ref": "react-ref-vs-state" },
+    { "kind": "problem", "ref": "react-context-value-identity" },
+    { "kind": "problem", "ref": "react-context-read-scope" },
+    {
+      "kind": "workout",
+      "ref": "invoice-panel-react",
+      "note": "Three complaints, and each one is a piece of state in the wrong place."
+    }
+  ]
+}

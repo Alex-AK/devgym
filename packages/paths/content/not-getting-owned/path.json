@@ -1,0 +1,30 @@
+{
+  "slug": "not-getting-owned",
+  "title": "Not getting owned",
+  "question": "What would it actually take to break into this?",
+  "summary": "Untrusted input reaching a parser that cannot tell data from code, a token left where a script can read it, and the handful of headers worth setting. Ends with issuing a token and gating a route on it.",
+  "order": 6,
+  "minutes": 60,
+  "steps": [
+    {
+      "kind": "page",
+      "ref": "security/untrusted-input-becomes-code",
+      "note": "One shape underneath XSS and SQL injection both. Read it as one idea."
+    },
+    { "kind": "page", "ref": "security/storing-a-token" },
+    { "kind": "page", "ref": "headers/security-headers" },
+    { "kind": "problem", "ref": "security-xss-source" },
+    { "kind": "problem", "ref": "dom-innerhtml-xss" },
+    { "kind": "problem", "ref": "security-sql-injection" },
+    { "kind": "problem", "ref": "security-token-storage" },
+    { "kind": "problem", "ref": "security-cookie-flags" },
+    { "kind": "problem", "ref": "security-samesite-none-secure" },
+    { "kind": "problem", "ref": "security-csp-unsafe-inline" },
+    { "kind": "problem", "ref": "security-nosniff-mime" },
+    {
+      "kind": "workout",
+      "ref": "jwt-auth-express",
+      "note": "The expiry and the 401 are the workout. The password hash staying out of the response is the review."
+    }
+  ]
+}

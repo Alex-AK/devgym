@@ -1,0 +1,27 @@
+{
+  "slug": "the-browser-already-does-this",
+  "title": "The browser already does this",
+  "question": "How much of this did the browser already do for me?",
+  "summary": "Which element means what, where an accessible name comes from, and the validation you rewrote in JavaScript. No workout: the hour goes on reps instead, because these are decisions you make a dozen times a day and rarely twice the same way.",
+  "order": 4,
+  "minutes": 45,
+  "steps": [
+    {
+      "kind": "page",
+      "ref": "browser/which-element-means-this",
+      "note": "The element you did not use is doing work you would otherwise write."
+    },
+    { "kind": "page", "ref": "browser/the-accessible-name" },
+    { "kind": "page", "ref": "browser/forms-the-browser-validates" },
+    { "kind": "problem", "ref": "html-anchor-vs-button" },
+    { "kind": "problem", "ref": "html-button-type-default" },
+    { "kind": "problem", "ref": "html-details-summary" },
+    { "kind": "problem", "ref": "html-fieldset-legend" },
+    { "kind": "problem", "ref": "a11y-div-button" },
+    { "kind": "problem", "ref": "a11y-label-input" },
+    { "kind": "problem", "ref": "a11y-icon-button-name" },
+    { "kind": "problem", "ref": "forms-validation-both-sides" },
+    { "kind": "problem", "ref": "forms-required-vs-aria" },
+    { "kind": "problem", "ref": "forms-prevent-default-submit" }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "slug": "why-the-page-is-slow",
+  "title": "Why the page is slow",
+  "question": "The page takes seconds. Where did the time go?",
+  "summary": "The three places the time usually is: a component rendering more often than anyone meant, a query per row, and an index the planner would not use. One slice across React and the database, because that is how the bug arrives.",
+  "order": 2,
+  "minutes": 60,
+  "steps": [
+    {
+      "kind": "page",
+      "ref": "react/what-a-render-is",
+      "note": "Render cost and re-render count are two different problems. Separate them first."
+    },
+    { "kind": "page", "ref": "databases/n-plus-one" },
+    { "kind": "page", "ref": "databases/how-an-index-gets-used" },
+    { "kind": "problem", "ref": "react-slow-render" },
+    { "kind": "problem", "ref": "react-derive-write-time" },
+    { "kind": "problem", "ref": "sql-orders-per-customer" },
+    { "kind": "problem", "ref": "sql-batch-related-rows" },
+    { "kind": "problem", "ref": "sql-top-recent" },
+    {
+      "kind": "workout",
+      "ref": "slow-list-endpoint-kysely",
+      "note": "Nobody tells you which of the three it is. That is the exercise."
+    }
+  ]
+}

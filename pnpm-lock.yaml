@@ -196,6 +196,8 @@ importers:
 
   packages/handbook: {}
 
+  packages/paths: {}
+
   packages/shared:
     devDependencies:
       typescript:

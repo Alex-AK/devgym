@@ -1,0 +1,26 @@
+{
+  "slug": "correct-before-fast",
+  "title": "Making the query correct before fast",
+  "question": "Is this query right? Fast comes after.",
+  "summary": "A join changes your row count, NULL is neither equal nor unequal, and grouping decides what you are allowed to select. Every rep runs against the practice database, so the hour is spent writing SQL rather than reading about it.",
+  "order": 5,
+  "minutes": 45,
+  "steps": [
+    {
+      "kind": "page",
+      "ref": "sql/what-a-join-does",
+      "note": "Row multiplication first. Half of the wrong totals below start here."
+    },
+    { "kind": "page", "ref": "sql/null-is-not-a-value" },
+    { "kind": "page", "ref": "sql/grouping" },
+    { "kind": "problem", "ref": "sql-join-author-name" },
+    { "kind": "problem", "ref": "sql-order-totals" },
+    { "kind": "problem", "ref": "sql-anti-join" },
+    { "kind": "problem", "ref": "sql-null-check" },
+    { "kind": "problem", "ref": "sql-coalesce-stock" },
+    { "kind": "problem", "ref": "sql-not-exists" },
+    { "kind": "problem", "ref": "sql-count-genre" },
+    { "kind": "problem", "ref": "sql-revenue-by-genre" },
+    { "kind": "problem", "ref": "sql-having-avg" }
+  ]
+}

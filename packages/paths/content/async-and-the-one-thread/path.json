@@ -1,0 +1,29 @@
+{
+  "slug": "async-and-the-one-thread",
+  "title": "Async, and what the one thread is doing",
+  "question": "There is one thread. What is it doing while you wait?",
+  "summary": "The event loop, then what that means for an effect that outlives the component that started it. Ends on the race everyone ships at least once: the older response arriving last and winning.",
+  "order": 7,
+  "minutes": 60,
+  "steps": [
+    {
+      "kind": "page",
+      "ref": "javascript/the-event-loop",
+      "note": "One thread, two queues, and what await really suspends."
+    },
+    { "kind": "page", "ref": "react/effects-and-cleanup" },
+    { "kind": "problem", "ref": "js-microtask-order" },
+    { "kind": "problem", "ref": "debug-async-foreach" },
+    { "kind": "problem", "ref": "js-await-in-loop" },
+    { "kind": "problem", "ref": "debug-try-catch-async" },
+    { "kind": "problem", "ref": "js-abort" },
+    { "kind": "problem", "ref": "react-effect-cleanup" },
+    { "kind": "problem", "ref": "react-fetch-race" },
+    { "kind": "problem", "ref": "react-abort-on-unmount" },
+    {
+      "kind": "workout",
+      "ref": "autocomplete-react",
+      "note": "Three complaints against one box, and two of them are the same race."
+    }
+  ]
+}
