@@ -1,0 +1,34 @@
+{
+  "slug": "invoice-panel-react",
+  "title": "The deleted line is still there",
+  "kind": "bug-hunt",
+  "minutes": 12,
+  "difficulty": "easy",
+  "relevance": "daily",
+  "stack": {
+    "client": "react"
+  },
+  "summary": "Three complaints about the invoice panel: a removed line stays in the list, the total at the bottom ignores the filter, and the rows lag a character behind while you type.",
+  "focus": ["react state", "rendering", "props", "react effects"],
+  "editable": ["src/client/InvoiceLines.tsx"],
+  "checkpoints": [
+    {
+      "id": "rows-are-the-invoice",
+      "title": "The rows on screen are the lines on the invoice",
+      "testFile": "tests/checkpoints/01-the-rows-are-the-invoice.test.tsx",
+      "hint": "The invoice is a prop and this panel is one view of it, so a copy of it held here is a second answer to the same question and the two can disagree. Every row drawn has to come from the lines this render was handed."
+    },
+    {
+      "id": "total-matches-the-rows",
+      "title": "The total is the total of the rows on screen",
+      "testFile": "tests/checkpoints/02-the-total-matches-the-rows.test.tsx",
+      "hint": "The total and the rows answer the same question about the same list, so they have to be worked out from the same list. Filtering to two lines and adding up six is the whole complaint."
+    },
+    {
+      "id": "one-keystroke-one-render",
+      "title": "One keystroke, one render",
+      "testFile": "tests/checkpoints/03-one-keystroke-one-render.test.tsx",
+      "hint": "An effect whose body is a setState renders twice: once with the old value, then again once the effect has corrected it, and the old value is on screen in between. Anything worked out from props and state can be worked out during the render that shows it, which is one render rather than two."
+    }
+  ]
+}

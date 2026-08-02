@@ -1,0 +1,34 @@
+{
+  "slug": "conditional-requests-express",
+  "title": "Stop resending the report",
+  "kind": "feature",
+  "minutes": 12,
+  "difficulty": "easy",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express"
+  },
+  "summary": "A page polls GET /report every ten seconds and gets 160 KB back every time, whether or not anything changed. Give the response a validator and answer the poll that finds nothing new with a 304.",
+  "focus": ["http caching", "etag", "conditional requests", "express"],
+  "editable": ["src/server/report.ts"],
+  "checkpoints": [
+    {
+      "id": "validator-on-the-response",
+      "title": "The report comes back with a validator",
+      "testFile": "tests/checkpoints/01-the-report-carries-a-validator.test.ts",
+      "hint": "The tag has to change when the report changes and stay put when it does not, which is exactly what sales.revision already tracks. Quote it and that is the whole tag. It goes on the 200, because a caller cannot ask about a copy it was never given a name for."
+    },
+    {
+      "id": "nothing-changed-nothing-sent",
+      "title": "A client that already has it gets nothing back",
+      "testFile": "tests/checkpoints/02-nothing-changed-nothing-sent.test.ts",
+      "hint": "304 and end(): a 304 with a body has saved nobody anything. Comparing the header with === works until a W/ turns up on one side of it, and the header can carry a list, so split it and strip the prefix before you compare."
+    },
+    {
+      "id": "the-304-is-cheap",
+      "title": "The 304 costs nothing to produce",
+      "testFile": "tests/checkpoints/03-the-304-costs-nothing.test.ts",
+      "hint": "A tag worked out from the finished report saves the bytes and none of the work. revision is a counter and buildReport() is the aggregate: only one of them belongs before the comparison."
+    }
+  ]
+}

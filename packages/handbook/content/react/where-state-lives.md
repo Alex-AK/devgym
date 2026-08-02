@@ -4,6 +4,7 @@ question: Where should this piece of state actually live?
 order: 2
 practise:
   - react-lifting-state
+  - invoice-panel-react
   - react-state-colocation
   - react-derived-state
   - react-unnecessary-effect

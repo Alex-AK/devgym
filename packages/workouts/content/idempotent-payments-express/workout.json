@@ -1,0 +1,41 @@
+{
+  "slug": "idempotent-payments-express",
+  "title": "Charge the card once",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express",
+    "database": "sqlite"
+  },
+  "summary": "A double-clicked pay button charged a customer twice. Make POST /payments safe to retry: the same Idempotency-Key replays the first answer, a new key is a new payment, and two submissions landing together still cost one charge.",
+  "focus": ["idempotency", "http status codes", "sqlite", "concurrency"],
+  "editable": ["src/server/payments.ts"],
+  "checkpoints": [
+    {
+      "id": "charges-the-card-once",
+      "title": "A payment goes through and charges the card once",
+      "testFile": "tests/checkpoints/01-a-payment-charges-the-card-once.test.ts",
+      "hint": "A request with no Idempotency-Key is a 400, answered before anything is charged: a payment the client cannot name is one it cannot safely send again. A header of nothing but spaces is no header."
+    },
+    {
+      "id": "same-key-replays",
+      "title": "The same key replays the first answer",
+      "testFile": "tests/checkpoints/02-the-same-key-replays-the-first-answer.test.ts",
+      "hint": "Record the status and the body you answered with against the key, then answer a repeat from the record instead of working it out again. A replayed create is still a 201."
+    },
+    {
+      "id": "double-submit",
+      "title": "Two submissions at the same moment charge once",
+      "testFile": "tests/checkpoints/03-two-submissions-at-the-same-moment.test.ts",
+      "hint": "A SELECT that misses is not a claim: both requests can miss it and both go on to charge. Write the row before you charge and let the primary key settle who won. INSERT OR IGNORE reports the loser as changes === 0, and the loser is the one that answers 409."
+    },
+    {
+      "id": "changed-body-refused",
+      "title": "The same key with a different payment is refused",
+      "testFile": "tests/checkpoints/04-the-same-key-with-a-different-payment.test.ts",
+      "hint": "Store fingerprint(body) alongside the key and compare it before you replay anything. A key that comes back carrying a different payment is 422, not a replay of the old one."
+    }
+  ]
+}

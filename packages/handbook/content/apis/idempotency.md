@@ -3,6 +3,8 @@ title: Idempotency
 question: The payment timed out and I cannot tell whether it went through. Is retrying safe?
 order: 2
 practise:
+  - http-idempotency-key-scope
+  - idempotent-payments-express
   - http-idempotency-key
   - http-retry-safe-methods
   - http-put-vs-patch

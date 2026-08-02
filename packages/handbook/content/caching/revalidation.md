@@ -3,6 +3,8 @@ title: Revalidation
 question: The client already has this. How do I avoid sending it again?
 order: 3
 practise:
+  - http-stale-while-revalidate
+  - conditional-requests-express
   - http-etag-conditional
   - http-cache-control
   - react-fetch-race
