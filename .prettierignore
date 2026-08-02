@@ -7,3 +7,10 @@ pnpm-workspace.yaml
 apps/server/data/
 apps/server/drizzle/
 docs/
+
+# A module step's fences are line-structured: one assertion per line, and the
+# `js run` snippet is shown to the reader exactly as written. Prettier rewrites
+# both, and on a long assertion it wraps the line and then glues the next one
+# onto it, which is a content bug the spec catches and nobody should have to
+# debug. Source code for a different program, like the workout content.
+packages/modules/content/

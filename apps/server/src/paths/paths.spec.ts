@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { allPages } from '../handbook/handbook-content';
+import { listModules } from '../modules/modules-content';
 import { problemSeeds } from '../seed/problems.seed';
 import { listManifests } from '../workouts/workout-content';
 import { listPaths, parsePath } from './paths-content';
@@ -17,6 +18,7 @@ const paths = listPaths();
 const pageRefs = new Set(allPages().map((page) => `${page.section}/${page.slug}`));
 const problemSlugs = new Set(problemSeeds.map((problem) => problem.slug));
 const workoutSlugs = new Set(listManifests().map((workout) => workout.slug));
+const moduleSlugs = new Set(listModules().map((entry) => entry.slug));
 
 /** A session with everything the validator wants, so a test can take one thing away. */
 function session(overrides: Partial<Record<string, unknown>> = {}): string {
@@ -59,6 +61,7 @@ describe('the essentials path', () => {
       page: pageRefs,
       problem: problemSlugs,
       workout: workoutSlugs,
+      module: moduleSlugs,
     };
     for (const path of paths) {
       for (const step of path.steps) {
@@ -69,7 +72,7 @@ describe('the essentials path', () => {
   });
 
   it('reads, then proves, then builds', () => {
-    const phase = { page: 0, problem: 1, workout: 2 } as Record<string, number>;
+    const phase = { page: 0, module: 0, problem: 1, workout: 2 } as Record<string, number>;
     for (const path of paths) {
       const order = path.steps.map((step) => phase[step.kind] ?? -1);
       expect(
@@ -140,13 +143,22 @@ describe('the session validator', () => {
     expect(() => parsePath(session({ steps }), 'ok')).toThrow(/read, prove, then build/);
   });
 
-  it('refuses a module step until modules exist', () => {
+  it('accepts a module as a read step, now that modules exist', () => {
+    const steps = [
+      { kind: 'module', ref: 'js-date' },
+      { kind: 'page', ref: 'moving-data/request-response' },
+      { kind: 'problem', ref: 'http-fetch-not-ok' },
+    ];
+    expect(() => parsePath(session({ steps }), 'ok')).not.toThrow();
+  });
+
+  it('refuses a module step that arrives after the reps it should precede', () => {
     const steps = [
       { kind: 'page', ref: 'moving-data/request-response' },
       { kind: 'problem', ref: 'http-fetch-not-ok' },
       { kind: 'module', ref: 'js-date' },
     ];
-    expect(() => parsePath(session({ steps }), 'ok')).toThrow(/reserved and not yet valid/);
+    expect(() => parsePath(session({ steps }), 'ok')).toThrow(/read, prove, then build/);
   });
 
   it('refuses a kind nobody has heard of', () => {

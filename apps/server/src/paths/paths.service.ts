@@ -17,6 +17,7 @@ import type { AppDb } from '../db/client';
 import { APP_DB } from '../db/db.module';
 import { problemProgress, problems, workoutAttempts } from '../db/schema';
 import { allPages, type HandbookPageContent, readSection } from '../handbook/handbook-content';
+import { listModules, type ModuleContent } from '../modules/modules-content';
 import { listManifests } from '../workouts/workout-content';
 import { listPaths, type PathContent, readPath } from './paths-content';
 
@@ -34,6 +35,7 @@ interface Lookups {
   sectionTitles: Map<string, string>;
   problems: Map<string, ProblemFacts>;
   workouts: Map<string, { manifest: WorkoutManifest; bestPassed: number | null }>;
+  modules: Map<string, ModuleContent>;
 }
 
 @Injectable()
@@ -91,6 +93,7 @@ export class PathsService {
       sectionTitles: new Map([...sections].map((slug) => [slug, sectionTitle(slug)] as const)),
       problems: this.problemFacts(),
       workouts: this.workoutFacts(),
+      modules: new Map(listModules().map((entry) => [entry.slug, entry] as const)),
     };
   }
 
@@ -189,6 +192,24 @@ function resolveStep(step: PathStep, lookups: Lookups, index: number): PathStepD
       };
     }
 
+    case 'module': {
+      const found = lookups.modules.get(step.ref);
+      if (!found) return null;
+      return {
+        kind: 'module',
+        index,
+        ref: step.ref,
+        note,
+        // A module carries no progress, for the same reason a page does not.
+        done: false,
+        slug: found.slug,
+        title: found.title,
+        summary: found.summary,
+        minutes: found.minutes,
+        stepCount: found.steps.length,
+      };
+    }
+
     case 'workout': {
       const found = lookups.workouts.get(step.ref);
       if (!found) return null;
@@ -210,8 +231,6 @@ function resolveStep(step: PathStep, lookups: Lookups, index: number): PathStepD
       };
     }
 
-    // `module` is refused by the loader until modules exist, so a step can
-    // never reach here as one. When they do, this is where it lands.
     default:
       return null;
   }

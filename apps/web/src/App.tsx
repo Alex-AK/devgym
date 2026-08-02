@@ -7,6 +7,8 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { HandbookPage } from '@/pages/HandbookPage';
 import { HandbookPageView } from '@/pages/HandbookPageView';
 import { HowItTeachesPage } from '@/pages/HowItTeachesPage';
+import { ModulePage } from '@/pages/ModulePage';
+import { ModulesPage } from '@/pages/ModulesPage';
 import { PathPage } from '@/pages/PathPage';
 import { PathsPage } from '@/pages/PathsPage';
 import { PracticePage } from '@/pages/PracticePage';
@@ -30,6 +32,8 @@ export function App(): React.ReactElement {
             to a reader; "path" is what it is called in the code and the API. */}
         <Route path="essentials" element={<PathsPage />} />
         <Route path="essentials/:slug" element={<PathPage />} />
+        <Route path="modules" element={<ModulesPage />} />
+        <Route path="modules/:slug" element={<ModulePage />} />
         <Route path="handbook" element={<HandbookPage />} />
         <Route path="handbook/:section/:slug" element={<HandbookPageView />} />
         <Route path="about" element={<AboutPage />} />

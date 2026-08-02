@@ -451,6 +451,62 @@ export interface WorkoutDetail extends WorkoutSummary {
   solution: WorkoutFile[] | null;
 }
 
+/* ------------------------------------------------------------------- modules */
+
+/**
+ * A module is one sitting with one API: 15 to 25 minutes of ordered steps, and
+ * every step is predict, run, correct. It is the format for the APIs you use
+ * constantly and understand shallowly, where the problem is not being stuck but
+ * holding a wrong model that has never cost enough to notice. Content lives in
+ * `packages/modules/content/<slug>/`, so adding one touches no code.
+ */
+export interface ModuleStep {
+  /** Filename without its ordering prefix: stable, and the URL fragment. */
+  id: string;
+  title: string;
+  /** The question you answer before running anything. */
+  predict: string;
+  /** Markdown, with the code fences lifted out. */
+  body: string;
+  /** The snippet, prefilled into the editor and yours to change. */
+  code: string;
+  /** Expressions evaluated after the snippet. Each one must come out true. */
+  assertions: string[];
+}
+
+/** Row in the module list (`GET /api/modules`). */
+export interface ModuleSummary {
+  slug: string;
+  title: string;
+  summary: string;
+  order: number;
+  minutes: number;
+  stepCount: number;
+}
+
+export interface ModuleDetail extends ModuleSummary {
+  steps: ModuleStep[];
+  sources: HandbookSource[];
+  /** ISO date the module's claims were last checked against its sources. */
+  verified: string;
+  /** Where to practise it afterwards, resolved the way a page's list is. */
+  practiseLinks: HandbookPractiseLink[];
+}
+
+/** `POST /api/modules/:slug/steps/:stepId/run` request body. */
+export interface ModuleRunRequest {
+  /** The editor contents. The assertions come from the step, not from here. */
+  code: string;
+}
+
+export interface ModuleRunResponse {
+  /** Set when the snippet could not be evaluated at all. */
+  error: string | null;
+  results: CodeTestResult[];
+  logs: string[];
+  passed: boolean;
+}
+
 /* --------------------------------------------------------------------- paths */
 
 /**
@@ -464,11 +520,11 @@ export const PATH_STEP_KINDS = ['page', 'problem', 'workout', 'module'] as const
 export type PathStepKind = (typeof PATH_STEP_KINDS)[number];
 
 /**
- * What a session may author today. `module` is in `PathStepKind` already and
- * refused by the loader until modules exist, so adding it later is one case in
- * a switch rather than a change to the shape.
+ * What a session may author. `module` was reserved here before modules existed
+ * and became legal the day they did, which cost exactly the one case in a
+ * switch it was reserved to cost.
  */
-export const AUTHORED_PATH_STEP_KINDS = ['page', 'problem', 'workout'] as const;
+export const AUTHORED_PATH_STEP_KINDS = ['page', 'problem', 'workout', 'module'] as const;
 export type AuthoredPathStepKind = (typeof AUTHORED_PATH_STEP_KINDS)[number];
 
 /** A step as authored: a kind, what it points at, and why it is here. */
@@ -498,6 +554,15 @@ export interface PathPageStep extends PathStepBase {
   question: string;
 }
 
+export interface PathModuleStep extends PathStepBase {
+  kind: 'module';
+  slug: string;
+  title: string;
+  summary: string;
+  minutes: number;
+  stepCount: number;
+}
+
 export interface PathProblemStep extends PathStepBase {
   kind: 'problem';
   slug: string;
@@ -520,7 +585,7 @@ export interface PathWorkoutStep extends PathStepBase {
   bestCheckpointsPassed: number | null;
 }
 
-export type PathStepDetail = PathPageStep | PathProblemStep | PathWorkoutStep;
+export type PathStepDetail = PathModuleStep | PathPageStep | PathProblemStep | PathWorkoutStep;
 
 /** Row in the path list (`GET /api/paths`). */
 export interface PathSummary {

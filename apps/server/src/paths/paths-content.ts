@@ -42,9 +42,10 @@ export const CONTENT_DIR = join(PATHS_PACKAGE, 'content');
 /**
  * Read, then prove, then build. A session's steps run in this order and the
  * loader enforces it, because a rep that arrives before the page explaining it
- * is the daily queue's job rather than this one's.
+ * is the daily queue's job rather than this one's. A module is a read step: it
+ * is what a session about an API has instead of a page.
  */
-const PHASE: Record<AuthoredPathStepKind, number> = { page: 0, problem: 1, workout: 2 };
+const PHASE: Record<AuthoredPathStepKind, number> = { page: 0, module: 0, problem: 1, workout: 2 };
 
 export interface PathContent {
   slug: string;
@@ -102,7 +103,7 @@ export function parsePath(raw: string, slug: string): PathContent {
 
   let phase = 0;
   for (const step of steps) {
-    const next = PHASE[step.kind as AuthoredPathStepKind];
+    const next = PHASE[step.kind];
     if (next < phase) fail(`puts a ${step.kind} step after a later phase: read, prove, then build`);
     phase = next;
   }
@@ -124,9 +125,7 @@ function readStep(step: PathStep, index: number, fail: (why: string) => never): 
   if (!PATH_STEP_KINDS.includes(step?.kind)) {
     fail(`${at} has an unknown kind "${String(step?.kind)}"`);
   }
-  // `module` is a legal step the day modules exist, and one case in a switch
-  // when they do. Until then a session naming one would resolve to nothing.
-  if (!AUTHORED_PATH_STEP_KINDS.includes(step.kind as AuthoredPathStepKind)) {
+  if (!AUTHORED_PATH_STEP_KINDS.includes(step.kind)) {
     fail(`${at} is a "${step.kind}" step, which is reserved and not yet valid`);
   }
   if (!step.ref?.trim()) fail(`${at} points at nothing`);

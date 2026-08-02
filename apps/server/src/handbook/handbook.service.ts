@@ -2,15 +2,13 @@ import type {
   HandbookPageDetail,
   HandbookPageRef,
   HandbookPageSummary,
-  HandbookPractiseLink,
   HandbookSectionSummary,
 } from '@devgym/shared';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
+import { resolvePractiseLinks } from '../common/practise';
 import type { AppDb } from '../db/client';
 import { APP_DB } from '../db/db.module';
-import { problems } from '../db/schema';
-import { listManifests } from '../workouts/workout-content';
 import { type HandbookPageContent, listPages, listSections, readSection } from './handbook-content';
 
 @Injectable()
@@ -39,7 +37,7 @@ export class HandbookService {
       body: page.body,
       sources: page.sources,
       verified: page.verified,
-      practiseLinks: this.resolvePractise(page.practise),
+      practiseLinks: resolvePractiseLinks(this.db, page.practise),
       previous: toRef(pages[index - 1]),
       next: toRef(pages[index + 1]),
     };
@@ -51,35 +49,6 @@ export class HandbookService {
     } catch {
       throw new NotFoundException(`No handbook section ${slug}`);
     }
-  }
-
-  /**
-   * A `practise` entry is a bare slug, and the author shouldn't have to say
-   * which kind it is. Problems are looked up live so the link carries the title
-   * the problem actually has; a slug that resolves to neither is a content bug
-   * the safety net catches before it ships, so it's dropped rather than shown.
-   */
-  private resolvePractise(slugs: string[]): HandbookPractiseLink[] {
-    if (slugs.length === 0) return [];
-
-    const problemTitles = new Map(
-      this.db
-        .select({ slug: problems.slug, title: problems.title })
-        .from(problems)
-        .all()
-        .map((row) => [row.slug, row.title] as const)
-    );
-    const workoutTitles = new Map(
-      listManifests().map((manifest) => [manifest.slug, manifest.title] as const)
-    );
-
-    return slugs.flatMap<HandbookPractiseLink>((slug) => {
-      const problem = problemTitles.get(slug);
-      if (problem) return [{ kind: 'problem', slug, title: problem }];
-      const workout = workoutTitles.get(slug);
-      if (workout) return [{ kind: 'workout', slug, title: workout }];
-      return [];
-    });
   }
 }
 

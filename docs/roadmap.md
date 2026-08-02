@@ -45,43 +45,30 @@ structure. Credits: MDN, the V8 blog, open algorithms references.
 The patterns themselves stay in `dsa-patterns` below. Choosing a structure is not a pattern; it is a
 decision ordinary feature work makes hourly and usually by reflex.
 
-## 3. Modules
+## 3. The rest of the modules
 
-A fourth content type, specified in full and not started. It is the first since workouts that needs
-application code rather than a directory, and it settles twenty problems that the handbook was never
-the right home for: `query-params` and `dates` have ten each, cited by nothing.
-
-One sitting with one API, 15 to 25 minutes, ordered steps, and every step is predict, run, correct.
-[content.md](./content.md) holds the shape on disk, the tagged fences and the authoring rules.
-
-The application cost, which is the whole of it:
-
-1. `packages/modules` with the loader, validator and `modules.spec.ts`, mirroring
-   `packages/handbook`. The first three steps of `js-date` are the fixture, and the spec is the
-   proof. No UI, no endpoints.
-2. A `modules` Nest module: list, get, and one run endpoint handing `{ code, assertions }` to the
-   existing `grading/code-runner.ts`. The runner does not change.
-3. The step view on the web, reusing `CodeEditor` and `Markdown`.
-
-No schema change and no progress tracking in v1, for the reason handbook pages get none: the
-problems are the progress tracking, and a module's `practise` list is how it reaches your queue.
-
-Then content, in this order.
+The format ships and `js-date` is written, so everything here is content: a directory, no application
+code. Seven left, and the ten `query-params` problems cited by nothing are the reason
+`url-and-searchparams` is next.
 
 | Module                 | The wrong model it corrects                                                          |
 | ---------------------- | ------------------------------------------------------------------------------------ |
-| `js-date`              | That a `Date` is a date. It is an instant, months count from zero, parsing is a trap |
 | `url-and-searchparams` | That a query string is a string you can build by hand                                |
 | `promises`             | That `await` in a loop and `Promise.all` differ only in style                        |
 | `json`                 | That `JSON.stringify` round-trips your object                                        |
 | `js-errors`            | That `catch` catches what you think, and that a thrown thing is an `Error`           |
 | `regex`                | That a pattern that works is a pattern that terminates                               |
 | `tokens-and-crypto`    | That a signed token is an encrypted one, and that comparing strings is safe          |
-| `node-fs`              | That reading a file is one call and writing one is atomic. Weakest of the eight here |
+| `node-fs`              | That reading a file is one call and writing one is atomic. Weakest of the seven here |
 
-`js-date` is the format's real test: if the shape survives timezones it survives anything.
-`tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so
-it stays on `node:crypto` and `jose` and invents no primitives of its own.
+`tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so it
+stays on `node:crypto` and `jose` and invents no primitives of its own.
+
+**Two things `js-date` proved that the next author should not rediscover.** Assertions run on the
+reader's machine with no fake clock and no fixed timezone, so anything that depends on the host zone
+is a broken module for everybody except its author: `js-date`'s assertions were checked in five zones
+before it shipped. And a step's assertions are about the API rather than about the reader's edit, so
+they keep holding when the snippet is changed, which is what makes the editor safe to play in.
 
 ## 4. Pages missing from sections that already ship
 

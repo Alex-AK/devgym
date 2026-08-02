@@ -1,5 +1,6 @@
 import type {
   PathDetail,
+  PathModuleStep,
   PathPageStep,
   PathProblemStep,
   PathStepDetail,
@@ -7,7 +8,7 @@ import type {
 } from '@devgym/shared';
 import { WORKOUT_KIND_LABELS } from '@devgym/shared';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, CheckCircle2, Clock, Dumbbell, Target } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Dumbbell, ListOrdered, Target } from 'lucide-react';
 import * as React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -27,6 +28,12 @@ const PHASES = [
     title: 'Read',
     blurb: 'In order. Each one assumes the last.',
     icon: BookOpen,
+  },
+  {
+    kind: 'module' as const,
+    title: 'Sit with the API',
+    blurb: 'Predict, run, correct. What a session about an API has instead of a page.',
+    icon: ListOrdered,
   },
   {
     kind: 'problem' as const,
@@ -132,7 +139,25 @@ function Step({ step }: { step: PathStepDetail }): React.ReactElement {
       return <ProblemStep step={step} />;
     case 'workout':
       return <WorkoutStep step={step} />;
+    case 'module':
+      return <ModuleStep step={step} />;
   }
+}
+
+function ModuleStep({ step }: { step: PathModuleStep }): React.ReactElement {
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <Link to={`/modules/${step.slug}`} className="font-medium hover:underline">
+          {step.title}
+        </Link>
+        <span className="text-sm text-muted-foreground">
+          {step.stepCount} steps · {step.minutes} min
+        </span>
+      </div>
+      <p className="mt-0.5 text-sm text-muted-foreground">{step.summary}</p>
+    </div>
+  );
 }
 
 function PageStep({ step }: { step: PathPageStep }): React.ReactElement {

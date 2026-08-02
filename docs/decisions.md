@@ -343,6 +343,21 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   `query-params` and `dates` produced no hour at all. Read the module list with that in mind rather
   than as eight equal entries.
 
+- **The format shipped as specified, and the two rules experience added are in `content.md`.**
+  Building `js-date` found both: assertions run on the reader's machine with no fake clock and no
+  fixed timezone, so a module that depends on its author's zone is broken for everybody else; and a
+  step's assertions are about the API rather than about the reader's edit, which is what makes the
+  snippet safe to change and explore. Neither was in the spec, and neither is discoverable from a
+  module that happens to have been written in UTC.
+
+- **The run endpoint takes the code and looks the assertions up itself.** The client sends what is in
+  the editor; the assertions come from the step on disk. That is the split the format needs: the
+  snippet is yours to change and the check does not move when you change it.
+
+- **A `module` step on the essentials path became legal the day modules existed**, which cost the one
+  case in a switch it was reserved to cost. It counts as a read step, because it is what a session
+  about an API has instead of a page.
+
 - **A fourth content type was accepted even though it costs application code.** The other three all
   assume you already know the thing you are practising. The gap they miss is the handful of APIs
   used constantly and understood shallowly, where the problem is not being stuck but holding a wrong

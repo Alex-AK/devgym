@@ -196,6 +196,8 @@ importers:
 
   packages/handbook: {}
 
+  packages/modules: {}
+
   packages/paths: {}
 
   packages/shared:

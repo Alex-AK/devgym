@@ -321,8 +321,6 @@ rather than the reader.
 
 ## Modules
 
-**Specified, not built.** Nothing below changes how the other three types work.
-
 A module is one sitting with one API: fifteen to twenty-five minutes, ordered steps, and at every
 step you commit to an answer before the answer appears. The other three types assume you already
 know the thing you are practising. A module is for the APIs you use constantly and understand
@@ -358,14 +356,31 @@ packages/modules/content/<slug>/
 
 A step is markdown with `title` and `predict` in frontmatter and two tagged fences, ` ```js run `
 and ` ```js assert `. Assertions are expressions evaluated after the snippet, exactly as `js-code`
-problem tests are, and the IIFE rule carries over unchanged. The fences carry the code rather than
-the frontmatter, because a tagged fence is already valid markdown and renders on GitHub.
+problem tests are, and the IIFE rule carries over unchanged: **one assertion per line**, so anything
+multi-step is wrapped in `(() => { ... })()` on a single line. The fences carry the code rather than
+the frontmatter, because a tagged fence is already valid markdown and renders on GitHub. The loader
+lifts both fences out of the body, so the prose never renders the snippet or the answer twice.
+
+The numeric prefix orders the files and is not part of a step's identity, so renumbering a module
+does not change anybody's links.
 
 `practise`, `sources` and `verified` mean what they mean everywhere else, and the citation policy
 applies unchanged.
 
 The safety net mirrors the other two: every step's assertions pass against its own snippet, every
 step has a predict question, every `practise` slug resolves, and every module cites something.
+
+### Assertions run on someone else's machine
+
+There is no fake clock and no fixed timezone behind the run button, so an assertion that depends on
+the host's zone, locale or wall clock passes for its author and fails for the reader. Write ones that
+hold anywhere: compare against `Date.UTC(...)`, state the relationship through `getTimezoneOffset()`,
+name the zone explicitly in `Intl.DateTimeFormat`. `js-date` is the worked example and its assertions
+were checked in five zones before it shipped.
+
+Assertions are also about the API rather than about the reader's edit. They keep holding when the
+snippet is changed, which is exactly what makes the snippet safe to play in: trying the next thing
+that occurs to you is most of the value of the step being editable.
 
 ### The test that decides between a page and a module
 
@@ -376,7 +391,8 @@ wrong thing. None of those is a mental model; they are the edges of one API met 
 it, not when no page explains it.
 
 A module is also a legal step inside an essentials-path session, which is the only relationship the
-two have. They share a viewer, not a purpose: a session sequences things that assume you already know
+two have, and it counts as a read step there: it is what a session about an API has instead of a
+page. They share a viewer, not a purpose: a session sequences things that assume you already know
 roughly where you are, and a module is the one format that does not assume it.
 
 ### Non-goals

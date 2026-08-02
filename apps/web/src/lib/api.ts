@@ -3,6 +3,9 @@ import type {
   CreateSessionRequest,
   HandbookPageDetail,
   HandbookSectionSummary,
+  ModuleDetail,
+  ModuleRunResponse,
+  ModuleSummary,
   NextProblem,
   PathDetail,
   PathSummary,
@@ -93,6 +96,11 @@ export const api = {
   handbookPage: (section: string, slug: string): Promise<HandbookPageDetail> =>
     request(`/handbook/${section}/${slug}`),
 
+  modules: (): Promise<ModuleSummary[]> => request('/modules'),
+  module: (slug: string): Promise<ModuleDetail> => request(`/modules/${slug}`),
+  runModuleStep: (slug: string, stepId: string, code: string): Promise<ModuleRunResponse> =>
+    post(`/modules/${slug}/steps/${stepId}/run`, { code }),
+
   paths: (): Promise<PathSummary[]> => request('/paths'),
   path: (slug: string): Promise<PathDetail> => request(`/paths/${slug}`),
 
@@ -148,6 +156,8 @@ export const queryKeys = {
   workout: (slug: string) => ['workout', slug] as const,
   handbook: ['handbook'] as const,
   handbookPage: (section: string, slug: string) => ['handbook', section, slug] as const,
+  modules: ['modules'] as const,
+  module: (slug: string) => ['module', slug] as const,
   paths: ['paths'] as const,
   path: (slug: string) => ['path', slug] as const,
 };

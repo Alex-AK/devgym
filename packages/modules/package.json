@@ -1,0 +1,7 @@
+{
+  "name": "@devgym/modules",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Module content: one API a module, predict-run-correct steps, read by the server at runtime",
+  "license": "MIT"
+}

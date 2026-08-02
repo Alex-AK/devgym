@@ -58,16 +58,18 @@ them rather than quietly closing them.
 packages/shared/src/index.ts       types + const tuples, no runtime deps
 packages/workouts/content/<slug>/  workout content: manifest, brief, files, tests, solution
 packages/paths/content/<slug>/     the essentials path: one path.json an hour, ordering the above
+packages/modules/content/<slug>/   modules: a manifest and one markdown file per predict-run step
 apps/server/src/
   db/                              Drizzle schema, client, migrations module
   grading/                         four graders + the sandboxed code runner
   seed/problems/<category>.ts      problem content, one file per category
   problems/ progress/ sessions/    Nest modules
   paths/                           the essentials path: loader, safety net, read-only API
+  modules/                         modules: loader, safety net, and the step run endpoint
   workouts/                        workspace materialisation + the vitest checkpoint runner
   cli/grade.ts                     `pnpm grade` grader-inspection tool
 apps/web/src/
-  pages/                           Dashboard, Session, Practice, Problem, Problems, Paths
+  pages/                           Dashboard, Session, Practice, Problem, Problems, Paths, Modules
   components/CodeEditor.tsx        CodeMirror 6 wrapper, used for sql and js-code answers
   components/ui/                   hand-written shadcn components
 ```
@@ -96,6 +98,10 @@ apps/web/src/
   starter does not.
 - **Seeding without touching the real database:** set `DEVGYM_DATA_DIR` to a scratch path. Useful
   for checking the seeder end to end when the user is mid-streak.
+- **Adding a module** is a directory under `packages/modules/content/`. `modules.spec.ts` runs every
+  step's assertions against its own snippet, so a module that teaches something untrue fails the
+  build. Assertions run on the reader's machine with no fake clock or fixed timezone: write ones that
+  hold in any zone, and see `docs/content.md` before authoring.
 - **Adding a session to the essentials path** is a `path.json` under `packages/paths/content/`. It
   authors nothing: it orders pages, reps and workouts that already exist, and `paths.spec.ts` refuses
   a ref that resolves to nothing or a rep placed before the page explaining it. The path is a subset

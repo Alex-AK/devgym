@@ -1,6 +1,6 @@
 # devgym
 
-A local-first practice gym for staying sharp on web-dev fundamentals. Four ways in:
+A local-first practice gym for staying sharp on web-dev fundamentals. Five ways in:
 
 - **Problems** are short reps: type an answer, get tiered feedback (correct / close / not close),
   come back to it on a spaced-repetition schedule.
@@ -8,6 +8,8 @@ A local-first practice gym for staying sharp on web-dev fundamentals. Four ways 
   checkpoints, see how far you got.
 - **The handbook** is what you read beside a workout: one concept a page, sources on every one, and
   links to the problems and workouts that make you prove you absorbed it.
+- **Modules** are one sitting with one API: ordered steps, and every step asks you to commit to an
+  answer before it runs the code.
 - **The essentials path** is for the hour you have on a weekend: a curated route through the other
   three, read then prove then build, on one slice of the work at a time.
 
@@ -35,7 +37,7 @@ keys, no accounts, no network calls at runtime.
 
 ```sh
 pnpm verify     # the gate: typecheck, lint, format and the full test suite, in parallel
-pnpm test       # graders, seed data, workout, handbook and path content, queue, sessions, scheduling
+pnpm test       # graders, seed data, workout, handbook, path and module content, queue, sessions
 pnpm build      # typecheck and build every package
 pnpm seed       # rebuild practice.db and upsert problems by slug
 pnpm grade      # check a grader from the terminal (see below)
@@ -196,6 +198,23 @@ be checkable against an open reference.
 
 See `packages/handbook/README.md` for the authoring contract.
 
+## Modules
+
+A module is the format for an API you use constantly and understand shallowly, where the problem is
+not being stuck but holding a wrong model that has never cost enough to notice. One sitting, 15 to
+25 minutes, and every step is predict, run, correct: the prose appears only after you have run the
+snippet, because committing to a wrong answer first is what makes the correction stick.
+
+A step is markdown with a `predict` question and two tagged fences, ` ```js run ` and
+` ```js assert `, under `packages/modules/content/<slug>/`. The snippet is prefilled into the editor
+and yours to change; the assertions come from disk and run through the same code runner that grades
+`js-code` problems. `pnpm verify` runs every step's assertions against its own snippet, so a module
+that teaches something untrue fails the build.
+
+No progress tracking, for the reason handbook pages get none: the problems are the progress
+tracking, and a module's `practise` list is how it reaches your queue afterwards. See
+`packages/modules/README.md` for the authoring contract.
+
 ## The essentials path
 
 `/essentials` is the deliberate-study entrance, and the only part of devgym not written against a
@@ -220,6 +239,7 @@ The path is a subset on purpose: most content is not on it and never will be. Se
 - `packages/workouts`: workout content, the scaffold copied into each workspace, and the dependency
   set every workspace resolves against
 - `packages/handbook`: handbook pages · `packages/paths`: the essentials path, one manifest an hour
+- `packages/modules`: modules, one directory each, read by the server at runtime
 - `apps/server/src/grading`: the four graders plus the sandboxed code runner
 - `apps/server/src/seed/problems`: one file per category, positions generated at seed time
 - `apps/server/src/workouts`: workspace materialisation and the vitest checkpoint runner

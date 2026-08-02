@@ -1,0 +1,35 @@
+{
+  "slug": "js-date",
+  "title": "Date, and what it actually holds",
+  "summary": "A Date is not a date. It is one number, milliseconds since the epoch, and every year, month and hour you read off it is computed on demand in a timezone the object never stored. Ten steps on the parts of that which cost money.",
+  "order": 1,
+  "minutes": 20,
+  "practise": [
+    "dates-month-index",
+    "dates-iso-date-only-utc",
+    "dates-utc-storage",
+    "dates-dst-add-day",
+    "dates-days-between",
+    "dates-format-locale",
+    "dates-duration-storage",
+    "debug-json-date"
+  ],
+  "sources": [
+    {
+      "author": "MDN",
+      "title": "Date",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date"
+    },
+    {
+      "author": "MDN",
+      "title": "Date.parse()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/parse"
+    },
+    {
+      "author": "MDN",
+      "title": "Intl.DateTimeFormat",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat"
+    }
+  ],
+  "verified": "2026-08-02"
+}
