@@ -14,9 +14,9 @@ sources:
   - author: Microsoft
     title: Bulkhead pattern
     url: https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead
-  - author: Marc Brooker (AWS)
-    title: Timeouts, retries, and backoff with jitter
-    url: https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/
+  - author: Marc Brooker
+    title: Will circuit breakers solve my problems?
+    url: https://brooker.co.za/blog/2022/02/16/circuit-breakers.html
 verified: 2026-08-01
 ---
 
@@ -102,3 +102,12 @@ only ever cost you its own share.
 percentage with no minimum volume, so an endpoint doing two calls a minute trips on a single
 failure. Require a minimum number of calls in the window before the rate is allowed to trip
 anything.
+
+**One shard went down and the breaker cut off all twelve.** The counter is per dependency, and the
+dependency is not one thing: the calls that failed were the ones routed to a single unhealthy shard
+or cell, and the breaker cannot tell those apart from the healthy ones behind the same client. Marc
+Brooker's objection is that a breaker in that position has no good answer available, since saying the
+dependency is down makes things worse for everyone it was working for, and saying it is up is the
+same as not having a breaker. Key the breaker to what actually fails together, one per shard or per
+cell, or use a per-call token bucket that limits retries without ever declaring the whole dependency
+dead.
