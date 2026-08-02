@@ -38,7 +38,9 @@ and they come in this order.
 **Does this need an effect at all?** Two things look like effects and are not. Transforming data for
 render is an expression in the component body: filter it, sort it, total it during render and it
 cannot be out of date. Reacting to something the user did belongs in the event handler, because the
-handler knows what happened and an effect only sees the state that came out of it.
+handler knows what happened and an effect only sees the state that came out of it. Deciding a value
+is derived rather than stored is the same question [where state lives](./where-state-lives.md) asks
+first.
 
 **What does the cleanup have to undo?** Whatever the effect started. The test is that running setup
 twice in a row leaves the world in the same state as running it once: two `addEventListener` calls

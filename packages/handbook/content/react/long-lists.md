@@ -34,8 +34,9 @@ verified: 2026-08-01
 Two costs get confused here, and they are paid to different things.
 
 The first is React's. Twenty thousand rows means building 20,000 elements, reconciling them against
-the previous tree and committing 20,000 nodes, on every render of the list. Memoising the sort or
-the filter shrinks the work that happens before that, not the render itself.
+the previous tree and committing 20,000 nodes, on every render of the list
+([what a render actually is](./what-a-render-is.md) is those three steps). Memoising the sort or the
+filter shrinks the work that happens before that, not the render itself.
 
 The second is the browser's. Twenty thousand elements sitting in the document cost memory, and each
 one is something the engine has to account for when style and layout are recalculated. That bill

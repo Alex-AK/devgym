@@ -105,8 +105,10 @@ next state is derived from the previous state, pass the updater function instead
 so it can do nothing for a component whose `filter` prop changes on every keystroke. And when the
 profiler puts the time inside that component's own render, skipping renders was never the lever:
 fix the slow render before the re-render. A component that takes 40ms to render still takes 40ms
-when it renders half as often. `useMemo` around the expensive filter and sort, or windowing so the
-render only touches the rows on screen, is what moves that number.
+when it renders half as often. `useMemo` around the expensive filter and sort, or
+[windowing](./long-lists.md) so the render only touches the rows on screen, is what moves that
+number. [Memo, and what it cannot fix](./memo-and-what-it-cannot-fix.md) is the rest of that
+argument.
 
 **The DOM had not caught up by the next line.** Nothing is committed until the handler returns, so
 measuring layout immediately after a state change reads the old DOM. `flushSync` is the escape

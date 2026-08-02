@@ -60,8 +60,10 @@ mount in both development and production. `useMemo` is a performance hint. Code 
 depends on one object existing exactly once wants a ref.
 
 So there is an order to work in, and memoisation is last in it. Measure, then remove work (derive a
-value at write time instead of on every keystroke, move state down so fewer components render at
-all), then memoise what is left. Ryan Florence's account of adding `PureComponent` everywhere and
+value at write time instead of on every keystroke, [move state down](./where-state-lives.md) so fewer
+components render at all), then memoise what is left. [What a render actually
+is](./what-a-render-is.md) is the measurement half: a component slow in its own render phase is not a
+memo problem at all. Ryan Florence's account of adding `PureComponent` everywhere and
 finding his app slower is the standard reason to keep that order.
 
 ## Worked example

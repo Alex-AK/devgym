@@ -119,7 +119,8 @@ one. Consumers cannot defend themselves against this; only the provider can fix 
 read happens inside the component, below that comparison. react.dev says it plainly: a memoized
 component still re-renders when a context it uses changes. `memo` can still stop the damage
 spreading, though. Read the context in a small outer component and pass the field down as a prop to
-a memoized child, and the expensive subtree stops following the value.
+a memoized child, and the expensive subtree stops following the value. What `memo` does compare, and
+what defeats it, is [memo and what it cannot fix](./memo-and-what-it-cannot-fix.md).
 
 **Mousemove re-renders the sidebar.** The sidebar reads `theme`, but `theme` shares a value object
 with `pos`, and `pos` changes dozens of times a second. `theme` never changed and the sidebar

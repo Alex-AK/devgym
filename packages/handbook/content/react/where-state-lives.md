@@ -148,7 +148,8 @@ cause and deletes code rather than adding a wrapper.
 **An effect whose entire body is a `setState`.** Every change now renders twice, once with the stale
 value and again after the effect corrects it, and the old content is on screen in between. A value
 computed from props and state is derived, so compute it during render. Effects are for synchronising
-with something outside React.
+with something outside React, which is what [effects, and what cleanup has to
+undo](./effects-and-cleanup.md) is about.
 
 **The edit form still shows the previous user's draft.** React kept the same component instance,
 because its type and position in the tree did not change, and state belongs to the instance rather

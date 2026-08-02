@@ -130,7 +130,9 @@ deletion, so check the built chunks before assuming a `lazy` call made anything 
 
 **A spinner appears where a button used to render instantly.** The component was above the fold, so
 its code was always going to be needed at first paint, and the split added a round trip and a
-fallback in front of it. Import it normally and split the thing further down the page instead.
+fallback in front of it. Import it normally and split the thing further down the page instead. Bytes
+are only one of the two budgets: [the main thread](./the-main-thread.md) is what the bytes cost once
+they have arrived.
 
 **One slow chunk holds up content that was ready.** A boundary covers everything inside it: "even if
 only one of these components suspends waiting for some data, all of them together will be replaced by
