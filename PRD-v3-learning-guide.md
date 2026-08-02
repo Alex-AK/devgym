@@ -4,7 +4,8 @@
 > `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 2 (React), 3
 > (moving data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases), 8 (the server runtime) and 9
 > (systems) are underway; every concept section 9's card list names now has a card, though its
-> case-study shelf does not exist yet, and it has no workout. Section 10 (trade-offs) is not started.
+> case-study shelf does not exist yet, and it has no workout. Section 16 (writing SQL) has shipped
+> whole. Section 10 (trade-offs) is not started.
 > Seven further sections have been added since the first draft: TypeScript and the browser you are
 > writing for, both by the pairing rule; AI engineering, running it in production, and data
 > structures, from a topic pass that moved the scope once, deliberately and by decision; then writing
@@ -143,7 +144,7 @@ areas nothing was tracking.
 | React                                                          | 30+ problems, one workout | yes   | paired                         |
 | JavaScript under the hood                                      | yes                       | yes   | no workout yet                 |
 | Systems                                                        | ~19 cards                 | yes   | **no workout, and 13 pages**   |
-| **Writing SQL**                                                | 25 uncited of 29          | none  | **section owed, below**        |
+| Writing SQL                                                    | 29 problems               | yes   | paired                         |
 | **Security past the headers**                                  | 14 uncited of 18          | none  | **section owed, below**        |
 | **The DOM you still write**                                    | 8 uncited of 9            | none  | **pages owed in section 12**   |
 | **`URL` and `URLSearchParams`**                                | 10 uncited of 10          | none  | **a module, not a section**    |
@@ -425,10 +426,18 @@ patterns themselves get practised.
 
 ### 16. Writing SQL
 
-Found by the audit, and the largest single miss in it. `sql` is the second-biggest category in the
-repo and almost none of it is explained anywhere, because section 7 turned out to be about
-performance rather than about SQL: indexes, plans, N+1 and pagination, all of which assume you can
-already write the query being made slow.
+**Shipped.** Found by the audit and the largest single miss in it. `sql` is the second-biggest
+category in the repo and almost none of it was explained anywhere, because section 7 turned out to be
+about performance rather than about SQL: indexes, plans, N+1 and pagination, all of which assume you
+can already write the query being made slow.
+
+Writing it produced a rule worth keeping for any page about a language with an engine underneath.
+**Every number on these pages was produced by running the query against `practice.db`**, not
+recalled, and doing that contradicted three things that would otherwise have shipped as fact: SQLite
+accepts a select-list alias in `WHERE` where Postgres refuses, and silently resolves it to the table
+column when the alias shadows one; the `RANGE` frame default repeats a running total across tied
+rows rather than accumulating per row; and SQLite pushes an outer filter into a CTE instead of
+fencing it. None of those is exotic, and all three were briefed the other way round.
 
 Pages: what a join actually does (the row multiplication people meet as duplicate rows, and why
 `LEFT` changes the answer and not just the row count); `NULL` is not a value (three-valued logic,
@@ -490,21 +499,23 @@ have all landed. What remains, ordered by how much unexplained practice is sitti
 
 1. **The browser you are writing for** — now the largest unpaired block by some distance, and the
    audit added two DOM pages to it without changing that
-2. **Writing SQL** — the audit's biggest find, and unblocked: 29 problems are already sitting there
-3. **TypeScript, at the type level**
-4. **Security, past the headers** — takes the security-headers page owed to section 4 with it, since
+2. **TypeScript, at the type level**
+3. **Security, past the headers** — takes the security-headers page owed to section 4 with it, since
    they are one afternoon together and two afternoons apart
-5. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
+4. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
    its problems rather than ahead of them (see the pairing rule; a page with an empty `practise` list
    cannot ship at all)
-6. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
-7. **Running it in production**
-8. **Trade-offs and architecture** — last, as before, because it resists the page shape
+5. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
+6. **Running it in production**
+7. **Trade-offs and architecture** — last, as before, because it resists the page shape
 
-**On the numbers**: these are the map's, and `section.json` owns what a reader sees. Sections 16 and
-17 belong next to databases and headers in reading order, not at the end, so the display orders get
-resolved once when the second of them lands rather than renumbered per section. The test only asserts
-the orders are unique, so nothing breaks in the meantime.
+**On the numbers**: these are the map's, and they are identifiers rather than reading order.
+`section.json` owns what a reader sees, and the two have now diverged on purpose. Writing SQL took
+display order 7 and pushed databases, the server runtime and systems each down one, because writing a
+query comes before making it fast and a reader meeting the sections in order should get them that
+way. Section 17 will do the same next to headers when it lands. The map numbers below do not move
+when that happens, because renumbering them would invalidate every cross-reference in this document
+for no reader benefit.
 
 The single-page additions do not wait their turn, because each one slots into a section that already
 exists: SOAP into moving data, Express middleware and the three-framework comparison into the server
