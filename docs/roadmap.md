@@ -8,28 +8,7 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. What inference actually costs you
-
-The one page of the AI engineering section still missing, and the only one whose claims are provider
-behaviour rather than a protocol or a library: tokens, latency, and why the p99 is a different animal
-when the dependency is generative. The context window shared between prompt and completion, input
-against output pricing, time to first token against total time, and what a retry costs when the work
-is billed as it is produced rather than as it is delivered. It has reps waiting for it in
-`ai-engineering`: `ai-context-window-budget`, `ai-time-to-first-token`, `ai-idle-timeout-streaming`,
-`ai-retry-double-charge` and `ai-idempotency-key-choice` all point at material nothing explains.
-
-**It needs the provider API docs open, and that is the whole reason it is still here.** The other
-five pages were written against sources that could be read in full: the MCP specification, MDN, the
-pgvector README, OpenAI's evals templates. This one cannot be, and a page about what things cost is
-the worst possible place to write from memory: prices and limits move, and a wrong number reads
-exactly like a right one. Whoever writes it needs `docs.anthropic.com` and `platform.openai.com`
-reachable, and should date `verified` the day they actually read them. Quote behaviour rather than
-prices where the two can be separated, because behaviour ages better.
-
-This section is not machine learning. Training, model architectures and the statistics under them
-are out of scope and stay out.
-
-## 2. Data structures and the cost of a choice
+## 1. Data structures and the cost of a choice
 
 Around fifteen problems across `coding`, `js-apis` and `debugging` are about choosing a structure or
 getting a comparator right, and no page names any of it. Not an algorithms course: every page
@@ -45,7 +24,7 @@ structure. Credits: MDN, the V8 blog, open algorithms references.
 The patterns themselves stay in `dsa-patterns` below. Choosing a structure is not a pattern; it is a
 decision ordinary feature work makes hourly and usually by reflex.
 
-## 3. The rest of the modules
+## 2. The rest of the modules
 
 The format ships and `js-date` is written, so everything here is content: a directory, no application
 code. Seven left, and the ten `query-params` problems cited by nothing are the reason
@@ -70,7 +49,7 @@ is a broken module for everybody except its author: `js-date`'s assertions were 
 before it shipped. And a step's assertions are about the API rather than about the reader's edit, so
 they keep holding when the snippet is changed, which is what makes the editor safe to play in.
 
-## 4. Pages missing from sections that already ship
+## 3. Pages missing from sections that already ship
 
 Each of these is named on the curriculum map and absent from `packages/handbook/content/`. Ordered
 by how often the gap is met in ordinary work, not by section.
@@ -90,7 +69,7 @@ by how often the gap is met in ordinary work, not by section.
 Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
 so it blocks nothing.
 
-## 5. The rest of the problem queue
+## 4. The rest of the problem queue
 
 | Category         | Roughly | What it is                                                                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -107,7 +86,7 @@ or its own session preset. That needs the one application change in this file: t
 treats every category equally today, so categories need an opt-out flag it respects. Small, but it
 is code rather than content.
 
-## 6. The workout queue
+## 5. The workout queue
 
 Ordered by what the library cannot practise today. Everything here runs on infrastructure that
 already exists (PGlite, the fake Redis and its clock, the fixture API, testing-library) except where
@@ -140,7 +119,7 @@ The build-your-own genre grows further (a wire-protocol Redis clone, a tiny mess
 `json-parser`, `circuit-breaker-node` and `one-recompute-not-fifty` land well, and only then is it
 worth deciding whether multi-part series need real support.
 
-## 7. Sections with no practice behind them yet
+## 6. Sections with no practice behind them yet
 
 Both of these are last because nothing in the problem set is waiting on them.
 
