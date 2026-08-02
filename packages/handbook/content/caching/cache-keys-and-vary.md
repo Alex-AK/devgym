@@ -5,6 +5,7 @@ order: 4
 practise:
   - http-preflight-cache
   - http-cache-control
+  - security-authorization-caching
 sources:
   - author: IETF
     title: 'RFC 9111: HTTP Caching'

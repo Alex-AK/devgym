@@ -6,6 +6,8 @@ practise:
   - http-cors-preflight
   - http-preflight-cache
   - security-cors-not-auth
+  - security-cors-credentials
+  - security-vary-origin-poisoning
 sources:
   - author: WHATWG
     title: Fetch Standard

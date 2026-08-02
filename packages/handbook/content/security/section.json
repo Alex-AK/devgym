@@ -1,0 +1,6 @@
+{
+  "slug": "security",
+  "title": "Security, past the headers",
+  "order": 7,
+  "summary": "What breaks a web app is rarely a zero-day. It is untrusted input reaching a parser that cannot tell data from code, a password stored with the wrong kind of hash, a token left where a script can read it, or a key that stopped being secret the moment the build finished. This is the half a web engineer builds and reviews; the headers section owns the header-shaped part, and neither section teaches an attack it does not need for the defence to make sense."
+}

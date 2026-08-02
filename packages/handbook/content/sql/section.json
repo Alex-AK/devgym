@@ -1,6 +1,6 @@
 {
   "slug": "sql",
   "title": "Writing SQL",
-  "order": 9,
+  "order": 10,
   "summary": "The half that comes before making a query fast: what a join does to your row count, why a NULL comparison is neither true nor false, which columns you are allowed to select once you have grouped, and the window functions that turn a loop in application code into one line. The problems run SQLite, so every page says which engine it means."
 }
