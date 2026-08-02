@@ -8,25 +8,23 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. The AI engineering handbook section
+## 1. What inference actually costs you
 
-The reps exist and the pages do not, which makes this the largest gap against the stated target.
-The `ai-engineering` category is in the queue, so nothing here is blocked any more: the pages have
-reps to point `practise` at.
+The one page of the AI engineering section still missing, and the only one whose claims are provider
+behaviour rather than a protocol or a library: tokens, latency, and why the p99 is a different animal
+when the dependency is generative. The context window shared between prompt and completion, input
+against output pricing, time to first token against total time, and what a retry costs when the work
+is billed as it is produced rather than as it is delivered. It has reps waiting for it in
+`ai-engineering`: `ai-context-window-budget`, `ai-time-to-first-token`, `ai-idle-timeout-streaming`,
+`ai-retry-double-charge` and `ai-idempotency-key-choice` all point at material nothing explains.
 
-Pages: what inference actually costs you (tokens, latency, and why the p99 is a different animal
-when the dependency is generative); streaming a model response, whose transport half the moving-data
-section already owns; embeddings and vector search (what a nearest-neighbour lookup does and does
-not promise); retrieval, honestly (the plumbing, the chunking, and why the retrieval step is usually
-the bug); MCP servers (what the protocol specifies, and why a tool boundary is an API design problem
-you have solved before); evals as tests.
-
-**Credits: the Model Context Protocol specification, the provider API docs, and open papers where a
-claim needs one.** All of them are load-bearing rather than decorative here, because none of this
-material can be checked by running it against `practice.db` the way the SQL pages were. Whoever
-writes these needs the sources open in front of them; a session that cannot reach
-`modelcontextprotocol.io`, the provider docs and `arxiv.org` cannot honestly date a `verified` line
-and should write something else instead.
+**It needs the provider API docs open, and that is the whole reason it is still here.** The other
+five pages were written against sources that could be read in full: the MCP specification, MDN, the
+pgvector README, OpenAI's evals templates. This one cannot be, and a page about what things cost is
+the worst possible place to write from memory: prices and limits move, and a wrong number reads
+exactly like a right one. Whoever writes it needs `docs.anthropic.com` and `platform.openai.com`
+reachable, and should date `verified` the day they actually read them. Quote behaviour rather than
+prices where the two can be separated, because behaviour ages better.
 
 This section is not machine learning. Training, model architectures and the statistics under them
 are out of scope and stay out.
