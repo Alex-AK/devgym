@@ -1,6 +1,7 @@
 import { CATEGORIES, type Category, DIFFICULTIES } from '@devgym/shared';
 
 import { a11yProblems } from './problems/a11y';
+import { aiEngineeringProblems } from './problems/ai-engineering';
 import { codingProblems } from './problems/coding';
 import { cssProblems } from './problems/css';
 import { dateProblems } from './problems/dates';
@@ -39,6 +40,7 @@ const drafts: ProblemDraft[] = [
   ...codingProblems,
   ...systemsProblems,
   ...htmlProblems,
+  ...aiEngineeringProblems,
 ];
 
 /**
