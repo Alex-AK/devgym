@@ -43,6 +43,18 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 
 ## Content
 
+- **Four queued items were dropped on the merits rather than because they shipped**, and they are
+  recorded here so they are not re-added by someone reading the old tables in git history. **Infinite
+  scroll with retry** and **drag-and-drop ordering** overlapped the retry and windowing workouts, and
+  the giveaway was that their entire lesson column read "carried from the v2 backlog": a row that
+  cannot say what it teaches is a row nobody chose. **Search on Sequelize** was the product-search
+  brief a third time and cost a dependency, which the stack-breadth rule did not justify on its own.
+  **gRPC and WebRTC pages** are not met in the feature work this project targets, and the transport
+  decision page already covers when you would reach for them; tRPC keeps its page.
+- **`node-fs` stays in the module list, marked as the weakest of the eight.** Recording the doubt in
+  the roadmap beats dropping it and beats silence, because the next person to read the list will
+  otherwise have the same reservation and no way to know it was already considered.
+
 - **Every content type is a directory or a seed entry, never application code.** Content grows
   indefinitely, so anything that makes adding a problem, workout or page require an application
   change is a bug in the design. That is also why there is no authoring UI and should not be one.
@@ -255,6 +267,24 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   mental model to explain. A model is a page; an API is a module.
 
 ## Modules
+
+- **Modules and the essentials path stay separate, and the reason is what you arrive knowing.**
+  They look alike from outside: both are guided sequences longer than one rep, both need a route, and
+  both refuse progress tracking. But a path is assembled from pages, reps and workouts, and all three
+  assume you already know the thing. A module is the only format for the API you use constantly and
+  understand shallowly. Merging them would mean either the path starts authoring material, at which
+  point it no longer just orders what exists, or modules lose their steps and become a page plus reps,
+  which the handbook already is. They differ on every axis that matters: 15 to 25 minutes on one API
+  against an hour across a slice, and creating content against ordering it.
+- **What they do share is machinery, and that gets consolidated instead.** One sequence viewer, where
+  a module is a sequence of predict-run-correct steps and a session is a sequence of steps that may be
+  pages, reps, workouts or a whole module. The shared non-goal is stated once: neither introduces
+  progress tracking.
+- **The path ships first, and is the test of how many modules are needed.** It adds no content;
+  modules are eight of them at 10 to 20 authored steps each, plus a content type and app code. If an
+  essentials hour on async works from existing pages and reps, that is evidence the `promises` module
+  matters less than assumed. If the hour keeps wanting to teach the API from scratch, that is the
+  module spec earning itself.
 
 - **A fourth content type was accepted even though it costs application code.** The other three all
   assume you already know the thing you are practising. The gap they miss is the handful of APIs

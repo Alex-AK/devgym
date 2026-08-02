@@ -62,6 +62,9 @@ fill the read step from existing pages is not ready to be written.
 - **It is content, not code.** A session is a manifest listing pages, problem slugs and an optional
   workout, validated by the same safety net that already checks `practise` slugs resolve. Adding a
   session touches no application source.
+- **A module is a legal step too**, once modules exist. The two are not the same thing and do not
+  merge (see `decisions.md`), but a module is exactly the right read step for a session about an API
+  rather than a model. Build the path first: it is the test of how many modules are actually needed.
 - **No new progress tracking.** Page-level completion is a standing non-goal and this does not
   reopen it: the reps inside a session already carry their own progress, and that is the honest
   measure of whether the hour landed. A path may show you where you left off; it does not score you.
@@ -87,10 +90,62 @@ engineer cannot do without, not when they cover the handbook.
 ### What it needs from the app
 
 The only thing here that is not content: a route listing the sessions, and a session view that walks
-the three steps. This is the second item in this file needing application code, alongside the
+the steps. This is the second item in this file needing application code, alongside the
 `dsa-patterns` queue opt-out. It is small, and it should stay small: if a path starts wanting its own
 progress model, scheduling or scoring, that is the signal it has drifted from being an ordering into
 being a second app.
+
+### How to build it
+
+Enough of the contract to start without re-deriving it. Follow `packages/handbook` and
+`apps/server/src/handbook/` as the working model throughout: this is the same shape, and copying a
+pattern that already passes `pnpm verify` is most of the work.
+
+**Content lives in a directory, like everything else.**
+
+```
+packages/paths/content/<slug>/path.json
+```
+
+`path.json` carries `slug`, `title`, `question` (the question the hour answers, which is the test of
+whether the slice is coherent), `summary`, `order`, `minutes`, and `steps`.
+
+**A step is a tagged union, and the tag is what makes modules cheap later.**
+
+```jsonc
+{ "kind": "page", "ref": "moving-data/request-response", "note": "read this first" }
+{ "kind": "problem", "ref": "http-status-codes" }
+{ "kind": "workout", "ref": "conditional-requests-express" }
+```
+
+`kind` is `page | problem | workout` today. **Reserve `module` in the type now**, documented as not
+yet valid, so adding it later is one case in a switch rather than a change to the shape. Write the
+step renderer as one component per `kind` from the start, for the same reason. The module work will
+need a sequence viewer of its own, and the intended end state is one viewer where a module is a step;
+do not build anything that assumes a step is always a link out.
+
+**Validation goes in the same safety net**, as `paths.spec.ts` mirroring `handbook.spec.ts`:
+
+- every `ref` resolves, against `problemSeeds`, `listManifests()` and the handbook pages
+- `kind` is a known kind, and `module` is rejected until modules exist
+- every session has at least one `page` step and one `problem` step, since read-then-prove is the
+  format
+- `order` is unique across sessions, and `minutes` is present
+- steps are ordered, and the page steps come before the problem steps that depend on them
+
+**Server**: `apps/server/src/paths/` with a content loader, module and controller, mirroring
+`handbook/`. Shared types go in `packages/shared`, which builds to both CJS and ESM.
+
+**Web**: a list route and a session view. Steps link out to the problem and workout routes that
+already exist; the page step can render inline through the existing handbook page view.
+
+**Resume without storing anything.** Where you left off is derived from the progress the reps already
+carry, not from new state. A step whose problem is solved is done. This keeps the standing non-goal
+intact and means there is no migration.
+
+**Build order**: shared types, then the content package with one real session, then the loader and
+its spec, then the API, then the UI. The first session should be one whose pages and reps all exist
+today, so nothing is blocked on content.
 
 ## 1. AI engineering
 
@@ -182,7 +237,7 @@ Then content, in this order.
 | `js-errors`            | That `catch` catches what you think, and that a thrown thing is an `Error`           |
 | `regex`                | That a pattern that works is a pattern that terminates                               |
 | `tokens-and-crypto`    | That a signed token is an encrypted one, and that comparing strings is safe          |
-| `node-fs`              | That reading a file is one call and writing one is atomic                            |
+| `node-fs`              | That reading a file is one call and writing one is atomic. Weakest of the eight here |
 
 `js-date` is the format's real test: if the shape survives timezones it survives anything.
 `tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so
@@ -221,7 +276,7 @@ by how often the gap is met in ordinary work, not by section.
 | headers        | Conditional requests and ranges     | 304, 206, resumable downloads                                                               |
 | server-runtime | Three frameworks, one request       | Express, Nest and FastAPI on the same route. No Python runs; it is a comparison             |
 | moving-data    | SOAP, and why you are meeting it    | Written for the integration you inherit, not the service you build                          |
-| moving-data    | tRPC, gRPC and WebRTC               | The three transports from the v2 table with no page yet, one page each                      |
+| moving-data    | tRPC                                | The one transport from the v2 table still worth a page; see decisions.md for the other two  |
 
 Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
 so it blocks nothing.
@@ -248,7 +303,7 @@ is code rather than content.
 Ordered by what the library cannot practise today. Everything here runs on infrastructure that
 already exists (PGlite, the fake Redis and its clock, the fixture API, testing-library) except where
 a dependency is named. `graphql`, `react-window` and `zustand` are already in
-`packages/workouts/package.json`; `ws`, Hono with Zod, and Sequelize are not.
+`packages/workouts/package.json`; `ws` and Hono with Zod are not.
 
 | Workout                     | Stack                     | Shape    | Pairs with     | The lesson                                                                                        |
 | --------------------------- | ------------------------- | -------- | -------------- | ------------------------------------------------------------------------------------------------- |
@@ -271,9 +326,6 @@ a dependency is named. `graphql`, `react-window` and `zustand` are already in
 | Windowed list               | React + react-window      | feature  | React          | 10,000 rows without jank                                                                          |
 | TypeORM relations bug-hunt  | TypeORM + SQLite          | bug-hunt | server runtime | `save` against `update`, relations loading, and the nested-where trap                             |
 | Validated request boundary  | Hono + Zod                | feature  | APIs           | Two birds: the first Hono workout, and schema validation as the API's front door                  |
-| Search on Sequelize         | Sequelize + SQLite        | feature  | databases      | The product-search brief on a fourth ORM, for stack breadth                                       |
-| Infinite scroll with retry  | React + fixture API       | feature  | React          | Carried from the v2 backlog                                                                       |
-| Drag-and-drop ordering      | React + Zustand + API     | feature  | React          | Carried from the v2 backlog                                                                       |
 
 The build-your-own genre grows further (a wire-protocol Redis clone, a tiny message broker) only if
 the two systems workouts land well, and only then is it worth deciding whether multi-part series

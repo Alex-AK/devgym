@@ -317,6 +317,10 @@ wrong thing. None of those is a mental model; they are the edges of one API met 
 **a category's pairing can be satisfied by a module**. An area is unexplained when nothing explains
 it, not when no page explains it.
 
+A module is also a legal step inside an essentials-path session, which is the only relationship the
+two have. They share a viewer, not a purpose: a session sequences things that assume you already know
+roughly where you are, and a module is the one format that does not assume it.
+
 ### Non-goals
 
 Not a course platform: no enrolment, no percentage complete, no streaks on modules. Modules get no
