@@ -18,16 +18,19 @@
     "better-sqlite3": "^12.11.1",
     "drizzle-orm": "^0.45.2",
     "express": "^5.1.0",
+    "graphql": "^17.0.2",
     "jose": "^6.0.11",
     "jsdom": "^28.0.0",
     "kysely": "^0.29.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-window": "^2.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "supertest": "^7.1.1",
     "typeorm": "^1.1.0",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "zustand": "^5.0.14"
   }
 }

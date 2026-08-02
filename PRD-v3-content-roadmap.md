@@ -132,13 +132,12 @@ handbook column is what each one is the practical half of.
 Every one of these runs on infrastructure that already exists (PGlite, the fake Redis and its clock,
 the fixture API, testing-library) except where noted below.
 
-**Two that need a decision before they can be built:**
-
-- **N+1 in GraphQL** — deferred in this document until the transport pages existed. They do now, so
-  the brief has somewhere to link. It needs `graphql` as a new dependency in
-  `packages/workouts/package.json`, which is the one thing that is not just content.
-- **Drag-and-drop ordering** and **Windowed list** both name new dependencies too (Zustand,
-  react-window). Worth batching those three into one dependency decision rather than three.
+**The dependency decision is taken.** Three queued workouts named new dependencies, and they were
+raised together rather than one at a time: `graphql` for the N+1 bug-hunt (deferred in this document
+until the transport pages existed, which they now do), `react-window` for the windowed list, and
+`zustand` for drag-and-drop ordering. All three are in `packages/workouts/package.json`, so those
+workouts are now content like every other one. Adding a dependency stays a decision rather than a
+reflex: it is the one part of a workout that is not just a directory.
 
 Fixture and fake infrastructure already proved out in v2 (the fixture API with fault injection
 and per-query delay, the fake Redis with `advanceTime`, PGlite) covers everything here. The fake
