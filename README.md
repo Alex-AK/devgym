@@ -1,6 +1,6 @@
 # devgym
 
-A local-first practice gym for staying sharp on web-dev fundamentals. Three ways in:
+A local-first practice gym for staying sharp on web-dev fundamentals. Four ways in:
 
 - **Problems** are short reps: type an answer, get tiered feedback (correct / close / not close),
   come back to it on a spaced-repetition schedule.
@@ -8,6 +8,8 @@ A local-first practice gym for staying sharp on web-dev fundamentals. Three ways
   checkpoints, see how far you got.
 - **The handbook** is what you read beside a workout: one concept a page, sources on every one, and
   links to the problems and workouts that make you prove you absorbed it.
+- **The essentials path** is for the hour you have on a weekend: a curated route through the other
+  three, read then prove then build, on one slice of the work at a time.
 
 You write every answer yourself and a deterministic grader marks it, so the reps stay yours. No AI
 in the loop at runtime, fully offline, single user, no accounts.
@@ -33,7 +35,7 @@ keys, no accounts, no network calls at runtime.
 
 ```sh
 pnpm verify     # the gate: typecheck, lint, format and the full test suite, in parallel
-pnpm test       # graders, seed data, workout and handbook content, queue, sessions, scheduling
+pnpm test       # graders, seed data, workout, handbook and path content, queue, sessions, scheduling
 pnpm build      # typecheck and build every package
 pnpm seed       # rebuild practice.db and upsert problems by slug
 pnpm grade      # check a grader from the terminal (see below)
@@ -194,6 +196,22 @@ be checkable against an open reference.
 
 See `packages/handbook/README.md` for the authoring contract.
 
+## The essentials path
+
+`/essentials` is the deliberate-study entrance, and the only part of devgym not written against a
+15-minute morning. Each session is an hour on one slice: two or three pages in order, the reps those
+pages explain, then a workout where one fits. The daily session stays interleaved because that is
+what remembering wants; a path is blocked and ordered because that is what understanding something
+the first time wants.
+
+It adds no content. A session is a manifest under `packages/paths/content/<slug>/path.json` listing
+pages, problem slugs and an optional workout, and `pnpm verify` refuses one that points at anything
+that does not exist or that puts a rep before the page explaining it. Where you left off is derived
+from the reps you have already solved, so nothing new is stored and nothing is scored.
+
+The path is a subset on purpose: most content is not on it and never will be. See
+`packages/paths/README.md` for the authoring contract.
+
 ## Layout
 
 - `apps/web`: Vite + React + shadcn/ui frontend
@@ -201,6 +219,7 @@ See `packages/handbook/README.md` for the authoring contract.
 - `packages/shared`: shared TypeScript types, dual CJS/ESM so both apps resolve named exports
 - `packages/workouts`: workout content, the scaffold copied into each workspace, and the dependency
   set every workspace resolves against
+- `packages/handbook`: handbook pages · `packages/paths`: the essentials path, one manifest an hour
 - `apps/server/src/grading`: the four graders plus the sandboxed code runner
 - `apps/server/src/seed/problems`: one file per category, positions generated at seed time
 - `apps/server/src/workouts`: workspace materialisation and the vitest checkpoint runner

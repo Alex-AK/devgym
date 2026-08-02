@@ -266,6 +266,51 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   against `append` and the plus-sign space trap are the edges of one API met one at a time, not a
   mental model to explain. A model is a page; an API is a module.
 
+## The essentials path
+
+- **It is a second entrance, not a setting on the daily session.** Everything else here is judged
+  against a 15-minute morning, and the path is deliberately not: it is the weekend-or-evening mode.
+  The morning queue stays interleaved and spaced because that is what retention wants; an hour on
+  the path is blocked and ordered because that is what building a model the first time wants. Making
+  either one a mode of the other would blur two jobs that are correct at different stages.
+
+- **Where you left off is derived from the reps, and nothing is stored.** A step whose problem is
+  solved is done, and the first step that is not done is where you are. That keeps page-level
+  completion a standing non-goal, and it means the feature shipped with no schema change and no
+  migration. If a path ever wants its own progress model, that is the signal it has drifted from
+  being an ordering into being a second app.
+
+- **The subset rule is enforced mechanically, because it is the one that will get broken.** The path
+  is a recommendation, and a recommendation that eventually names every page is an index. Good
+  intentions do not survive seven more sessions, so `paths.spec.ts` fails if the sessions between
+  them cite three quarters of the handbook. The number is a tripwire rather than a target: it should
+  fire as a conversation about what to cut, long before anyone notices the path has stopped
+  recommending anything.
+
+- **Read, then prove, then build is enforced by the loader, not left to authors.** The reps come
+  after the pages that explain them, which is the exact opposite of the daily queue's job, and it is
+  the only structural rule the format has. A rule that is the whole point of a format is worth a
+  check rather than a sentence in a README.
+
+- **Seven hours shipped, and the test the path was meant to run for modules came back split.** The
+  async hour was built entirely from existing pages and reps, without once wanting to teach an API
+  from scratch, which by the stated criterion is evidence that the `promises` module matters less
+  than assumed. But `query-params` and `dates`, the two areas the module list targets hardest,
+  produced no candidate hour at all: twenty reps between them and nothing to read first, so there is
+  no read step to write. An API with no model to explain does not become an hour, and that is the
+  module spec earning itself. Note which direction the evidence can run: authoring the path can
+  demote a module, never promote one, because a slice that fits an hour is model-shaped by
+  construction.
+
+- **A session with no fitting workout is 45 minutes, not an hour padded with one.** Two of the seven
+  end on reps, because reaching for a workout that half-fits would cost the hour its coherence and
+  teach the wrong lesson about what the path is for.
+
+- **The reader sees "Essentials"; the code says "path".** The route is `/essentials` because that is
+  what the thing is to someone deciding how to spend an hour, and everything behind it, the package,
+  the API and the types, is `path`, because that is the word the spec and the docs use. One
+  translation, at the boundary, written down here so it is a decision rather than a drift.
+
 ## Modules
 
 - **Modules and the essentials path stay separate, and the reason is what you arrive knowing.**
@@ -280,11 +325,11 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   a module is a sequence of predict-run-correct steps and a session is a sequence of steps that may be
   pages, reps, workouts or a whole module. The shared non-goal is stated once: neither introduces
   progress tracking.
-- **The path ships first, and is the test of how many modules are needed.** It adds no content;
-  modules are eight of them at 10 to 20 authored steps each, plus a content type and app code. If an
-  essentials hour on async works from existing pages and reps, that is evidence the `promises` module
-  matters less than assumed. If the hour keeps wanting to teach the API from scratch, that is the
-  module spec earning itself.
+- **The path shipped first, and was the test of how many modules are needed.** It adds no content;
+  modules are eight of them at 10 to 20 authored steps each, plus a content type and app code. What
+  the test returned is recorded above: the async hour worked from existing pages and reps, and
+  `query-params` and `dates` produced no hour at all. Read the module list with that in mind rather
+  than as eight equal entries.
 
 - **A fourth content type was accepted even though it costs application code.** The other three all
   assume you already know the thing you are practising. The gap they miss is the handful of APIs

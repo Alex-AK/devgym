@@ -4,9 +4,9 @@ A local-first practice app for keeping web-dev fundamentals sharp. Read `README.
 does and how to run it. This file covers what an agent needs to change it safely.
 
 **The code is the source of truth for what exists.** No document in this repo lists what has shipped,
-by design: the seed files, `packages/handbook/content/` and `packages/workouts/content/` are the live
-inventory, and a status line would only go stale. Three documents hold what the code cannot say, and
-this file is the entry point to them:
+by design: the seed files, `packages/handbook/content/`, `packages/workouts/content/` and
+`packages/paths/content/` are the live inventory, and a status line would only go stale. Three
+documents hold what the code cannot say, and this file is the entry point to them:
 
 - **`docs/content.md`** — the bar every problem, handbook page, workout and module clears, and how to
   write each one. Read the relevant section before adding content.
@@ -57,15 +57,17 @@ them rather than quietly closing them.
 ```
 packages/shared/src/index.ts       types + const tuples, no runtime deps
 packages/workouts/content/<slug>/  workout content: manifest, brief, files, tests, solution
+packages/paths/content/<slug>/     the essentials path: one path.json an hour, ordering the above
 apps/server/src/
   db/                              Drizzle schema, client, migrations module
   grading/                         four graders + the sandboxed code runner
   seed/problems/<category>.ts      problem content, one file per category
   problems/ progress/ sessions/    Nest modules
+  paths/                           the essentials path: loader, safety net, read-only API
   workouts/                        workspace materialisation + the vitest checkpoint runner
   cli/grade.ts                     `pnpm grade` grader-inspection tool
 apps/web/src/
-  pages/                           Dashboard, Session, Practice, Problem, Problems
+  pages/                           Dashboard, Session, Practice, Problem, Problems, Paths
   components/CodeEditor.tsx        CodeMirror 6 wrapper, used for sql and js-code answers
   components/ui/                   hand-written shadcn components
 ```
@@ -94,6 +96,11 @@ apps/web/src/
   starter does not.
 - **Seeding without touching the real database:** set `DEVGYM_DATA_DIR` to a scratch path. Useful
   for checking the seeder end to end when the user is mid-streak.
+- **Adding a session to the essentials path** is a `path.json` under `packages/paths/content/`. It
+  authors nothing: it orders pages, reps and workouts that already exist, and `paths.spec.ts` refuses
+  a ref that resolves to nothing or a rep placed before the page explaining it. The path is a subset
+  on purpose, so read the bar in `docs/content.md` before adding one: the test is whether leaving
+  something out would make the hour incoherent, not whether it is good.
 - **Adding a workout** is a new directory under `packages/workouts/content/`. No application code
   changes. `workouts.spec.ts` then asserts the solution passes every checkpoint and the starter does
   not, which is what makes workout content as safe to edit as problem content.

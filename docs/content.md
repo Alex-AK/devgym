@@ -4,6 +4,9 @@ devgym has four content types: problems, handbook pages, workouts and modules. T
 one clears and how to write one. Read the section for the type you are adding, then the
 cross-cutting rules at the end, which apply to all four.
 
+A fifth kind of file authors nothing and orders what the four produce: a session on the essentials
+path. Its section is below, and its bar is different because its material is already written.
+
 What this file does not cover: `WRITING.md` owns the prose and is not optional reading, `CLAUDE.md`
 owns the commands and the constraints of the codebase, `docs/decisions.md` owns why a rule is the
 way it is, and `docs/roadmap.md` owns what is not written yet.
@@ -260,6 +263,61 @@ semantics kept, and WASM databases. The awkward semantics are usually the lesson
 `workouts.spec.ts` asserts every solution passes every checkpoint and every starter fails at least
 one, and that every checkpoint has a distinct id and an existing suite. That is what makes workout
 content as safe to edit as problem content.
+
+## The essentials path
+
+A session on the path is an hour on one slice of the work, and it authors nothing. It orders pages,
+reps and workouts that already exist, which makes it the one kind of file here judged on selection
+rather than on writing.
+
+It is also the only thing in devgym not judged against a 15-minute morning session. That is the
+point of it: the morning queue stays interleaved and spaced because that is what retention wants,
+and a session here is blocked and ordered because that is what building a model the first time
+wants. Both are correct, at different stages, and the app offers them as separate entrances rather
+than making one a setting on the other.
+
+### Where it lives
+
+`packages/paths/content/<slug>/path.json`, one directory per session. The manifest carries `slug`,
+`title`, `question`, `summary`, `order`, `minutes` and `steps`. A step is `{ kind, ref, note? }`,
+where `kind` is `page`, `problem` or `workout` and `ref` is `section/slug` for a page and a bare slug
+for anything else. `module` is reserved in the type and refused by the loader until modules exist.
+
+### The shape of an hour
+
+| Part  | Budget | What it is                                                    |
+| ----- | ------ | ------------------------------------------------------------- |
+| Read  | 20 min | Two or three handbook pages, in order, building on each other |
+| Prove | 15 min | Six to ten reps drawn from those pages, in a fixed order      |
+| Build | 20 min | One workout, where a fitting one exists                       |
+| Slack | 5 min  | An hour that needs all sixty minutes is an hour that overruns |
+
+A session without a workout is fine and spends the time on more reps. A session that cannot fill the
+read step from existing pages is not ready to be written.
+
+### The bar
+
+- **The `question` is the test.** Name the session by the question the hour answers. A slice you
+  cannot name that way is two sessions or none.
+- **The path is a subset, deliberately and permanently.** Most content is not on it and never will
+  be. The test for including a page: would leaving it out make the hour incoherent? Not "is it
+  good", which everything here is meant to be. If every page eventually appears on some session, the
+  path has become an index and has stopped being a recommendation. The suite fails at three quarters
+  coverage so that this is a conversation rather than a surprise.
+- **A session is one slice, not one section.** The most valuable ones cut across sections, because
+  that is how the work does. "Why the page is slow" is a React page, a database page and an N+1 rep,
+  and it is a better hour than anything wholly inside one section.
+- **Order is fixed and meaningful**, and the loader enforces it: read, then prove, then build.
+- **No new progress tracking.** Where you left off is derived from the reps, which carry their own
+  progress. A session shows you that; it does not score you.
+
+### What the suite enforces
+
+`paths.spec.ts` refuses a session whose `ref` resolves to nothing, whose steps run out of order,
+which has no page step or no problem step, which names a reserved kind, or whose `order` collides
+with another session's. It is the same net that already checks a page's `practise` slugs resolve,
+which is what makes an ordering safe to edit: content moves, and a stale reference fails the build
+rather than the reader.
 
 ## Modules
 
