@@ -4,6 +4,8 @@ import type {
   HandbookPageDetail,
   HandbookSectionSummary,
   NextProblem,
+  PathDetail,
+  PathSummary,
   PracticeSchemaResponse,
   ProblemDetail,
   ProblemSummary,
@@ -91,6 +93,9 @@ export const api = {
   handbookPage: (section: string, slug: string): Promise<HandbookPageDetail> =>
     request(`/handbook/${section}/${slug}`),
 
+  paths: (): Promise<PathSummary[]> => request('/paths'),
+  path: (slug: string): Promise<PathDetail> => request(`/paths/${slug}`),
+
   next: (
     after?: string,
     dir: 'next' | 'prev' = 'next',
@@ -143,4 +148,6 @@ export const queryKeys = {
   workout: (slug: string) => ['workout', slug] as const,
   handbook: ['handbook'] as const,
   handbookPage: (section: string, slug: string) => ['handbook', section, slug] as const,
+  paths: ['paths'] as const,
+  path: (slug: string) => ['path', slug] as const,
 };
