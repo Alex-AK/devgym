@@ -6,12 +6,14 @@
 >
 > Shipped so far: the `systems` and `html` categories, the TypeScript, React, JavaScript
 > mental-models and headers/security waves, and two workouts (the SSE dashboard and the
-> `json-parser` pilot). Still queued: the `sql-performance`, `api-design`, `node` and
-> `dsa-patterns` categories, and the workout list below, which has since grown by ten.
+> `json-parser` pilot). Still queued: the `sql-performance`, `api-design`, `node`, `dsa-patterns`
+> and `ai-engineering` categories, and the workout list below, which has since grown by ten.
 > `dsa-patterns` remains the one item here that needs an application change, for the queue opt-out
-> flag. Siblings:
+> flag. `ai-engineering` is the one with a deadline attached, because guide section 13 cannot ship a
+> page until it exists. Siblings:
 > [PRD-v3-learning-guide](./PRD-v3-learning-guide.md),
-> [PRD-v3-open-source](./PRD-v3-open-source.md).
+> [PRD-v3-open-source](./PRD-v3-open-source.md), and
+> [PRD-v4-modules](./PRD-v4-modules.md) for the fourth content type.
 
 ## Why
 
@@ -66,11 +68,24 @@ LRU today. The vault's own strategy note is the authoring guide: pick a few prob
 pattern, and understand why the solution works rather than memorising it. Around 30, added in
 pattern-sized waves.
 
-**Decided: this category stays out of the daily queue.** DSA is a separate track you enter on
+**Decided: `dsa-patterns` stays out of the daily queue.** DSA is a separate track you enter on
 purpose, via focused practice (`/practice?category=dsa-patterns`) or its own session preset, not
 something the morning round-robin deals you. This is the one item in this document that needs an
 application change: the queue currently treats all categories equally, so categories need an
 opt-out flag the session builder respects. Small, but it is code, not content.
+
+**`ai-engineering` — the web half of shipping against a model.** Added with guide section 13, and
+added _because_ of it: that section cannot ship a single page until this category exists, since a
+page with an empty `practise` list fails `pnpm verify`. Streaming a token response and what the
+client has to do with it, timeouts and retries against a slow generative dependency, idempotency when
+the expensive call is the one you are retrying, chunking and what a nearest-neighbour result actually
+promises, an MCP tool boundary read as API design, and turning a non-deterministic output into a
+deterministic assertion. Mostly explain and short-text, with js-code where the exercise is genuinely
+plumbing. Around 12 to start.
+
+**No model runs anywhere in this category.** Every problem is about the code around the dependency,
+which is the part that fails in production and the only part that can be graded deterministically
+offline. A problem that needs an inference call to grade is a problem this project will not have.
 
 ### Waves in existing categories
 

@@ -102,6 +102,12 @@ Issues and pull requests are welcome, for content errors above all. If a grader 
 correct answer wrong, `pnpm grade <slug> "<answer>"` prints the diagnosis; paste it into an
 issue and that is usually the whole report.
 
+### How it tries to teach
+
+Specified below as its own page at `/how-it-teaches`, linked from here rather than inlined, because
+it is longer than a section and it is the one claim on this page that can be checked against
+evidence.
+
 ### Colophon
 
 Built on pnpm workspaces, Vite, React, TypeScript, Tailwind, shadcn/ui, NestJS, Drizzle,
@@ -115,6 +121,45 @@ The page is hand-written React in `apps/web/src/pages/AboutPage.tsx` (it is one 
 pipeline for it would be machinery for its own sake). The README gets a short "About and
 credits" section linking to it, and the LLM-authorship disclaimer joins the README so it is
 visible to people who never run the app.
+
+## The learning-techniques page
+
+A second static page at `/how-it-teaches`, linked from the about page and the README.
+
+The app already leans on four techniques that have real evidence behind them, and it has never said
+so anywhere. That is a gap in the same direction as the LLM-authorship disclaimer: the honest move is
+to name the mechanism, say where in the app it happens, cite the evidence, and be equally clear about
+the parts that are guesses.
+
+What the page covers, one short section each, and every one of them names the file or the screen so
+the claim is checkable:
+
+- **Retrieval practice.** You answer before you see the answer, everywhere: problems, and the predict
+  step in every module ([PRD-v4](./PRD-v4-modules.md)). Recalling something is a stronger memory
+  operation than re-reading it.
+- **Spaced repetition.** `REVIEW_INTERVALS_DAYS` in `packages/shared`, a 1, 3, 7, 21, 60 ladder that
+  widens on a correct answer and resets on a wrong one. The page states the ladder outright, because
+  a reader deserves to know the schedule they are on.
+- **Interleaving.** The daily queue deals across categories rather than drilling one, which is slower
+  in the session and better afterwards.
+- **Desirable difficulty.** Why the grader gives a verdict and a reason rather than the answer, why
+  briefs state the symptom and never the cause, and why the checkpoint hint appears only after the
+  checkpoint has failed. The friction is the mechanism.
+
+**And the part that has to be on the page for it to be worth having:** the specific ladder is not
+evidence-based. Expanding intervals are; 1, 3, 7, 21, 60 is a guess that has never been tuned against
+anything, because a single-user app has no data to tune it with. Saying so is the difference between
+citing research and borrowing its authority.
+
+Sources are the load-bearing part, so they follow the citation policy above with no exceptions: open
+references only, cited for the claim actually made rather than for the general vibe of the field.
+Dunlosky et al.'s 2013 review is the obvious spine, since it rates practice testing and distributed
+practice as the two highest-utility techniques it examined and is freely available. Roediger and
+Karpicke on the testing effect, Cepeda et al. on distributed practice, and Bjork on desirable
+difficulties cover the rest. Every URL gets fetched before it ships, which is the rule that a rotted
+AWS link has already proved is not optional.
+
+Same build as the about page: hand-written React alongside `AboutPage.tsx`, not a content pipeline.
 
 ## Repo touches
 

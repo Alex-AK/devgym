@@ -4,8 +4,10 @@
 > `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 2 (React), 3
 > (moving data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases), 8 (the server runtime) and 9
 > (systems) are underway; every concept section 9's card list names now has a card, though its
-> case-study shelf does not exist yet. Section 10 (trade-offs) is not started. Two further sections
-> were added by the pairing rule below: TypeScript, and the browser you are writing for.
+> case-study shelf does not exist yet. Section 10 (trade-offs) is not started. Five further sections
+> have been added since the first draft: TypeScript and the browser you are writing for, both by the
+> pairing rule, then AI engineering, running it in production, and data structures, which came from a
+> topic pass and moved the scope once, deliberately and by decision.
 >
 > This extends [PRD-v2](./PRD-v2.md), which remains the live spec for the workout platform and for
 > what a handbook page is (its phase 4). This document is the map
@@ -74,6 +76,26 @@ The safety net runs in `pnpm verify`, like everything else:
 The UI stays minimal: a section list, a page view, and the links in both directions. No search, no
 progress tracking on pages themselves; the problems are the progress tracking.
 
+### Diagrams
+
+Some of this material is a diagram or it is nothing. A ring of servers, a partition splitting two
+datacentres, a request crossing four hops: prose describing those is prose being read twice.
+
+The shipped systems cards already draw in fenced ASCII blocks, and it works better than expected, so
+that stays the floor and costs nothing. The proposal above it is **Mermaid in a fenced block**, which
+keeps a diagram as diffable text in the repo, renders on GitHub without help, and needs one
+dependency in the web app.
+
+**That dependency is a decision, not a detail**, and it is this wave's equivalent of the workout
+dependency batch: `mermaid` is not small, and it lands in the app bundle rather than in a workout
+workspace. The alternatives are honest ones. Committed SVG needs no dependency and gives up
+diffability and easy authoring. Staying with ASCII needs nothing at all and caps what can be drawn.
+
+**Interactive diagrams are deferred, with the reason recorded.** A diagram you can drag a node around
+in is application code per diagram, which breaks the rule the whole library rests on. Revisit only if
+a specific concept proves it cannot be taught any other way, and then build that one thing rather
+than a framework for it.
+
 ## Pairing: reps for every page, pages for every rep
 
 The guide and the problem set are two halves of one library, and the standing rule is that neither
@@ -88,6 +110,24 @@ half runs far ahead of the other:
 **Not 1:1, deliberately.** A page can be served by problems from three categories, and a category
 can back several pages. The target is that no page is unpractised and no substantial category is
 unexplained, not a matching count on each side.
+
+### Check the shelf before writing
+
+Topic requests arrive as lists, and a list does not know what has already shipped. Four came in on
+the last pass that were already written, so the check is now a step: grep `packages/handbook/content`
+first, and if a page exists, the item is an edit to that page or it is nothing.
+
+| Asked for                  | Already lives in                                                     |
+| -------------------------- | -------------------------------------------------------------------- |
+| Rate limiting              | `apis/rate-limiting.md`, with the five algorithms and what to key on |
+| Write DB and read replicas | `systems/replication.md`, including replica lag and read-your-writes |
+| RESTful                    | `moving-data/rest-in-practice.md`                                    |
+| Stateless                  | `systems/scaling-up-and-out.md` (state is the thing that blocks it)  |
+| Express middleware         | `server-runtime/the-life-of-a-request.md`, in Nest's vocabulary only |
+
+The last row is the interesting one, and the reason this table is a step rather than a rule: the page
+exists, it covers the concept, and it never says `next()`. That is a real gap inside a covered topic,
+so it earned an Express page in section 8 rather than a shrug.
 
 Where it stands, and it is lopsided in one direction:
 
@@ -114,8 +154,9 @@ volume says otherwise, and then it gets written.
 
 ## The map
 
-Twelve sections. Web first throughout; each section notes what vault material feeds it and who gets
-credited (see the open-source PRD for the citation policy itself).
+Web first throughout; each section notes what vault material feeds it and who gets credited (see the
+open-source PRD for the citation policy itself). The count is deliberately not stated here, because
+sections get added by the pairing rule and the number went stale three times before anyone noticed.
 
 ### 1. JavaScript, under the hood
 
@@ -158,6 +199,11 @@ page. One enrichment from the web sockets note, which is grounded in running Soc
 production at scale: the WebSockets page gets a companion, **delivery guarantees over a socket**
 (what reconnection actually loses, client vs server buffering, at-least-once via acks, and the
 offset-and-replay pattern for missed events). Credits: the Socket.IO v4 docs, MDN.
+
+One page added: **SOAP, and why you are meeting it**. Written for the integration you inherit rather
+than the service you build, which is the only honest framing left: the envelope, the WSDL, what
+having a contract bought and what it cost, and how to talk to one from a stack that has moved on.
+Credits: the W3C SOAP and WSDL specifications.
 
 ### 4. Headers
 
@@ -211,6 +257,13 @@ dependency injection (what problem inversion of control solves, and the decorato
 the scaffold already documents); failure and retries (v2 4d: timeouts, backoff, jitter,
 idempotency keys); background work (pairs with the queues page in 4a).
 
+Two pages added. **Middleware, and the order it runs in** takes the Express half that the life-of-a-
+request page covers only in Nest's vocabulary: what `next()` does, why error middleware takes four
+arguments, and the ordering bugs that follow from mounting in the wrong place. **Three frameworks,
+one request** compares Express, Nest and FastAPI on the same route, which is the one place FastAPI
+earns a page: seeing a third framework name the same seams is what makes them visible as seams
+rather than as Express trivia. No Python runs anywhere; it is a comparison, not an exercise.
+
 ### 9. Systems, one concept at a time
 
 The vault's largest single category: hundreds of collected system design links, none processed.
@@ -246,6 +299,13 @@ The vault's 15-item architecture reading list survives as this section's further
 with every book credited. Credits: refactoring.guru, Microsoft's strangler-fig page, Will
 Larson's migrations essay, the listed books.
 
+A fourth page: **the dependency behind a port you own**. Redis is the worked example, because it is
+the one nearly everybody reaches for and nearly nobody wraps: what an adapter buys (swapping the fake
+for the real thing in tests, and surviving the day the managed instance changes), what it costs (an
+interface that leaks the moment you want a Lua script or a stream), and the honest rule for when a
+thin wrapper is worth it against when it is cargo cult. The workouts already ship a fake Redis with a
+clock, so the practical half exists.
+
 ### 11. TypeScript, at the type level
 
 Added by the pairing rule above, having originally been listed as deliberately absent. The problem
@@ -273,12 +333,83 @@ already validates; and what the platform gives you free that people reach for a 
 (`<dialog>`, `<details>`, `popover`, `inputmode`). Credits: MDN, the WHATWG HTML Standard, the ARIA
 Authoring Practices Guide, web.dev.
 
+### 13. AI engineering, for people who ship web apps
+
+The scope moved here, deliberately and once. devgym is web-first and stays web-first, but the things
+a web engineer is now asked to build have moved: an endpoint that streams tokens, a retrieval step in
+front of a model, a tool server another program drives. That is web engineering with an unfamiliar
+dependency on the end of it, and it fails in web-engineering ways: timeouts, backpressure,
+idempotency, cost per request.
+
+What this section is not is machine learning. Training, model architectures and the statistics behind
+them are out of scope and stay out: they fail the morning-session test and they are not what the
+stack is for.
+
+Pages: what inference actually costs you (tokens, latency, and why the p99 is a different animal when
+the dependency is generative); streaming a model response (SSE and chunked transfer, which
+[section 3](#3-moving-data-between-machines) already owns the transport half of); embeddings and
+vector search (what a nearest-neighbour lookup does and does not promise); retrieval, honestly (the
+plumbing, chunking, and why the retrieval step is usually the bug); MCP servers (what the protocol
+actually specifies, and why a tool boundary is an API design problem you have solved before); evals
+as tests (deterministic assertions against a non-deterministic dependency). Credits: the Model
+Context Protocol specification, the provider API docs, and open papers where a claim needs one.
+
+### 14. Running it in production
+
+The vault's "infrastructure" pile, refined into the part a web engineer owns. Not a cloud
+certification: the question each page answers is what changes about your code when it stops being a
+process on your laptop.
+
+Pages: what a deploy actually is (artefact, config, and the swap); processes, containers and what the
+image is really doing; configuration and secrets (why the environment, and where that stops being
+enough); health, readiness and the difference (which
+[load balancers](#9-systems-one-concept-at-a-time) already meets from the other side); logs, metrics
+and traces (three answers to three different questions, and the cardinality trap); zero-downtime
+releases and the migration that has to go first. Credits: the Twelve-Factor App, the Docker and
+Kubernetes docs, OpenTelemetry.
+
+### 15. Data structures and the cost of a choice
+
+This section exists because a decision below was reversed; see "Reversed, with the reasoning
+recorded".
+
+Not an algorithms course. Every page answers the same question in a different shape: what does this
+choice cost at the size you actually have. Array against object against `Map` against `Set` is a
+decision web code makes hourly and usually by reflex.
+
+Pages: array, object, `Map`, `Set` (lookup, insertion, iteration order, and what a key can be);
+what O notation is for, and the constant factors that beat it under a few thousand items; the
+structures behind the ones you use (hash tables, and why a bad key function is the whole story);
+sorting, and the comparator bugs that survive review; trees and the shapes real systems use them for
+(the B-tree the [databases section](#7-databases) already assumes); when the right answer is a
+database rather than a data structure. Credits: MDN, the V8 blog, open algorithms references.
+
+It pairs with the `dsa-patterns` problem category in the content roadmap, which stays the place the
+patterns themselves get practised.
+
 ### Deliberately absent
 
 - **Mobile and desktop**: the stated priority is web. The vault's React Native vs Flutter notes
   wait until the web map is substantially built.
-- **DSA theory**: the patterns become coding problems (content roadmap), not guide pages. A page
-  about sliding window teaches less than three graded implementations of it.
+- **Machine learning proper**: training, model architectures, and the statistics under them. Section
+  13 covers shipping against a model, which is web work. Building the model is not.
+- **A Python stack**: FastAPI is worth one comparison page inside section 8, because comparing how
+  three frameworks route a request teaches something Express alone cannot. A FastAPI _workout_ is a
+  different matter: it would put a Python runtime in the workout runner, which is a much larger
+  decision than a dependency line, and nothing in the queue needs it yet.
+
+### Reversed, with the reasoning recorded
+
+Two entries have left "deliberately absent", and both left for the same reason, so the pattern is
+worth naming: the original argument was about source material, and the pairing rule is about the
+reader.
+
+- **TypeScript**, recorded above, now section 11.
+- **DSA theory**, now section 15. The original entry said the patterns become coding problems, not
+  guide pages, and that a page about sliding window teaches less than three graded implementations of
+  it. That half still holds, and section 15 does not undo it: the patterns stay in `dsa-patterns`.
+  What the original missed is that choosing a structure is not a pattern, it is a decision made in
+  ordinary feature work every day, and nothing in the library explains it.
 
 ## Build order
 
@@ -287,7 +418,16 @@ have all landed. What remains, ordered by how much unexplained practice is sitti
 
 1. **The browser you are writing for** — now the largest unpaired block by some distance
 2. **TypeScript, at the type level**
-3. **Trade-offs and architecture** — last, as before, because it resists the page shape
+3. **AI engineering** — new, and the only section here with no practice behind it yet, so it ships
+   alongside its problems rather than ahead of them (see the pairing rule; a page with an empty
+   `practise` list cannot ship at all)
+4. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
+5. **Running it in production**
+6. **Trade-offs and architecture** — last, as before, because it resists the page shape
+
+The single-page additions do not wait their turn, because each one slots into a section that already
+exists: SOAP into moving data, Express middleware and the three-framework comparison into the server
+runtime, the adapter page into trade-offs. Any of them is an afternoon.
 
 Two smaller debts sit outside that order. The systems section's case-study shelf is specified above
 and not built, and it is further reading rather than pages, so it does not block anything. Dates and

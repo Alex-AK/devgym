@@ -443,6 +443,22 @@ Everything in the v1 hard constraints carries forward, with one addition:
 - **Workspaces are disposable.** `<data>/workouts/<attemptId>/` is deleted when an attempt finishes.
   Anything worth keeping goes in the database.
 
+### Self-hosting, raised and declined
+
+Hosting an instance on a personal server was proposed and dropped, and the reasoning is recorded here
+so it does not have to be had again.
+
+It collides with the constraint directly above it. The workout runner executes submitted code, and
+`node:vm` in `grading/code-runner.ts` is an isolation convenience rather than a security boundary,
+which is fine on a laptop and is a different proposition on a box with a public interface. Making it
+safe means real sandboxing, which is a project rather than a deployment.
+
+If it comes back, it comes back split. The read-only half (handbook, about, the learning-techniques
+page) has no code execution, no accounts and no user data, so publishing it is a static build and
+nothing more. The full app stays local, or stays behind a private network where the threat model is
+the same as today's. What does not happen is the whole thing on a public interface because the
+handbook wanted a URL.
+
 ## 4. Open questions
 
 - **Does a 20-minute workout actually fit a morning?** The queue is 15 minutes by design. Workouts
