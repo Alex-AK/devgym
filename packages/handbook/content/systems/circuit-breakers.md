@@ -5,6 +5,7 @@ order: 6
 practise:
   - sys-timeout-before-breaker
   - sys-circuit-breaker
+  - circuit-breaker-node
 sources:
   - author: Martin Fowler
     title: CircuitBreaker

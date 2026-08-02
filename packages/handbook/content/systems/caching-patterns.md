@@ -6,6 +6,7 @@ practise:
   - sys-cache-aside-vs-write-through
   - sys-cache-stampede
   - sys-thundering-herd
+  - one-recompute-not-fifty
 sources:
   - author: Donne Martin
     title: 'System Design Primer: caching'

@@ -1,0 +1,40 @@
+{
+  "slug": "circuit-breaker-node",
+  "title": "Build a circuit breaker",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "medium",
+  "relevance": "foundational",
+  "stack": {
+    "server": "node, no dependencies"
+  },
+  "summary": "A dependency is down and every request still waits the full timeout for it to say so. Build the breaker that stops asking: three states, a counter, a wait, and one trial call to decide whether it is back.",
+  "focus": ["state machines", "timeouts", "failure handling", "resilience"],
+  "editable": ["src/lib/breaker.ts"],
+  "checkpoints": [
+    {
+      "id": "failures-trip-it",
+      "title": "Failures trip it",
+      "testFile": "tests/checkpoints/01-failures-trip-it.test.ts",
+      "hint": "The count is of consecutive failures, so a success sets it back to zero rather than subtracting one. Pass both the value and the error straight through: a breaker changes when a call is made, never what it answers."
+    },
+    {
+      "id": "fails-fast",
+      "title": "An open circuit fails fast",
+      "testFile": "tests/checkpoints/02-an-open-circuit-fails-fast.test.ts",
+      "hint": "Throw CircuitOpenError before calling `fn`, not after. A refusal is not a failure of the dependency, so it must not move the counter or the deadline: derive the state from `openedAt` and the clock rather than storing it and mutating it on the way past."
+    },
+    {
+      "id": "timeout-counts",
+      "title": "A slow call is a failure",
+      "testFile": "tests/checkpoints/03-a-slow-call-is-a-failure.test.ts",
+      "hint": "Race `fn()` against `clock.sleep(timeoutMs)` and have the sleep resolve to a sentinel rather than reject, then throw CallTimeoutError when the sentinel wins. A rejection from the losing side of a settled race is an unhandled rejection later, when the clock passes it."
+    },
+    {
+      "id": "half-open",
+      "title": "One trial call decides",
+      "testFile": "tests/checkpoints/04-one-trial-call-decides.test.ts",
+      "hint": "Half-open is not a fourth thing to store: it is what open means once `openMs` has passed. One trial at a time needs a flag of its own, cleared in a `finally` so a rejected trial does not wedge it, and a failed trial re-opens by moving `openedAt` to now."
+    }
+  ]
+}

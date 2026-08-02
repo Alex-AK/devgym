@@ -8,32 +8,28 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. AI engineering
+## 1. The AI engineering handbook section
 
-The largest gap against the stated target, and the only place a whole handbook section is blocked by
-a missing problem category.
+The reps exist and the pages do not, which makes this the largest gap against the stated target.
+The `ai-engineering` category is in the queue, so nothing here is blocked any more: the pages have
+reps to point `practise` at.
 
-**The `ai-engineering` category comes first**, around 12 problems to start: streaming a token
-response and what the client has to do with it, timeouts and retries against a slow generative
-dependency, idempotency when the expensive call is the one being retried, chunking and what a
-nearest-neighbour result actually promises, an MCP tool boundary read as API design, and turning a
-non-deterministic output into a deterministic assertion. Mostly explain and short-text, with js-code
-where the exercise is genuinely plumbing. No model runs anywhere in it: every problem is about the
-code around the dependency, which is the part that fails in production and the only part that can be
-graded deterministically offline.
+Pages: what inference actually costs you (tokens, latency, and why the p99 is a different animal
+when the dependency is generative); streaming a model response, whose transport half the moving-data
+section already owns; embeddings and vector search (what a nearest-neighbour lookup does and does
+not promise); retrieval, honestly (the plumbing, the chunking, and why the retrieval step is usually
+the bug); MCP servers (what the protocol specifies, and why a tool boundary is an API design problem
+you have solved before); evals as tests.
 
-**The handbook section follows it and cannot ship a page before it**, because a page with an empty
-`practise` list fails `pnpm verify`. Pages: what inference actually costs you (tokens, latency, and
-why the p99 is a different animal when the dependency is generative); streaming a model response,
-whose transport half the moving-data section already owns; embeddings and vector search (what a
-nearest-neighbour lookup does and does not promise); retrieval, honestly (the plumbing, the
-chunking, and why the retrieval step is usually the bug); MCP servers (what the protocol specifies,
-and why a tool boundary is an API design problem you have solved before); evals as tests. Credits:
-the Model Context Protocol specification, the provider API docs, and open papers where a claim needs
-one.
+**Credits: the Model Context Protocol specification, the provider API docs, and open papers where a
+claim needs one.** All of them are load-bearing rather than decorative here, because none of this
+material can be checked by running it against `practice.db` the way the SQL pages were. Whoever
+writes these needs the sources open in front of them; a session that cannot reach
+`modelcontextprotocol.io`, the provider docs and `arxiv.org` cannot honestly date a `verified` line
+and should write something else instead.
 
-Neither half is machine learning. Training, model architectures and the statistics under them are
-out of scope and stay out.
+This section is not machine learning. Training, model architectures and the statistics under them
+are out of scope and stay out.
 
 ## 2. The JavaScript pages its reps already need
 
@@ -104,25 +100,7 @@ Then content, in this order.
 `tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so
 it stays on `node:crypto` and `jose` and invents no primitives of its own.
 
-## 5. A workout for the systems section
-
-Thirteen pages, every one paired with an explain-graded problem, and not one workout points at them.
-A section with no workout is reading that has never been tested under time pressure, and systems is
-where knowing the words and being able to build the thing diverge most. Two, deliberately the two
-concepts that are code rather than architecture, both on the build-your-own recipe the `json-parser`
-pilot proved: zero dependencies, checkpoints that map to stages, and a clock the real thing does not
-have.
-
-| Workout                  | Stack             | Pairs with       | The lesson                                                                                       |
-| ------------------------ | ----------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
-| Build a circuit breaker  | Node + fake clock | circuit breakers | Closed, open, half-open, and the timeout without which the counter never trips. No dependencies  |
-| One recompute, not fifty | Node + fake clock | caching patterns | Single-flight: concurrent callers for a cold key wait on one computation. The dedupe is the test |
-
-The second overlaps "Cache the expensive report" below on purpose and from the other side: that one
-is cache-aside in an Express app, this one is the primitive underneath it in isolation. If writing
-them proves that is one workout rather than two, merge them and record it.
-
-## 6. Pages missing from sections that already ship
+## 5. Pages missing from sections that already ship
 
 Each of these is named on the curriculum map and absent from `packages/handbook/content/`. Ordered
 by how often the gap is met in ordinary work, not by section.
@@ -142,7 +120,7 @@ by how often the gap is met in ordinary work, not by section.
 Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
 so it blocks nothing.
 
-## 7. The rest of the problem queue
+## 6. The rest of the problem queue
 
 | Category         | Roughly | What it is                                                                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -159,7 +137,7 @@ or its own session preset. That needs the one application change in this file: t
 treats every category equally today, so categories need an opt-out flag it respects. Small, but it
 is code rather than content.
 
-## 8. The workout queue
+## 7. The workout queue
 
 Ordered by what the library cannot practise today. Everything here runs on infrastructure that
 already exists (PGlite, the fake Redis and its clock, the fixture API, testing-library) except where
@@ -170,7 +148,7 @@ a dependency is named. `graphql`, `react-window` and `zustand` are already in
 | --------------------------- | ------------------------- | -------- | -------------- | ------------------------------------------------------------------------------------------------- |
 | Two clients in sync         | WebSocket (`ws`) + React  | feature  | moving data    | The delivery-guarantees page made real: reconnect, buffering, offset-and-replay for missed events |
 | Retry with backoff          | React + fixture API       | feature  | server runtime | Timeouts, jittered backoff, giving up honestly; fault injection already exists in the fixture     |
-| Cache the expensive report  | Express + fake Redis      | feature  | caching        | Cache-aside with a TTL, then the stampede: fifty concurrent misses must recompute once, not fifty |
+| Cache the expensive report  | Express + fake Redis      | feature  | caching        | Cache-aside in a real handler. The dedupe itself is already `one-recompute-not-fifty`; this is where it goes wrong around a route |
 | Context re-render bug-hunt  | React                     | bug-hunt | React          | A typing lag caused by one fat context; checkpoints count renders, the split is the fix           |
 | The form that loses your work | React                   | bug-hunt | the browser    | Errors nobody is told about: association, focus to the first failure, and the double submit       |
 | Cursor pagination bug-hunt  | Kysely + PGlite           | bug-hunt | databases      | Offset pagination drifting under concurrent writes; keyset as the fix, plan asserted via EXPLAIN  |
@@ -189,10 +167,10 @@ a dependency is named. `graphql`, `react-window` and `zustand` are already in
 | Validated request boundary  | Hono + Zod                | feature  | APIs           | Two birds: the first Hono workout, and schema validation as the API's front door                  |
 
 The build-your-own genre grows further (a wire-protocol Redis clone, a tiny message broker) only if
-the two systems workouts land well, and only then is it worth deciding whether multi-part series
-need real support.
+`json-parser`, `circuit-breaker-node` and `one-recompute-not-fifty` land well, and only then is it
+worth deciding whether multi-part series need real support.
 
-## 9. Sections with no practice behind them yet
+## 8. Sections with no practice behind them yet
 
 Both of these are last because nothing in the problem set is waiting on them.
 

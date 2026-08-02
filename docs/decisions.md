@@ -111,6 +111,18 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   naming the diagnosis deletes the part worth doing. It is the easiest mistake to make, because by
   the time you write the brief you know the answer.
 
+- **The two systems workouts stayed two.** They were queued with permission to merge if writing them
+  proved they were one, and they are not: a circuit breaker is a state machine over failures, and
+  single-flight is deduplication over concurrency. They share a fake clock and nothing else. The
+  overlap that remains is with the queued "Cache the expensive report", which is cache-aside in an
+  Express handler; the dedupe primitive underneath it is now `one-recompute-not-fifty`, so that
+  workout is about where the pattern goes wrong around a route rather than about the primitive.
+
+- **A checkpoint never waits out the suite timeout to learn a call is stuck.** Both clock-driven
+  workouts assert on "has this settled by now" through a helper that races the call against a few
+  macrotask ticks. Without it, a starter that never times out anything spends ten seconds per
+  assertion, and a 25-minute exercise pays half a minute for every run of its checkpoints.
+
 - **Performance is judged by what the code asked the database for, never by a stopwatch.** A timed
   assertion would be flaky. Asserting on statement counts, rows returned and the `EXPLAIN` of the
   query actually sent makes the failure message the teaching, and it separates an index that exists

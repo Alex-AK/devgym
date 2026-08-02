@@ -1,0 +1,40 @@
+{
+  "slug": "one-recompute-not-fifty",
+  "title": "One recompute, not fifty",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no dependencies"
+  },
+  "summary": "The dashboard report takes four seconds to build and fifty people open the dashboard every minute. Build the cache that computes it once for all of them, and once again when it goes stale, however many are waiting.",
+  "focus": ["concurrency", "caching", "promises", "cache stampede"],
+  "editable": ["src/lib/cache.ts"],
+  "checkpoints": [
+    {
+      "id": "single-flight",
+      "title": "One computation for fifty callers",
+      "testFile": "tests/checkpoints/01-one-computation-for-fifty-callers.test.ts",
+      "hint": "Store the promise, not the value: put it in a map keyed by the cache key before you await it, and hand the same promise to everyone who arrives while it is there. Remove it when it settles, or the key is stuck on one computation forever."
+    },
+    {
+      "id": "fresh-values",
+      "title": "A fresh value is not recomputed",
+      "testFile": "tests/checkpoints/02-a-fresh-value-is-not-recomputed.test.ts",
+      "hint": "The deadline is set when the computation finishes and is never touched again, so reading a value does not extend its life. Compare against `clock.now()` on the way in rather than scheduling anything to delete it."
+    },
+    {
+      "id": "failures",
+      "title": "A failure is not a value",
+      "testFile": "tests/checkpoints/03-a-failure-is-not-a-value.test.ts",
+      "hint": "Store the entry inside the success path only, and remove the in-flight promise however it settles: `finally` does both cases, `then` does one of them."
+    },
+    {
+      "id": "stampede",
+      "title": "The stampede after expiry",
+      "testFile": "tests/checkpoints/04-the-stampede-after-expiry.test.ts",
+      "hint": "Expiry is the same cold-key path as the very first request, so if single-flight works there it works here. If fifty computations start, the check for an existing flight is happening after an await, and fifty callers have already gone past it."
+    }
+  ]
+}
