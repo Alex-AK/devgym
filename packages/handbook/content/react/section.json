@@ -1,0 +1,6 @@
+{
+  "slug": "react",
+  "title": "React, beyond the API",
+  "order": 2,
+  "summary": "The parts the API reference leaves out: what a render actually is, why a component nobody touched rendered anyway, and where a piece of state belongs. Most React performance work turns out to be working out which of those three questions you are really asking."
+}
