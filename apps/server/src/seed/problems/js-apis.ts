@@ -1051,4 +1051,225 @@ export const jsApiProblems: ProblemDraft[] = [
     explanation:
       'new Array(3) sets length to 3 without creating any elements, so every index is a hole, not an element holding undefined. map, forEach, filter and reduce all check for an element before calling back and skip straight past a hole, which is why the result keeps the same 3 empty slots instead of [0, 1, 2]. Array.from builds its result from a length (or an iterable) and calls the mapping function for every index from the start, so it never has a hole to skip. Spread and for...of also visit holes, but as undefined, and JSON.stringify turns them into null, so "does this array have holes" gets a different answer depending which method you ask.',
   },
+
+  {
+    slug: 'js-await-suspends-caller',
+    title: 'Three logs, one await',
+    category: 'js-apis',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A loader, and the line that calls it:',
+      '',
+      code(
+        'js',
+        'async function loadUser(id) {',
+        "  console.log('start');",
+        '  const user = await db.users.find(id);',
+        "  console.log('loaded');",
+        '  return user;',
+        '}',
+        '',
+        'loadUser(1);',
+        "console.log('after');"
+      ),
+      '',
+      'In what order do the three lines log?'
+    ),
+    graderConfig: {
+      accept: ['start after loaded', 'start, after, loaded', 'start / after / loaded'],
+      acceptPatterns: ['\\bstart\\b[\\s,/>-]+after[\\s,/>-]+loaded\\b'],
+      nearMisses: {
+        'start loaded after':
+          '`await` does not suspend the caller. It suspends `loadUser`, and control goes straight back to the line after the call.',
+        'after start loaded':
+          'Calling an async function runs its body immediately. Nothing about `async` defers the first line.',
+        'start loaded': 'Three lines log. `after` is one of them.',
+      },
+      hints: [
+        'Calling an async function runs its body straight away, not on some later tick.',
+        'The body runs synchronously until it reaches an `await`.',
+        'At the `await` the function suspends and the caller carries on, so `loaded` comes last.',
+      ],
+    },
+    canonicalAnswer: 'start after loaded',
+    solution: code(
+      'js',
+      'async function loadUser(id) {',
+      "  console.log('start');            // 1: runs on the call, synchronously",
+      '  const user = await db.users.find(id);',
+      "  console.log('loaded');           // 3: after the promise settles",
+      '  return user;',
+      '}',
+      '',
+      'loadUser(1);                       // returns a pending promise here',
+      "console.log('after');              // 2: the caller was never blocked"
+    ),
+    explanation:
+      'An async function is not deferred. Its body runs synchronously on the call, exactly like any other function, right up to the first `await`; that is what makes `setLoading(true)` before an `await` take effect immediately. At the `await` the function returns a pending promise to its caller and the rest of the body is scheduled as a continuation, so the caller runs on and `after` logs second. Nothing else in the file waits, which is why an unawaited call is fire-and-forget: `loadUser(1)` here has no `await` and no `.catch()`, so a rejection would surface as an unhandled rejection with nobody to see it.',
+  },
+
+  {
+    slug: 'js-spread-undefined-overwrite',
+    title: 'The default that lost to undefined',
+    category: 'js-apis',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A helper fills in whatever the caller left out:',
+      '',
+      code(
+        'js',
+        "const defaults = { pageSize: 20, sort: 'newest' };",
+        '',
+        'function withDefaults(query) {',
+        '  return { ...defaults, ...query };',
+        '}',
+        '',
+        'const options = withDefaults({ page: 2, sort: undefined });',
+        'console.log(options.sort, options.pageSize);'
+      ),
+      '',
+      'What does it log?'
+    ),
+    graderConfig: {
+      accept: ['undefined 20', 'undefined, 20', 'undefined and 20'],
+      acceptPatterns: ['\\bundefined\\b[\\s,]+(and\\s+)?20\\b'],
+      nearMisses: {
+        'newest 20':
+          'A spread copies keys, and `sort` is a key on that object. What the key holds does not come into it.',
+        'newest, 20':
+          'A spread copies keys, and `sort` is a key on that object. What the key holds does not come into it.',
+        'undefined undefined':
+          'Only the keys present in `query` get overwritten, and `pageSize` is not one of them.',
+      },
+      hints: [
+        'Spread copies keys. Ask which keys the second object has.',
+        '`sort` is an own enumerable key of `{ page: 2, sort: undefined }`, so it is copied like any other.',
+        'A destructuring default is the thing that fires on `undefined`. A spread is not.',
+      ],
+    },
+    canonicalAnswer: 'undefined 20',
+    solution: code(
+      'js',
+      "'sort' in options;   // true. the key was copied, undefined and all",
+      'options.sort;        // undefined',
+      'options.pageSize;    // 20. query has no pageSize key, so nothing overwrote it',
+      '',
+      '// the form that does fall back on undefined:',
+      "function withDefaults({ pageSize = 20, sort = 'newest', ...rest }) {",
+      '  return { pageSize, sort, ...rest };',
+      '}'
+    ),
+    explanation:
+      'Object spread copies own enumerable keys, and it has no interest in what they hold, so a key set to `undefined` overwrites a real default just as firmly as a key set to `"oldest"` would. `pageSize` survives only because `query` has no such key at all: presence is the whole test, which is why `"sort" in options` is `true` afterwards. Destructuring defaults behave the opposite way and do fire on `undefined`, so pulling the fields out by name gives you the merge you meant. This bites most often on an options object built from `req.query` or from another destructure, where a field nobody set arrives explicitly `undefined` rather than absent.',
+  },
+
+  {
+    slug: 'js-closure-per-call',
+    title: 'Two generators from one factory',
+    category: 'js-apis',
+    difficulty: 'easy',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'Two id generators, made the same way:',
+      '',
+      code(
+        'js',
+        'function makeIdGenerator(prefix) {',
+        '  let next = 1;',
+        '  return () => `${prefix}-${next++}`;',
+        '}',
+        '',
+        "const orderId = makeIdGenerator('order');",
+        "const userId = makeIdGenerator('user');",
+        '',
+        'console.log(orderId(), userId(), orderId());'
+      ),
+      '',
+      'What does it log?'
+    ),
+    graderConfig: {
+      accept: ['order-1 user-1 order-2', 'order-1, user-1, order-2'],
+      acceptPatterns: ['order-?1[\\s,]+user-?1[\\s,]+order-?2'],
+      nearMisses: {
+        'order-1 user-2 order-3':
+          'That is what a single module-level `next` would give you. Calling the factory again runs `let next = 1` again.',
+        'order-1 user-1 order-1':
+          '`next++` returns the old value and writes back the new one, so the same generator called twice gives 1 then 2.',
+      },
+      hints: [
+        'Each call to `makeIdGenerator` executes the function body again.',
+        '`let next` is created fresh per call, and the returned arrow closes over that one.',
+        'So the two generators count independently, and `next++` yields the value before the increment.',
+      ],
+    },
+    canonicalAnswer: 'order-1 user-1 order-2',
+    solution: code(
+      'js',
+      "orderId(); // 'order-1'   its own next: 1 -> 2",
+      "userId();  // 'user-1'    a different next, still 1 -> 2",
+      "orderId(); // 'order-2'   back to the first one"
+    ),
+    explanation:
+      'A closure captures a binding, not a value, and each call to the factory creates a new set of bindings for its body, so `orderId` and `userId` hold different `next` variables that never see each other. That per-call scope is the whole reason the factory pattern works for caches, counters, rate limiters and anything else that needs private state without a class. `next++` is postfix, so it hands back the value before the increment and stores the new one, which is why the numbering starts at 1 rather than 2. Nothing outside can read or reset `next`: the only handle on it is the function that closed over it.',
+  },
+
+  {
+    slug: 'js-max-spread-arity',
+    title: 'The high score that stopped coming back',
+    category: 'js-apis',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A leaderboard reads its top figure from this:',
+      '',
+      code('js', 'function highestScore(scores) {', '  return Math.max(...scores);', '}'),
+      '',
+      'Say what it returns for `[]`, and what happens when `scores` holds 200,000 numbers.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['-infinity', 'minus infinity', 'negative infinity'],
+          missingFeedback:
+            '`Math.max()` with no arguments still has to return something. Name the value.',
+        },
+        {
+          synonyms: [
+            'rangeerror',
+            'range error',
+            'call stack',
+            'stack overflow',
+            'too many arguments',
+            'argument limit',
+          ],
+          missingFeedback:
+            'Spread does not pass the array. It passes one argument per element. What does that do to a call with 200,000 of them?',
+        },
+      ],
+      hints: [
+        '`Math.max()` with no arguments returns the identity for max, not `0` and not `NaN`.',
+        'Spread turns each element into a separate argument, and a call has a limit on those.',
+        'Past a few hundred thousand it throws `RangeError: Maximum call stack size exceeded`.',
+      ],
+    },
+    canonicalAnswer:
+      'An empty array gives -Infinity, because Math.max() with no arguments returns -Infinity. With 200,000 scores the spread passes 200,000 separate arguments and the call throws a RangeError, maximum call stack size exceeded.',
+    solution: code(
+      'js',
+      'Math.max();                       // -Infinity. the identity for max',
+      'highestScore([]);                 // -Infinity',
+      'highestScore(bigArray);           // RangeError: Maximum call stack size exceeded',
+      '',
+      '// no argument list, so no limit and no empty-array surprise:',
+      'scores.reduce((max, score) => (score > max ? score : max), 0);'
+    ),
+    explanation:
+      'Both failures come from the same line doing something other than what it looks like: `...scores` is not "pass the array", it is "make one argument out of every element", and the call frame that holds them has a ceiling. On Node 24 this function returned a number for 100,000 scores and threw `RangeError: Maximum call stack size exceeded` at 125,000, and the cutoff is not a fixed number to memorise, because it moves with the engine and with how much stack is left when you call it. The empty case is quieter and worse: `-Infinity` is a real number that flows on into your arithmetic and your JSON, so the bug surfaces somewhere else entirely. A `reduce` takes no argument list, which removes both problems at once.',
+  },
 ];

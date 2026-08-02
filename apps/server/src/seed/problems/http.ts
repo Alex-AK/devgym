@@ -1787,4 +1787,86 @@ export const httpProblems: ProblemDraft[] = [
     explanation:
       "Retry counts multiply through a stack rather than adding, so every layer that quietly helps makes the incident worse, and the layers are easy to miss because two of them are usually somebody else's defaults. Time multiplies too: three attempts against a three-second timeout is nine seconds per layer, so the request is still open long after the user gave up. Pick one layer to retry at, usually the one that knows whether the call is safe to repeat at all, and give the whole operation a single deadline the attempts have to fit inside. `Retry-After` beats your formula whenever the server sends one, and full jitter, `random(0, min(cap, base * 2 ** attempt))`, is what stops every client that failed together from arriving back together.",
   },
+
+  {
+    slug: 'http-read-finish-middleware',
+    title: 'The first middleware in the stack',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'The first thing registered on an Express app, and nobody on the team wrote it:',
+      '',
+      code(
+        'js',
+        'app.use((req, res, next) => {',
+        '  const start = process.hrtime.bigint();',
+        '',
+        "  res.on('finish', () => {",
+        '    const ms = Number(process.hrtime.bigint() - start) / 1e6;',
+        '    logger.info({ method: req.method, path: req.path, status: res.statusCode, ms });',
+        '  });',
+        '',
+        '  next();',
+        '});'
+      ),
+      '',
+      'In one sentence: what does this produce, and at what moment?'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'after the response',
+            'once the response',
+            'when the response',
+            'after the request',
+            'finish',
+            'has been sent',
+            'is sent',
+            'was sent',
+            'completed',
+            'completes',
+          ],
+          missingFeedback:
+            'Name the moment the log line is written: before the handler, or after the response?',
+        },
+        {
+          synonyms: [
+            'status',
+            'duration',
+            'how long',
+            'milliseconds',
+            'time it took',
+            'latency',
+            'elapsed',
+            'timing',
+          ],
+          missingFeedback:
+            'Say what the line carries. Name something it can only know at that moment.',
+        },
+      ],
+      hints: [
+        '`next()` returns immediately. Nothing here waits for the handler to finish.',
+        "The work is inside a listener for the response's `finish` event.",
+        'That event fires once the response has been handed to the socket, which is why both the status and the duration are known by then.',
+      ],
+    },
+    canonicalAnswer:
+      'One log line per request, written after the response has been sent, carrying the method, path, final status and how long the request took.',
+    solution: md(
+      'One line per request, at the moment the response finishes:',
+      '',
+      code(
+        'text',
+        'middleware: calling next()',
+        'handler: started',
+        'handler: responding',
+        'LOG GET /orders 200 63.5ms'
+      )
+    ),
+    explanation:
+      'Registering a listener is not doing the work: this middleware subscribes to `finish` and calls `next()` in the same tick, so the request goes straight on to the handler and the callback runs much later, once the response has been written to the socket. That is what makes the line worth having, because `res.statusCode` and the elapsed time are both only true at the end, whichever handler or error path produced them. It also covers responses the router never reached: a request that matched no route still finishes, so its 404 is logged by the same line. `finish` means the response was handed off, not that the client received it; for the case where the connection died first, listen for `close` as well and compare `res.writableFinished`.',
+  },
 ];

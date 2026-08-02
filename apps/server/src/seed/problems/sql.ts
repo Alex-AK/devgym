@@ -1548,4 +1548,136 @@ export const sqlProblems: ProblemDraft[] = [
     explanation:
       'A trigram index stores every overlapping three-character slice of a string, which changes the question from "where does this value sort" to "which rows contain these slices". Both symptoms fall out of that: a misspelling still shares slices with the correct spelling, which is exactly what `similarity()` counts, and a fragment from the middle is just another set of slices to look up. The `%` operator compares against `pg_trgm.similarity_threshold`, which defaults to 0.3, and that number is the whole quality of your fuzzy search, so measure it against real queries rather than accept it. A pattern too short to yield any trigram degenerates to a full index scan, which is why a two-character search box stays slow. SQLite reaches the same place through an FTS5 table built with `tokenize = trigram`, which makes `LIKE` and `GLOB` indexed.',
   },
+
+  {
+    slug: 'sql-read-join-condition',
+    title: "Somebody else's report query",
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'Postgres. You are reviewing this and have never seen it before:',
+      '',
+      code(
+        'sql',
+        'SELECT c.name, count(o.id) AS paid_orders',
+        'FROM customers c',
+        "LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'paid'",
+        'GROUP BY c.name',
+        'ORDER BY c.name;'
+      ),
+      '',
+      'In one sentence: which customers come back, and what is the number beside each one?'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'every customer',
+            'all customers',
+            'all the customers',
+            'including customers',
+            'even customers',
+            'even the ones',
+            'even those',
+            'zero',
+            'none',
+            'no paid',
+            'without any',
+            'whether or not',
+          ],
+          missingFeedback:
+            'Which rows does the left side keep? Say what happens to a customer with no paid order.',
+        },
+        {
+          synonyms: ['paid'],
+          missingFeedback: 'The count is not of all their orders. Which ones does it count?',
+        },
+      ],
+      hints: [
+        'A condition in `ON` is part of the join. A condition in `WHERE` is applied after the join has happened.',
+        'A `LEFT JOIN` keeps every row on the left whatever the `ON` condition decides.',
+        'So a customer with no paid order still comes back, and `count(o.id)` counts nothing for them: 0.',
+      ],
+    },
+    canonicalAnswer:
+      'Every customer comes back, including the ones with no paid orders at all, and the number counts only their paid orders, so it is zero for those.',
+    solution: md(
+      'Every customer, with a count of their paid orders. Three customers, where only Dana has a paid order:',
+      '',
+      code(
+        'text',
+        ' name  | paid_orders',
+        '-------+-------------',
+        ' Dana  |           1',
+        ' Omar  |           0',
+        ' Sam   |           0'
+      ),
+      '',
+      "Move `o.status = 'paid'` into a `WHERE` and only Dana comes back."
+    ),
+    explanation:
+      "The `ON` clause decides which rows on the right are allowed to match; the `LEFT` decides that a row on the left survives regardless. So an extra condition in `ON` narrows the matching without ever dropping a customer, which is exactly what a report like this wants. The same condition in `WHERE` is applied after the join, when the unmatched customers already have `NULL` for every `o` column, and `NULL = 'paid'` is not true, so they are filtered out and the `LEFT JOIN` quietly becomes an inner one. The count is worth reading too: `count(o.id)` counts non-null values, giving 0 for a customer with no match, while `count(*)` counts rows and would report 1 for the same customer.",
+  },
+
+  {
+    slug: 'sql-in-list-empty',
+    title: 'The filter with nothing ticked',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'Postgres. The endpoint builds its `IN` list from whatever the user ticked:',
+      '',
+      code(
+        'js',
+        "const placeholders = ids.map((_, i) => `$${i + 1}`).join(', ');",
+        'const sql = `SELECT id, title FROM books WHERE id IN (${placeholders})`;',
+        'const { rows } = await db.query(sql, ids);'
+      ),
+      '',
+      'The user unticks everything, so `ids` arrives as `[]`. What does the database do with that?'
+    ),
+    graderConfig: {
+      accept: [
+        'a syntax error',
+        'syntax error',
+        'it throws a syntax error',
+        'it rejects it as a syntax error',
+        'the statement fails with a syntax error',
+      ],
+      acceptPatterns: ['syntax\\s*error'],
+      nearMisses: {
+        'it returns no rows':
+          'Postgres never gets as far as matching. `IN ()` is not an empty set, it is invalid syntax, and the statement is rejected before any row is looked at.',
+        'no rows':
+          'Postgres never gets as far as matching. `IN ()` is not an empty set, it is invalid syntax, and the statement is rejected before any row is looked at.',
+        'an empty array':
+          'That is what the endpoint returns on a good day. Look at the SQL string this builds when `ids` is empty.',
+        'it returns every row':
+          'An empty `IN` list is not a missing filter either. The statement does not run at all.',
+      },
+      hints: [
+        'Write out the SQL string this builds when `ids` is empty, then read that.',
+        'Postgres receives `SELECT id, title FROM books WHERE id IN ()`.',
+        'It rejects it: `syntax error at or near ")"`. Guard the empty case, or pass an array to `= ANY($1)`.',
+      ],
+    },
+    canonicalAnswer: 'a syntax error',
+    solution: md(
+      code(
+        'text',
+        'SELECT id, title FROM books WHERE id IN ()',
+        'ERROR:  syntax error at or near ")"'
+      ),
+      '',
+      'One parameter holding the whole array has no such shape, and matches nothing when the array is empty:',
+      '',
+      code('js', "await db.query('SELECT id, title FROM books WHERE id = ANY($1)', [ids]);")
+    ),
+    explanation:
+      'An empty `IN` list is a hole in the SQL grammar rather than a filter that matches nothing, and the two engines this project uses disagree about it in the worst way: Postgres 18 rejects `IN ()` with `syntax error at or near ")"`, while SQLite accepts it and returns zero rows. So the same builder is a 500 on one engine and a silently empty page on the other, and neither is what "nothing is ticked" usually means, which is either every row or none by intent rather than by accident. Decide that case in the application, before any SQL is built. `= ANY($1)` avoids the whole shape by passing one array parameter instead of a generated list, and it matches nothing for an empty array without a syntax error.',
+  },
 ];

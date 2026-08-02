@@ -40,26 +40,32 @@ First decks would be dates and time formats, the join family, redirect status co
 directives, JavaScript's equality and nullish operators, and SQL's null semantics. Every one is a
 distinction the handbook already explains, so a card cites the page rather than teaching it again.
 
-## 2. Reading code you did not write
+## 2. Practising reading on purpose
 
-Every rep in the library asks you to produce something: a query, a function, a name, a sentence of
-diagnosis. None of them hands you an unfamiliar snippet and asks what it does, which is most of the
-working day and all of a code review.
+Reps that hand you unfamiliar code and ask what it does exist now, in the categories their snippets
+belong to, and the morning queue deals them like any other rep. **What is missing is the entrance.**
+Focused practice scopes by category, difficulty and queue mode, so there is no way to ask for the
+reading reps wherever they live, and nobody can sit down and read for fifteen minutes.
 
-**The format needs no application code, which is the useful finding.** A prompt is markdown, so a
-fenced snippet plus a `short-text` or `explain` grader is the entire mechanism, and eight of the seed
-files already use predict-the-output prompts in passing. What is missing is the ability to practise
-reading on purpose: those reps sit in categories chosen by topic, so nobody can sit down and read for
-fifteen minutes. That makes this content plus one `path`, which is the object that already exists for
-ordering reps into an hour.
+So this is the one thing the format does need application code for: a selector the queue and the
+session builder respect that is not the category. That is the same shape of change `dsa-patterns`
+needs and not the same flag, one being a category opting out of the round robin and the other a tag
+cutting across categories, and it is worth designing once for both.
 
-Four question shapes carry it: what does this print, where the answer turns on evaluation order,
-closure capture or async scheduling; what does this function do, in one sentence, which is really
-about naming intent; what breaks when the input is empty, `null`, or very large; and which line is
-the one that matters, over a snippet where most of them are noise. The authoring discipline is the
-hard part. The snippet has to be idiomatic code somebody would really ship rather than a puzzle
-written to have a surprising answer, and the question has to be answerable without being a
-definition. A reading rep that rewards spotting a trick teaches trick-spotting.
+The essentials path was the obvious vehicle and was refused; the argument is in
+[decisions.md](./decisions.md). A `reading` category would work mechanically and is the wrong axis,
+because a rep about what a `LEFT JOIN` condition does belongs in the SQL queue whatever shape the
+question takes.
+
+Four question shapes carry the material as it grows: what does this print, where the answer turns on
+evaluation order, closure capture or async scheduling; what does this function do, in one sentence,
+which is really about naming intent; what breaks when the input is empty, `null`, or very large; and
+which line is the one that matters, over a snippet where most of them are noise. The authoring
+discipline is the hard part. The snippet has to be idiomatic code somebody would really ship rather
+than a puzzle written to have a surprising answer, and the question has to be answerable without
+being a definition. A reading rep that rewards spotting a trick teaches trick-spotting. Run every
+snippet before it ships: the empty `IN ()` list that reads like a syntax error on both engines is a
+syntax error on Postgres and zero rows on SQLite, and only running it says so.
 
 Not to be confused with the modules, which already do predict-then-run. A module walks you through an
 API you are being taught and settles the prediction by running it. A reading rep is the opposite
@@ -164,7 +170,33 @@ worth deciding whether multi-part series need real support.
 
 ## 7. Sections with no practice behind them yet
 
-Both of these are last because nothing in the problem set is waiting on them.
+These are last because nothing in the problem set is waiting on them.
+
+**Isolation: sandboxes, containers and virtual machines.** What actually contains code you do not
+trust, and what only looks like it does. This project is its own worked example, which is the reason
+the section is worth writing rather than reading elsewhere: the workout runner executes submitted
+code, [decisions.md](./decisions.md) records `node:vm` as an isolation convenience and not a security
+boundary, and self-hosting was declined on exactly that ground. Pages: what a process already gives
+you and what it does not; what a container is made of, which is namespaces and cgroups over a kernel
+everything still shares; where a virtual machine draws the line instead, and what that costs; microVMs,
+and why the people running other people's code ended up there; and running code a model wrote, which
+is the case a web engineer now actually meets. That last one is a gap inside a section that already
+ships, since the AI engineering pages cover the code around a generative dependency and say nothing
+about executing its output. Distinct from production below, which owns the image as a packaging and
+deploy concern: this section owns isolation as a security property. Credits: the Docker and Firecracker
+docs, the Linux man pages, `node:vm`'s own documented warning.
+
+**Unix, at the level a web engineer meets it.** Not a shell course and not systems administration:
+the handful of operating-system facts that decide how a Node process behaves once it is not on your
+laptop. Pages: your server is a process, with an environment, a working directory, a parent and a set
+of file descriptors; standard output and standard error are two streams, which is why logs go to
+stdout and why a progress bar does not; signals, and the `SIGTERM` a platform sends before it stops
+waiting, which is the whole of graceful shutdown; exit codes, including what a non-zero one does
+inside a pipeline; permissions and ownership, and why the container does not run as root; and the
+path, environment and quoting rules that make a command behave one way in CI and another on a laptop.
+The overlap with production is signals, and the split is that production owns the deploy sequence
+while this section owns what the signal is. Credits: the Linux man pages, the POSIX specification,
+Node's `process` documentation.
 
 **Running it in production.** Each page answers what changes about your code when it stops being a
 process on your laptop, which is the part a web engineer owns rather than a cloud certification.

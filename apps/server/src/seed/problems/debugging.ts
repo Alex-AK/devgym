@@ -1234,4 +1234,113 @@ export const debuggingProblems: ProblemDraft[] = [
     explanation:
       'The three copies fail in three different ways. viaSpread only duplicates the top level, so `placedAt` and `discountCodes` are not copied at all, they are the exact same `Date` and `Set` `order` points at. viaJson goes through `JSON.stringify` and `JSON.parse`, and JSON has no Date or Set type: a Date becomes whatever `toJSON` returns (an ISO string, with none of the Date methods), and a Set becomes `{}`, because stringify has no idea what to do with one and gives up. structuredClone is the one that gets this right: it implements the structured clone algorithm, the same one the browser uses for `postMessage`, and it copies a Date, Map or Set as itself, independent of the original. It still cannot clone a function or a DOM node, and throws a clear `DataCloneError` rather than failing quietly when you try.',
   },
+
+  {
+    slug: 'debug-empty-query-param',
+    title: 'The table that empties when you clear the box',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'Clearing the "rows per page" box empties the table. The box is part of a form that submits as a query string, so a cleared box arrives as `?limit=`:',
+      '',
+      code(
+        'js',
+        'const limit = Number(req.query.limit ?? 20);',
+        'const rows = await db.orders.list({ limit });'
+      ),
+      '',
+      'What is `limit` by the time the query runs?'
+    ),
+    graderConfig: {
+      accept: ['0', 'zero', '0 (zero)'],
+      nearMisses: {
+        '20': '`??` falls back for `null` and `undefined` only. An empty string is neither, so the default never fires.',
+        nan: "`Number('')` is `0`, not `NaN`. `NaN` is what `Number(undefined)` gives, and `??` is what stops that ever happening here.",
+        'an empty string':
+          'That is what `??` passes through, yes. `Number` is the part of the line that turns it into something else.',
+        undefined:
+          'A cleared box is still submitted, as an empty string. `undefined` is what a parameter that is not in the query string at all looks like.',
+      },
+      hints: [
+        'Two conversions happen on that line. Take them one at a time.',
+        "`'' ?? 20` is `''`: the nullish operator only fires for `null` and `undefined`, and an empty string is neither.",
+        "`Number('')` is `0`, so the query runs with `LIMIT 0`.",
+      ],
+    },
+    canonicalAnswer: '0',
+    solution: code(
+      'js',
+      "// ?limit=      req.query.limit is ''        -> '' ?? 20 is ''   -> Number('') is 0",
+      "// ?limit=50    req.query.limit is '50'      -> Number('50')     -> 50",
+      '// (no limit)   req.query.limit is undefined -> 20',
+      '',
+      '// validate at the boundary instead:',
+      'const { limit } = querySchema.parse(req.query); // z.coerce.number().int().min(1).default(20)'
+    ),
+    explanation:
+      "`??` asks whether a value is missing, and an empty string is present, so the default is skipped and `Number('')` turns it into `0`. `LIMIT 0` is valid SQL that returns no rows, so nothing throws and nothing logs: the page just comes back empty. The trio is worth knowing cold, because every HTML form produces the middle one: a missing parameter is `undefined`, a cleared field is `''`, and only the first of those is nullish. `||` would paper over it here and is defensible when `0` is not a legal page size anyway, but the honest fix is a schema at the boundary that coerces and bounds the value, so the handler never sees a string at all.",
+  },
+
+  {
+    slug: 'debug-sync-work-in-handler',
+    title: 'The health check that times out during an export',
+    category: 'debugging',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'One Node process serves this API. While a large export is running, every other request, the health check included, sits unanswered for about half a second and then they all arrive at once:',
+      '',
+      code(
+        'js',
+        "app.post('/exports', async (req, res) => {",
+        '  const { from, to } = req.body;',
+        "  if (!from || !to) return res.status(400).json({ error: 'Both dates are required' });",
+        '',
+        '  const csv = await db.sales.csvBetween(from, to);',
+        '  const gz = zlib.gzipSync(Buffer.from(csv));',
+        '  await storage.put(`exports/${req.id}.csv.gz`, gz);',
+        '',
+        '  res.status(202).json({ id: req.id });',
+        '});'
+      ),
+      '',
+      'Which line is the one that matters?'
+    ),
+    graderConfig: {
+      accept: [
+        'zlib.gzipsync',
+        'gzipsync',
+        'the gzipsync line',
+        'const gz = zlib.gzipsync(buffer.from(csv));',
+      ],
+      acceptPatterns: ['gzipsync'],
+      nearMisses: {
+        'db.sales.csvbetween':
+          'That one is awaited, so the thread is free to answer other requests while the database works.',
+        'storage.put': 'Awaited as well, and not where the half second goes.',
+        'buffer.from(csv)':
+          'Synchronous too, but it is a copy rather than a computation. The line after it is where the CPU time goes.',
+      },
+      hints: [
+        'Three lines here do real work. Two of them are awaited.',
+        'An awaited call hands the thread back. A synchronous one keeps it until it returns.',
+        'Compressing tens of megabytes takes hundreds of milliseconds of CPU, and the `Sync` variant spends them without yielding once.',
+      ],
+    },
+    canonicalAnswer: 'zlib.gzipSync',
+    solution: code(
+      'js',
+      'const gzip = promisify(zlib.gzip);',
+      '',
+      'const gz = await gzip(Buffer.from(csv)); // runs on the threadpool, not the event loop',
+      '',
+      '// or never hold it in memory at all:',
+      '// pipeline(rowsAsCsvStream, zlib.createGzip(), storage.createWriteStream(key))'
+    ),
+    explanation:
+      'The two awaited calls do far more work in wall-clock terms and cost the process nothing: while they wait, the event loop is free to run other requests. The synchronous one is the opposite, and the size of the input is what makes it visible. Compressing a 40 MB CSV with `zlib.gzipSync` here took 484ms, and a timer set for every 10ms alongside it did not fire once in that window; the promisified `zlib.gzip` finished in about the same wall-clock time and let that timer fire 49 times, because zlib hands the work to the threadpool. Nothing in the `Sync` name says "blocks every other request in the process", so treat it as a signal to look, not as an implementation detail: `readFileSync`, `execSync`, `pbkdf2Sync` and a JSON parse of something huge all behave this way.',
+  },
 ];

@@ -416,4 +416,68 @@ export const testingProblems: ProblemDraft[] = [
     explanation:
       'Coverage answers "did this line run", which is a genuinely useful question for finding dead or forgotten code. It cannot answer "is this behaviour correct", because that depends on assertions it never inspects. Branch coverage is a stricter signal than line coverage and worth preferring. Mutation testing gets closer to the real question by changing the code and checking whether any test notices, which is the check a coverage number only pretends to make. Treat a coverage target as a smoke alarm, not a certificate.',
   },
+
+  {
+    slug: 'testing-assertion-never-ran',
+    title: 'Green against a function that resolves',
+    category: 'testing',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      '`createUser` resolves for a duplicate email instead of rejecting, and this test is green:',
+      '',
+      code(
+        'js',
+        "it('rejects a duplicate email', () => {",
+        '  const db = makeTestDb();',
+        "  db.users.push({ id: 'usr_1', email: 'taken@example.com' });",
+        '',
+        "  createUser(db, { email: 'taken@example.com', name: 'Ada' }).catch((error) => {",
+        "    expect(error.message).toContain('already exists');",
+        '  });',
+        '});'
+      ),
+      '',
+      'Which line is the one that matters?'
+    ),
+    graderConfig: {
+      accept: [
+        'the .catch line',
+        'the catch callback',
+        'the assertion inside the catch',
+        '.catch',
+        'catch',
+        'the expect inside catch',
+      ],
+      acceptPatterns: ['\\.?catch'],
+      nearMisses: {
+        'the callback is not async':
+          'Making it `async` on its own changes nothing. The assertion still only runs if the promise rejects.',
+        createuser: 'The call is right. What happens to the promise it returns is not.',
+        'db.users.push': 'That is the fixture, and it is doing its job.',
+        'expect(error.message).tocontain':
+          'Right assertion, and it never executes. Say what it is sitting inside.',
+      },
+      hints: [
+        'Every line here runs. One of them contains something that does not.',
+        'The promise resolves, so the rejection handler is never called and the assertion inside it never executes.',
+        'A test that makes no assertion passes. `await expect(...).rejects.toThrow(...)` is the form that cannot.',
+      ],
+    },
+    canonicalAnswer: 'the .catch callback',
+    solution: code(
+      'js',
+      "it('rejects a duplicate email', async () => {",
+      '  const db = makeTestDb();',
+      "  db.users.push({ id: 'usr_1', email: 'taken@example.com' });",
+      '',
+      "  await expect(createUser(db, { email: 'taken@example.com', name: 'Ada' })).rejects.toThrow(",
+      "    'already exists'",
+      '  );',
+      '});'
+    ),
+    explanation:
+      'A `catch` callback runs only if the promise rejects, so a test whose entire assertion lives in one passes by making no assertion at all when the code under test is wrong in exactly the way the test exists to catch. Returning the promise does not save it: run the same test with `return` in front of the call and it still passes, because the chain resolves and the handler is skipped. `await expect(promise).rejects.toThrow(...)` inverts that, failing when nothing is thrown, and it is worth the habit for `await`ing too, since Vitest reports an un-awaited `rejects` as a hanging assertion. Where an assertion really does belong inside a callback, `expect.assertions(1)` is the guard that turns "never ran" into a failure.',
+  },
 ];

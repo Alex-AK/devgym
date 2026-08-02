@@ -2084,4 +2084,92 @@ export const reactProblems: ProblemDraft[] = [
     explanation:
       'React reconciles on the element **type**, and `lazy()` returns a new type every time it is called. Calling it in a render body therefore hands React a type it has never seen on each render, and the only thing it can do with a changed type is unmount the old tree and mount a fresh one, taking the state inside with it. The new wrapper then suspends again before its already-cached module resolves, which is the spinner. react.dev puts it directly: do not declare `lazy` components inside other components. None of this is special to `lazy`, either. Any component defined inside another component gets a new identity every render and remounts for exactly the same reason.',
   },
+
+  {
+    slug: 'react-read-timer-hook',
+    title: 'A hook with a timer and a cleanup',
+    category: 'react',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A search box reads its term through this hook, as `useSearchTerm(query, 300)`:',
+      '',
+      code(
+        'jsx',
+        'function useSearchTerm(value, delay) {',
+        '  const [current, setCurrent] = useState(value);',
+        '',
+        '  useEffect(() => {',
+        '    const id = setTimeout(() => setCurrent(value), delay);',
+        '    return () => clearTimeout(id);',
+        '  }, [value, delay]);',
+        '',
+        '  return current;',
+        '}'
+      ),
+      '',
+      'In one sentence: which values does a component get back from this, and what happens to the rest?'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'stop',
+            'stops',
+            'stopped',
+            'settle',
+            'settles',
+            'settled',
+            'pause',
+            'paused',
+            'quiet',
+            'idle',
+            'last',
+            'latest',
+            'final',
+            'debounce',
+          ],
+          missingFeedback:
+            'Say which values reach the component: every one it is passed, or one of them.',
+        },
+        {
+          synonyms: [
+            'cleartimeout',
+            'clear the timeout',
+            'clears the timeout',
+            'cancel',
+            'cancels',
+            'cancelled',
+            'canceled',
+            'cleanup',
+            'clean up',
+            'resets the timer',
+            'restarts the timer',
+            'throws away the timer',
+          ],
+          missingFeedback:
+            'What does the function the effect returns do, and when does React call it?',
+        },
+      ],
+      hints: [
+        'Read the dependency array first: the effect re-runs on every new `value`.',
+        'React runs the previous cleanup before it re-runs an effect.',
+        'So each new value cancels the timer the one before it set, and only a value that survives `delay` ms is ever stored.',
+      ],
+    },
+    canonicalAnswer:
+      'It returns the value only once it has stopped changing for delay ms: every new value re-runs the effect, and the cleanup clears the pending timeout, so the values in between are cancelled and the component never sees them.',
+    solution: md(
+      'It debounces. The component sees the value only after `delay` ms with no change, and never sees the ones typed in between.',
+      '',
+      code(
+        'jsx',
+        "// typing 'react' one letter at a time, 20ms apart, with delay = 50:",
+        "// the component renders 'r', then 'react'. 're', 'rea' and 'reac' never arrive."
+      )
+    ),
+    explanation:
+      "The cleanup is what makes this a debounce rather than a delay. React runs the previous effect's cleanup before re-running it, so each new `value` cancels the timeout the previous one scheduled, and a timeout only ever fires if its value survives `delay` ms unchanged. Rendered for real with `delay = 50` and a new letter every 20ms, a component fed `r`, `re`, `rea`, `reac`, `react` received `r` and then `react`, and nothing else. Drop the `clearTimeout` and every keystroke lands `delay` ms later instead, which is the same number of renders as before with a lag added: a delay, not a debounce.",
+  },
 ];

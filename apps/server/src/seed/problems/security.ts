@@ -1168,4 +1168,74 @@ export const securityProblems: ProblemDraft[] = [
     explanation:
       "None of the three cover for each other. HttpOnly keeps document.cookie from returning it, but a same-origin fetch still attaches the cookie automatically, since HttpOnly blocks the JavaScript read, not the browser's own send. Secure only constrains the transport: a cookie readable by an injected script because HttpOnly is missing is exactly as stealable over HTTPS as over HTTP. SameSite is the one to set explicitly rather than inherit, because browsers disagree about what an absent attribute means: Chromium treats it as Lax, Firefox as None. Lax covers the classic hidden-form CSRF but still sends the cookie on an ordinary top-level GET link, so a state-changing action still needs to happen on POST rather than GET for SameSite to be doing any of the work. Set all three. They cost nothing and each closes a door the others do not.",
   },
+
+  {
+    slug: 'security-limiter-after-routes',
+    title: 'Ten thousand login attempts, none refused',
+    category: 'security',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A script is trying passwords against `/api/login` as fast as it can, and nothing is ever refused:',
+      '',
+      code(
+        'js',
+        'const app = express();',
+        '',
+        'app.use(helmet());',
+        'app.use(express.json());',
+        "app.use('/api', apiRoutes);",
+        'app.use(rateLimit({ windowMs: 60_000, max: 5 }));',
+        '',
+        'app.listen(3000);'
+      ),
+      '',
+      'Which requests does that rate limiter actually run for?'
+    ),
+    graderConfig: {
+      accept: [
+        'the ones no route matched',
+        'requests no route matched',
+        'unmatched paths',
+        'only the 404s',
+        'the 404s',
+        'requests that no route handled',
+        'requests that fall through',
+      ],
+      acceptPatterns: [
+        'unmatched',
+        '404',
+        'no (route|handler|match)',
+        '(nothing|no route|no handler) (matched|handled|answered)',
+        'falls? through',
+        'fell through',
+      ],
+      nearMisses: {
+        'every request':
+          'Every request enters the stack, but one a route answers never reaches this line: the handler sends the response and never calls `next()`.',
+        'requests to /api': 'Those are exactly the ones it misses.',
+        'all requests to /api/login': 'Those are exactly the ones it misses.',
+        none: 'It does run, for the requests that get that far. Work out which ones those are.',
+      },
+      hints: [
+        'Express runs the stack in registration order, one `next()` at a time.',
+        'A handler that sends a response ends the chain. Nothing registered after it runs.',
+        'So the limiter only sees requests that got past every route without one answering them.',
+      ],
+    },
+    canonicalAnswer: 'only the ones no route matched',
+    solution: code(
+      'js',
+      'app.use(helmet());',
+      'app.use(express.json());',
+      'app.use(rateLimit({ windowMs: 60_000, max: 5 })); // before anything that answers',
+      "app.use('/api', apiRoutes);",
+      '',
+      '// tighter still: a stricter limiter mounted on the route that gets attacked',
+      "app.use('/api/login', rateLimit({ windowMs: 60_000, max: 5 }));"
+    ),
+    explanation:
+      "Express middleware is a list walked in registration order, and the walk stops the moment something responds instead of calling `next()`. A limiter registered below the routes is therefore protecting only the paths that reached the end of the list without being answered, which is to say the 404s. Run this and the numbers are stark: six logins in a row leave the limiter at zero calls, the same limiter moved above `app.use('/api', apiRoutes)` runs on every one of them, and a request to a path with no route does reach it. Order is the whole configuration for anything mounted with `app.use`, which is why the security-relevant ones go at the top, and why a limiter aimed at a specific endpoint is better mounted on that path than left to the end of the file.",
+  },
 ];

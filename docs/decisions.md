@@ -341,6 +341,15 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   end on reps, because reaching for a workout that half-fits would cost the hour its coherence and
   teach the wrong lesson about what the path is for.
 
+- **The reading reps are not a session, and reading is not a category.** Twelve reps that hand you
+  unfamiliar code and ask what it does now sit in the categories their snippets belong to, and the
+  obvious next move, an hour on the path, does not survive the format's own rules. A session is named
+  by the question its hour answers, and "what does this code do" is a posture rather than a slice of
+  the work. There is nothing to read first, because reading is a skill rather than a model several
+  reps share, so the read step could only be padded with pages about whatever the snippets happen to
+  touch. The order would carry no meaning either, since no reading rep builds on the one before it.
+  What is missing is an entrance rather than an ordering, and that is application code: roadmap §2.
+
 - **The reader sees "Essentials"; the code says "path".** The route is `/essentials` because that is
   what the thing is to someone deciding how to spend an hour, and everything behind it, the package,
   the API and the types, is `path`, because that is the word the spec and the docs use. One
