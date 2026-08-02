@@ -23,8 +23,9 @@ sources:
 verified: 2026-08-01
 ---
 
-Postgres is the engine on this page, because that is what the query-plan workouts run. SQLite
-differences are called out where they bite, and they bite hardest around `LIKE`.
+Postgres is the engine on this page, because that is what the query-plan workouts run, and the plans
+were taken from PostgreSQL 18. SQLite differences are called out where they bite, and they bite
+hardest around `LIKE`.
 
 ## The model
 

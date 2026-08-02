@@ -9,35 +9,39 @@ export const typescriptProblems: ProblemDraft[] = [
     relevance: 'daily',
     type: 'short-text',
     prompt: md(
-      'Your update endpoint accepts any subset of `User`:',
+      'The route already carries the id, and every field of the profile itself is editable:',
       '',
       code(
         'ts',
-        'interface User { id: string; name: string; email: string }',
+        'interface UserProfile { name: string; email: string; bio: string }',
         '',
         'function update(id: string, patch: ???) {}'
       ),
       '',
-      'Which built-in utility type expresses "every field of `User`, all optional"?'
+      'Which built-in utility type expresses "every field of `UserProfile`, all optional"?'
     ),
     graderConfig: {
-      accept: ['partial<user>', 'partial'],
-      acceptPatterns: ['Partial\\s*<\\s*User\\s*>'],
+      accept: ['partial<userprofile>', 'partial'],
+      acceptPatterns: ['Partial\\s*<\\s*UserProfile\\s*>'],
       nearMisses: {
-        'optional<user>': 'There is no `Optional` utility type in TypeScript.',
-        'required<user>': 'Required does the opposite. It strips the `?` off optional fields.',
-        'pick<user>': 'Pick selects specific keys; it does not make them optional.',
+        'optional<userprofile>': 'There is no `Optional` utility type in TypeScript.',
+        'required<userprofile>':
+          'Required does the opposite. It strips the `?` off optional fields.',
+        'pick<userprofile>': 'Pick selects specific keys; it does not make them optional.',
+      },
+      closeSubstrings: {
+        omit: 'Good instinct, and the right move when a type holds keys the caller must not change. Here the id is a separate parameter and the profile has nothing to exclude, so one utility does it.',
       },
       hints: [
         'TypeScript ships a handful of mapped utility types for exactly this.',
         'It is the opposite of `Required<T>`.',
-        '`Partial<User>`',
+        '`Partial<UserProfile>`',
       ],
     },
-    canonicalAnswer: 'Partial<User>',
-    solution: code('ts', 'function update(id: string, patch: Partial<User>) {}'),
+    canonicalAnswer: 'Partial<UserProfile>',
+    solution: code('ts', 'function update(id: string, patch: Partial<UserProfile>) {}'),
     explanation:
-      '`Partial<T>` is a mapped type that adds `?` to every property, which is exactly the shape of a PATCH body. Its siblings are worth memorising as a set: `Required<T>` removes the `?`, `Readonly<T>` adds `readonly`, `Pick<T, K>` keeps named keys and `Omit<T, K>` drops them. One caveat. `Partial` is shallow, so nested objects keep their required fields; a deep version has to be written by hand with recursion.',
+      '`Partial<T>` is a mapped type that adds `?` to every property, which is exactly the shape of a PATCH body. Its siblings are worth memorising as a set: `Required<T>` removes the `?`, `Readonly<T>` adds `readonly`, `Pick<T, K>` keeps named keys and `Omit<T, K>` drops them. The id is a route parameter here, so the patch type has nothing to protect; when the type does carry keys the caller must never change, you compose two of them and get `Partial<Omit<T, ...>>`. `Partial` is also shallow, so nested objects keep their required fields and a deep version has to be written by hand with recursion.',
   },
 
   {

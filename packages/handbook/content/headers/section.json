@@ -1,6 +1,6 @@
 {
   "slug": "headers",
   "title": "Headers",
-  "order": 6,
+  "order": 7,
   "summary": "The metadata that decides what a request actually does: which format comes back, who the caller is, what the browser will let your code read, and which address the rate limiter counts. Almost none of it is taught directly, and all of it shows up in production."
 }

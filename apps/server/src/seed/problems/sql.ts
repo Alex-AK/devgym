@@ -1,4 +1,4 @@
-import { md, type ProblemDraft, sqlProblem } from './types';
+import { code, md, type ProblemDraft, sqlProblem } from './types';
 
 /**
  * SQL problems run against practice.db. Grading compares raw row values against
@@ -952,4 +952,600 @@ export const sqlProblems: ProblemDraft[] = [
     explanation:
       'The instinctive `GROUP BY book_id, MAX(created_at)` answers "when" but cannot tell you the rating **from that row**: other columns are not carried along by an aggregate, and databases that let you select them anyway return an arbitrary row. Ranking with `ROW_NUMBER()` and filtering `rn = 1` keeps the whole winning row intact. This "latest record per key" query shows up constantly: current price per product, latest status per ticket, most recent login per user.',
   }),
+
+  // The index problems below are deliberately not type `sql`. practice.db carries
+  // no indexes, so nothing here can be demonstrated by running a query against it.
+  // Every claim was checked against PostgreSQL 18 plans and the official docs.
+  {
+    slug: 'sql-index-range-descent',
+    title: 'Reaching the end of an index without reading it',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      '`orders` has 40 million rows and a B-tree index on `created_at`. A query for the last hour comes back in milliseconds:',
+      '',
+      code(
+        'text',
+        'Index Scan using orders_created_idx on orders',
+        '  Index Cond: (created_at > $1)'
+      ),
+      '',
+      'Those entries sit at the far end of the index. What does the index do to reach the first of them, instead of reading the 40 million entries in front?'
+    ),
+    graderConfig: {
+      accept: [
+        'descends the tree',
+        'descend the tree',
+        'tree descent',
+        'descends from the root',
+        'walks down from the root',
+        'walks down the tree',
+        'navigates down the tree',
+        'a binary search down the tree',
+        'binary search',
+      ],
+      acceptPatterns: [
+        'descend',
+        'walks? down',
+        'from the root',
+        'down the tree',
+        'binary search',
+        'navigat\\w* down',
+      ],
+      nearMisses: {
+        'it scans the index':
+          'Scanning is what happens once it arrives. Getting to the first matching entry is the part that is not a scan.',
+        'a full index scan': 'That reads every entry, which is the thing this plan is avoiding.',
+        'it reads the index from the start':
+          'Nothing reads the 40 million entries in front. The index is not entered at the start.',
+        'it uses the index': 'True, and the question is how. Name the movement it makes.',
+      },
+      hints: [
+        'A sorted list would have to be walked from one end. This is not a list.',
+        'Every lookup starts at the root page and picks one child at each level.',
+      ],
+    },
+    canonicalAnswer: 'It descends the tree from the root, picking one child page per level.',
+    solution: md(
+      'It descends the tree. Start at the root page, compare, follow one child, repeat until you land on the leaf holding the first entry that satisfies the condition.',
+      '',
+      'One page read per level, and then a scan that stops as soon as the values pass the end of the range.'
+    ),
+    explanation:
+      'A B-tree is not a sorted list, so nothing has to be walked to get to a range: at each level the index compares the key and follows a single child page, until it lands on the leaf holding the first qualifying entry. Only then does it scan, and it stops the moment the values leave the range. That is what turns "find rows after a timestamp" into a cost that tracks the number of rows returned rather than the number stored. Postgres notes that over 99% of the pages in a B-tree index are leaf pages, which is another way of saying the part you descend through is tiny.',
+  },
+
+  {
+    slug: 'sql-index-order-desc',
+    title: 'The DESC index nobody needs',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      '`events` has an index on `created_at`. The dashboard runs `ORDER BY created_at DESC LIMIT 20`, and the plan has no sort step in it.',
+      '',
+      'A colleague wants to add a second index on `created_at DESC`, because the existing one "only sorts ascending". Say what the existing index is already doing, and name the case where a `DESC` inside `CREATE INDEX` does earn its place.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'backward',
+            'backwards',
+            'in reverse',
+            'reverse',
+            'other direction',
+            'either direction',
+            'both directions',
+            'from the end',
+            'right to left',
+            'other end',
+          ],
+          missingFeedback:
+            'The leaf pages of a B-tree are linked both ways. What can the planner do with that?',
+        },
+        {
+          synonyms: [
+            'mixed',
+            'different directions',
+            'opposite direction',
+            'asc and desc',
+            'multicolumn',
+            'multi-column',
+            'two columns',
+            'more than one column',
+            'directions differ',
+            'disagree',
+            'composite',
+          ],
+          missingFeedback:
+            'Flipping the whole sort is free. A declared direction only starts to matter when the directions do not all flip together.',
+        },
+      ],
+      hints: [
+        'Compare the plan against the same query sorted ascending. One word differs.',
+        'B-tree leaf pages are linked in both directions, so the whole sort can be flipped for nothing.',
+        'A declared direction only pays when one column has to go one way and another the other way.',
+      ],
+    },
+    canonicalAnswer:
+      'The existing index is being read backwards. A B-tree links its leaf pages both ways, so a descending sort is the same walk in reverse and needs no sort step, which is why the mirror-image index would be dead weight. A DESC only earns its place on a multicolumn index whose directions differ, like (tenant_id ASC, created_at DESC), because that ordering cannot be produced by walking one plain index in either direction.',
+    solution: md(
+      'The index is read backwards. Postgres shows it as `Index Scan Backward`, and no `Sort` node appears.',
+      '',
+      'Flipping every column of the sort at once is free, so a mirror-image index costs writes and disk for nothing. The exception is a multicolumn index whose directions disagree: `(x, y)` serves `ORDER BY x, y` and `ORDER BY x DESC, y DESC`, but `ORDER BY x, y DESC` needs an index declared that way.'
+    ),
+    explanation:
+      'A B-tree stores keys in one order and links its leaf pages in both directions, so `ORDER BY x DESC` is the same index read from the other end. That makes a second, mirrored index pure cost: more to write on every insert, more to keep on disk, and nothing gained. Where a direction genuinely matters is inside a multicolumn index, because `ORDER BY x, y DESC` asks for two orders at once and a single walk cannot produce it; Postgres plans that one with a sort step layered on top of the index scan.',
+  },
+
+  {
+    slug: 'sql-index-lower-email',
+    title: 'The query that got slower by getting correct',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'Login ran `WHERE email = $1` off the index on `email` in a couple of milliseconds. Someone made it case-insensitive:',
+      '',
+      code('sql', 'SELECT id FROM users WHERE lower(email) = $1;'),
+      '',
+      'It now plans as `Seq Scan on users`, with `Filter: (lower(email) = $1)`. The index on `email` is still there.',
+      '',
+      'What has to be created?'
+    ),
+    graderConfig: {
+      accept: [
+        'an index on lower(email)',
+        'index on lower(email)',
+        'lower(email)',
+        'an expression index on lower(email)',
+        'a functional index on lower(email)',
+        'create index on users (lower(email))',
+        'an expression index',
+      ],
+      acceptPatterns: ['lower\\s*\\(\\s*email\\s*\\)', '(expression|functional)\\s+index'],
+      nearMisses: {
+        'an index on email':
+          'That one already exists. Once the column is wrapped in a function, what the index stores is no longer what the query compares.',
+        'a partial index':
+          'A partial index changes which rows are indexed. What is wrong here is which value is indexed.',
+        'reindex the table': 'Rebuilding it gives you the same index over the same values.',
+        'analyze the table': 'The planner is right. There is nothing indexed for it to choose.',
+      },
+      hints: [
+        'The planner matches what the query asks for against what the index actually stores.',
+        'The index holds `email`. The query no longer mentions `email` on its own.',
+        'Postgres can index the result of a function.',
+      ],
+    },
+    canonicalAnswer: 'An index on lower(email)',
+    solution: md(
+      code('sql', 'CREATE INDEX users_lower_email_idx ON users (lower(email));'),
+      '',
+      'The query has to spell the expression the same way the index declares it.'
+    ),
+    explanation:
+      'An index stores the values you told it to store, and `email` is not `lower(email)`, so there is nothing for the planner to descend and it falls back to reading every row and applying the function. An expression index stores the computed value instead, and the query only uses it if it spells the expression the same way. The cost lands on writes, because the expression is recomputed on every insert and non-HOT update; it is never recomputed during a search. SQLite has had expression indexes since 3.9.0 and is stricter about the match: `x + y` and `y + x` are the same number and two different index keys.',
+  },
+
+  {
+    slug: 'sql-index-like-prefix',
+    title: 'One wildcard changes the plan',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'An autocomplete box runs `WHERE email LIKE $1`. With `ali%` the plan is an index scan on `users_email_idx`. With `%ali%` it is a sequential scan over every row. Same column, same index.',
+      '',
+      'Say what the planner turns the anchored pattern into, and why the leading `%` leaves it nothing to work with.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'range',
+            'between',
+            '>=',
+            'two comparisons',
+            'two bounds',
+            'bounds',
+            'lower and upper',
+            'upper bound',
+            'greater than or equal',
+            'contiguous',
+          ],
+          missingFeedback:
+            'The `Index Cond` on the fast plan does not mention `LIKE` at all. What does it get rewritten to?',
+        },
+        {
+          synonyms: [
+            'no prefix',
+            'nothing to descend',
+            'no starting point',
+            'anywhere',
+            'any position',
+            'not anchored',
+            'no anchor',
+            'every row',
+            'whole table',
+            'all the rows',
+            'could start anywhere',
+            'unknown start',
+          ],
+          missingFeedback:
+            'An index is sorted by the whole string from its first character. What does `%ali%` fail to tell it?',
+        },
+      ],
+      hints: [
+        'Look at the `Index Cond` on the fast plan. It is not a pattern match.',
+        'An index is sorted by the whole string, starting at its first character.',
+        '`ali%` pins down the first three characters. `%ali%` pins down nothing.',
+      ],
+    },
+    canonicalAnswer:
+      "The anchored pattern is rewritten as a range: the Index Cond becomes email >= 'ali' AND email < 'alj', a contiguous run the index can be descended to. With a leading % there is no prefix to descend to, because a match could begin at any position in the string, so nothing narrows the scan and every row has to be read.",
+    solution: md(
+      "`LIKE 'ali%'` becomes a range. The `Index Cond` reads `email >= 'ali' AND email < 'alj'`, which is an ordinary bounded scan.",
+      '',
+      'A leading `%` names no first character, so every row is a candidate and reading them all is the only honest plan.'
+    ),
+    explanation:
+      'A B-tree is sorted by the whole string from the first character on, so a known prefix is a known place to start and Postgres rewrites the pattern into a plain range. A leading `%` supplies no first character, and no amount of index makes an unbounded search bounded. Two caveats travel with this: outside the C locale the index needs `text_pattern_ops` for the rewrite to apply, and SQLite optimises `LIKE` only when the column is indexed `BINARY` with `case_sensitive_like` on, or `NOCASE` with it off. When the pattern genuinely has to float, the answer is a trigram index rather than a B-tree.',
+  },
+
+  {
+    slug: 'sql-index-composite-order',
+    title: 'What a composite index is actually sorted by',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      '`events` holds 200,000 tenants and has one index, on `(tenant_id, created_at)`.',
+      '',
+      '- `WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 20` is instant, and the plan has no sort step.',
+      '- `WHERE created_at > $1`, with no tenant in the query, returns 1,000 rows and reads every page of the index to find them.',
+      '',
+      'Say why the first gets its ordering for nothing, and why the second has to read all of the index.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'contiguous',
+            'one run',
+            'a single run',
+            'together',
+            'already sorted',
+            'sorted within',
+            'in order within',
+            'already in order',
+            'one block',
+            'next to each other',
+            'adjacent',
+          ],
+          missingFeedback:
+            'Fixing `tenant_id` picks out one stretch of the index. What is already true about the order inside that stretch?',
+        },
+        {
+          synonyms: [
+            'leading',
+            'leftmost',
+            'left-most',
+            'first column',
+            'not the first',
+            'second column',
+            'scattered',
+            'interleaved',
+            'every tenant',
+            'each tenant',
+            'restarts',
+            'starts over',
+            'only within',
+            'many places',
+          ],
+          missingFeedback:
+            'Where does one `created_at` value live, in an index sorted by tenant first?',
+        },
+      ],
+      hints: [
+        'The index is sorted by `tenant_id` first, and by `created_at` only inside each one.',
+        'Ask where the entries for a single tenant sit relative to each other.',
+        'Then ask where one `created_at` value sits when the tenant is not pinned down.',
+      ],
+    },
+    canonicalAnswer:
+      'An equality on tenant_id picks out one contiguous run of the index, and inside that run the entries are already sorted by created_at, so the newest 20 are the last 20 entries of the run read backwards and no sort step is needed. The second query constrains only the second column, and created_at restarts from the beginning inside every tenant, so there is no single position to descend to and the matching entries are spread across the whole index, which is why all of it has to be read.',
+    solution: md(
+      'A composite index is sorted by its first column, and by the second only inside a run where the first is equal.',
+      '',
+      '- `tenant_id = $1` lands on one such run, whose entries are already in `created_at` order. The `ORDER BY` is free, and `DESC` is that run read backwards.',
+      '- `created_at > $1` alone has no run to land on, because those values start over in every tenant. The index is still the cheapest plan, but only as a read of the whole thing.'
+    ),
+    explanation:
+      'A composite index is sorted by its first column, and by the second only within a run where the first is equal. Both symptoms fall out of that one rule, and so does the advice about column order: the column you filter by equality goes first, the column you sort by goes second. Postgres 18 can still use the index for a predicate on the second column, by repeating the descent once per distinct leading value, but that skip scan needs a leading column with few distinct values: 20 tenants gives `Index Searches: 21`, and 200,000 gives `Index Searches: 1` and a read of every page. What a high-cardinality first column costs you is not the index, it is the skipping.',
+  },
+
+  {
+    slug: 'sql-search-stemmed-lexemes',
+    title: 'The search that misses a word the row contains',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      "Your search box is `WHERE body LIKE '%' || $1 || '%'`. A user searches for `running` and gets nothing, though one row reads \"She runs every morning before work\".",
+      '',
+      "Swap the predicate for `to_tsvector('english', body) @@ plainto_tsquery('english', $1)` and the same search finds it.",
+      '',
+      'Full-text search is not storing the words in that row. What is it storing instead?'
+    ),
+    graderConfig: {
+      accept: [
+        'lexemes',
+        'stemmed lexemes',
+        'normalised lexemes',
+        'normalized lexemes',
+        'word stems',
+        'stems',
+        'the stem of each word',
+        'stemmed words',
+      ],
+      acceptPatterns: ['lexeme', '\\bstem(s|med|ming)?\\b'],
+      nearMisses: {
+        'the words':
+          'Not as they are written. `runs` and `running` have to arrive at the same entry for this to work.',
+        tokens:
+          'A token is what the parser hands over. Something is done to it before it is stored.',
+        'the whole string':
+          'The original text is not in there at all, which is why searching it never had to be.',
+        keywords:
+          'Close in spirit. Postgres has a specific name for the normalised form it stores.',
+      },
+      hints: [
+        'Both `runs` and `running` have to reach the same entry, or this could not work.',
+        'What is stored is not English. Words are cut back to a common root and the useless ones are dropped.',
+      ],
+    },
+    canonicalAnswer: 'Stemmed lexemes, with stop words removed.',
+    solution: md(
+      'Lexemes: normalised, stemmed words with stop words removed.',
+      '',
+      "`to_tsvector('english', 'She runs every morning before work')` gives `'everi':3 'morn':4 'run':2 'work':6`. Six words in, four lexemes: `she` and `before` are stop words and drop out. A search for `running` normalises to `run` too, so the two meet in the middle."
+    ),
+    explanation:
+      "Full-text search does not store your text, it stores what your text reduces to. The English configuration folds case, stems each word to a root and discards stop words, and the query goes through the same reduction, which is how `running` and `runs` meet at `run` when `LIKE '%running%'` never could. That normalisation costs you a class of search: `plainto_tsquery('english', 'the')` returns an empty query, so a user searching for a stop word matches nothing at all. SQLite's FTS5 does none of this unless you build the table with `tokenize = porter`.",
+  },
+
+  {
+    slug: 'sql-search-tsvector-tsquery',
+    title: 'operator does not exist: tsvector @@ tsvector',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'You wrote the search predicate as:',
+      '',
+      code('sql', "WHERE to_tsvector('english', body) @@ to_tsvector('english', $1)"),
+      '',
+      'and Postgres refuses it with `operator does not exist: tsvector @@ tsvector`.',
+      '',
+      'The left side is right. What has to produce the right side?'
+    ),
+    graderConfig: {
+      accept: [
+        'plainto_tsquery',
+        'websearch_to_tsquery',
+        'to_tsquery',
+        'phraseto_tsquery',
+        'a tsquery',
+        'tsquery',
+      ],
+      acceptPatterns: ['ts_?query'],
+      nearMisses: {
+        to_tsvector:
+          '`@@` wants a document on one side and a query on the other. That is the document side again.',
+        plainto_tsvector:
+          'No such function. The query side is a different type, not a different spelling.',
+        'cast it to text': 'The types are the point. Naming a different one does not resolve it.',
+      },
+      hints: [
+        '`@@` takes two different types. Both sides of yours are the same one.',
+        'The left side is the document. The right side is the question being asked of it.',
+        'There is a family of functions that turn text into the query type. `plainto_` is the plain one.',
+      ],
+    },
+    canonicalAnswer:
+      'plainto_tsquery, or websearch_to_tsquery for raw user input. The right side has to be a tsquery.',
+    solution: md(
+      code('sql', "WHERE to_tsvector('english', body) @@ plainto_tsquery('english', $1)"),
+      '',
+      '`to_tsvector` builds documents; the `..._tsquery` family builds queries. `to_tsquery` takes a hand-written expression with `&`, `|` and `!`, `plainto_tsquery` takes plain text and ANDs it together, and `websearch_to_tsquery` takes anything a user typed.'
+    ),
+    explanation:
+      '`@@` pairs a `tsvector` with a `tsquery`, in either order, and is not defined for two of the same type: the document and the question are different things and Postgres will not guess which you meant. Both sides go through the same normalisation, which is the part that makes the match work at all. On user input, reach for `websearch_to_tsquery`, because it never raises a syntax error, whereas `to_tsquery` will reject a search box containing a stray quote and hand your users a 500.',
+  },
+
+  {
+    slug: 'sql-search-rank-vs-match',
+    title: 'Four thousand matches in table order',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Your search endpoint filters with `@@` and returns 4,000 rows for a common word, in whatever order the table handed them over. The filter is correct. The first page is useless.',
+      '',
+      '`@@` will not fix this. Say what it decides and what it cannot, and name what you add to get the good matches first.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'boolean',
+            'true or false',
+            'yes or no',
+            'whether',
+            'matches or not',
+            'in or out',
+            'a filter',
+            'filter',
+            'membership',
+            'binary',
+            'no score',
+            'no ordering',
+            'equally',
+          ],
+          missingFeedback:
+            'What does `@@` return, and how much can a value of that type say about 4,000 rows?',
+        },
+        {
+          synonyms: [
+            'ts_rank',
+            'rank',
+            'ranking',
+            'order by',
+            'relevance score',
+            'score',
+            'sort by',
+          ],
+          missingFeedback:
+            'Something has to turn 4,000 equal matches into a first page. Name the function.',
+        },
+      ],
+      hints: [
+        'Ask what type `@@` returns, and how many distinct values that type has.',
+        'Everything that passed the filter passed it equally. Nothing in the filter separates them.',
+        'Postgres has a function that scores a `tsvector` against a `tsquery`. Its name starts with `ts_`.',
+      ],
+    },
+    canonicalAnswer:
+      '`@@` decides one thing: whether the document matches the query at all. It is boolean, so all 4,000 rows are exactly as matched as each other and it has no opinion about which is better. Ranking is a separate step: ts_rank (or ts_rank_cd, which also weighs how close the matched lexemes sit) scores each surviving row, and you ORDER BY that score and LIMIT it.',
+    solution: md(
+      '- **`@@` matches.** It returns a boolean, so every row that passed passed identically. It cannot order anything.',
+      '- **`ts_rank` ranks.** It scores a `tsvector` against a `tsquery`, and you `ORDER BY` that and `LIMIT`.',
+      '',
+      '`ts_rank_cd` is the variant that also weighs how close the matched lexemes sit to each other.'
+    ),
+    explanation:
+      'Matching and ranking are two questions, and Postgres keeps them apart on purpose. `@@` is answered straight from the GIN index and throws away almost everything cheaply; ranking then reads the `tsvector` of every surviving row, which the docs call out as expensive and I/O bound. Filter hard first and rank the survivors, never the other way round. If titles should count for more than bodies, that decision is made with `setweight` when the `tsvector` is built, not at ranking time.',
+  },
+
+  {
+    slug: 'sql-search-gin-index',
+    title: 'The index that was created and never used',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'foundational',
+    type: 'short-text',
+    prompt: md(
+      'The `@@` predicate is right, and the plan is a `Seq Scan` over 2 million rows. So you index the expression:',
+      '',
+      code('sql', "CREATE INDEX docs_body_idx ON docs (to_tsvector('english', body));"),
+      '',
+      'It is created without complaint. The plan is still a `Seq Scan`.',
+      '',
+      'What kind of index does that statement need to be?'
+    ),
+    graderConfig: {
+      accept: ['gin', 'a gin index', 'using gin', 'gin index', 'an inverted index'],
+      acceptPatterns: ['\\bgin\\b', 'inverted'],
+      nearMisses: {
+        'b-tree':
+          'That is what you got by default, and it is why nothing changed. A B-tree sorts whole values; it cannot answer "which rows contain this lexeme".',
+        btree:
+          'That is the default you already have. A B-tree sorts whole values; it cannot answer "which rows contain this lexeme".',
+        'a unique index': 'Uniqueness is not the problem. The access method is.',
+        hash: 'A hash index answers equality on the whole value. The query asks about one lexeme inside it.',
+      },
+      hints: [
+        'The index exists and is never chosen. The planner does not believe it can answer the question.',
+        'A `tsvector` is a set of lexemes, and the query asks which rows contain one. Which access method is built for "contains"?',
+        'Postgres calls it the preferred text-search index type.',
+      ],
+    },
+    canonicalAnswer: 'GIN',
+    solution: md(
+      code('sql', "CREATE INDEX docs_body_idx ON docs USING GIN (to_tsvector('english', body));"),
+      '',
+      'Without `USING GIN` you get a B-tree, which is perfectly happy to be built over a `tsvector` and useless for `@@`.'
+    ),
+    explanation:
+      '`CREATE INDEX` defaults to a B-tree, and `tsvector` has a B-tree operator class, so the statement succeeds and hands you an index that sorts whole vectors. `@@` never asks about a whole vector. It asks which rows contain a given lexeme, and that is what an inverted index is: one entry per lexeme, holding the list of rows it appears in. Postgres calls GIN the preferred text-search index type; GiST is the other option and is lossy, so it produces false matches that have to be rechecked against the table. SQLite has no equivalent index at all: FTS5 is a virtual table you write into alongside the real one and query with `MATCH`.',
+  },
+
+  {
+    slug: 'sql-search-trigram',
+    title: 'Typos and a fragment from the middle',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Two complaints about the same search box. Someone typing `recieve` finds nothing. And a support agent pasting a fragment of a product code, `%X47%`, waits nine seconds while the table is scanned.',
+      '',
+      'Full-text search answers neither: a misspelling does not stem to the right word, and a product code is not a word. Name what does answer both, and say why it can serve a pattern that starts with a wildcard when a B-tree cannot.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'trigram',
+            'pg_trgm',
+            'trgm',
+            'gin_trgm_ops',
+            'gist_trgm_ops',
+            'three-character',
+            'three character',
+          ],
+          missingFeedback:
+            'Both complaints are about characters rather than words. What do you get if you chop every string into overlapping three-character slices?',
+        },
+        {
+          synonyms: [
+            'left-anchored',
+            'not anchored',
+            'no anchor',
+            'no prefix',
+            'anywhere in the string',
+            'any position',
+            'every position',
+            'middle of the string',
+            'from the middle',
+            'also chopped',
+            'chopped into',
+            'extracted from the pattern',
+            'every slice',
+          ],
+          missingFeedback:
+            'A B-tree needs a known first character before it can descend. Say what a trigram index needs instead.',
+        },
+      ],
+      hints: [
+        'Neither complaint is about words. Both are about characters that are nearly right, or in an awkward place.',
+        'Chop every string into overlapping three-character slices and store those. Now ask what a search for `%X47%` becomes.',
+        'The index is not sorted by the string, so there is no first character for it to need.',
+      ],
+    },
+    canonicalAnswer:
+      'A trigram index: pg_trgm with gin_trgm_ops, which stores every overlapping three-character slice of every string. It answers the typo through similarity() and the % operator, and it answers %X47% because the pattern is chopped into slices too and looked up directly. The search string need not be left-anchored, because nothing is being descended into: the index is asked which rows contain these slices, wherever they sit.',
+    solution: md(
+      code(
+        'sql',
+        'CREATE EXTENSION pg_trgm;',
+        'CREATE INDEX docs_body_trgm ON docs USING GIN (body gin_trgm_ops);'
+      ),
+      '',
+      "That one index serves both: `body % $1` for the misspelling, and `body LIKE '%X47%'` for the fragment. A trigram index stores slices from every position, so the search string need not be left-anchored the way a B-tree requires."
+    ),
+    explanation:
+      'A trigram index stores every overlapping three-character slice of a string, which changes the question from "where does this value sort" to "which rows contain these slices". Both symptoms fall out of that: a misspelling still shares slices with the correct spelling, which is exactly what `similarity()` counts, and a fragment from the middle is just another set of slices to look up. The `%` operator compares against `pg_trgm.similarity_threshold`, which defaults to 0.3, and that number is the whole quality of your fuzzy search, so measure it against real queries rather than accept it. A pattern too short to yield any trigram degenerates to a full index scan, which is why a two-character search box stays slow. SQLite reaches the same place through an FTS5 table built with `tokenize = trigram`, which makes `LIKE` and `GLOB` indexed.',
+  },
 ];

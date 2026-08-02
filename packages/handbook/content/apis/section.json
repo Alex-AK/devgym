@@ -1,6 +1,6 @@
 {
   "slug": "apis",
   "title": "APIs in practice",
-  "order": 9,
+  "order": 10,
   "summary": "The decisions that outlive the endpoint: how a list is paged, what a retry does to a write, which change forces a new version, who gets turned away, and where the permission check lives so the route nobody has written yet is covered."
 }

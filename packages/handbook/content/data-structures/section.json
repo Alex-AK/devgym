@@ -1,0 +1,6 @@
+{
+  "slug": "data-structures",
+  "title": "Structures, and what the choice costs",
+  "order": 3,
+  "summary": "Choosing between an array, an object, a Map and a Set is a decision ordinary feature work makes hourly and usually by reflex, and the reflex is where the bugs come from. Every page here answers what the choice costs at the size you actually have rather than at the size an interview question has. It is not an algorithms course: the named patterns are practised as problems rather than read, and what gets written down is the handful of models that decide whether a structure fits."
+}

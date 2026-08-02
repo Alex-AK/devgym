@@ -22,8 +22,10 @@ sources:
 verified: 2026-08-01
 ---
 
-Postgres is the engine on this page. The SQLite equivalents are shown alongside, because they say the
-same thing in a different vocabulary.
+Postgres is the engine on this page, and the plans were taken from PostgreSQL 18. The version matters
+once: the skip scan in the last trap, and the `Index Searches` line that shows it, arrived in 18, and
+earlier releases neither skip nor print that count. The SQLite equivalents are shown alongside,
+because they say the same thing in a different vocabulary.
 
 ## The model
 

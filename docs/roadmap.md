@@ -8,23 +8,64 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. Data structures and the cost of a choice
+## 1. Flash cards, and the distinctions the queue refuses
 
-Around fifteen problems across `coding`, `js-apis` and `debugging` are about choosing a structure or
-getting a comparator right, and no page names any of it. Not an algorithms course: every page
-answers what the choice costs at the size you actually have.
+A mode entered on purpose to drill contrasts: Unix time against ISO 8601, `INNER` against `LEFT`
+against `FULL`, 301 against 302 against 307 against 308, `null` against `undefined`, the `SameSite`
+values, the cache directives. Two-sided cards over a named set, a few seconds each, a deck at a
+sitting rather than a rep in a queue.
 
-Pages: array, object, `Map`, `Set` (lookup, insertion, iteration order, and what a key can be); what
-O notation is for, and the constant factors that beat it under a few thousand items; the structures
-behind the ones you use (hash tables, and why a bad key function is the whole story); sorting, and
-the comparator bugs that survive review; trees and the shapes real systems use them for (the B-tree
-the databases section already assumes); when the right answer is a database rather than a data
-structure. Credits: MDN, the V8 blog, open algorithms references.
+**It exists because the problem format refuses this material, and that refusal is right.**
+[content.md](./content.md) says a definition to recall is not an easy problem, and that writing the
+card anyway teaches that the definition was the point. That holds for the daily queue, where a
+definitional rep displaces a rep about doing the work. It stops holding the moment someone has opted
+in to drill a contrast set, because then the definition is exactly the point, and knowing cold which
+join keeps the unmatched rows is worth ninety seconds. So a deck takes the `dsa-patterns` shape
+rather than the problems shape: its own entry point, out of the round-robin, never dealt to a
+morning session.
 
-The patterns themselves stay in `dsa-patterns` below. Choosing a structure is not a pattern; it is a
-decision ordinary feature work makes hourly and usually by reflex.
+**It is the largest piece of application code in this file.** A deck itself is content, a directory
+beside paths and modules. Around it sits a card type and a review mode. **Grading is settled: cards
+are self-graded.** You flip, you say whether you had it, and the schedule moves on your word. The
+alternative was reusing the `short-text` matcher, and it was declined because free recall of a phrase
+is exactly where a matcher is wrong often enough to be worth avoiding, and being marked wrong on an
+answer you knew is the fastest way to stop opening a deck. Auto-grading stays available later for
+decks whose answers really are single strings; nothing about the card format forecloses it.
 
-## 2. The rest of the modules
+That leaves one open question, which the first deck can answer rather than a design document: whether
+a card feeds `solved_at` and the review ladder at all, or keeps a schedule of its own. The ladder was
+built for reps that produce a verdict, and a self-graded card produces an opinion.
+
+First decks would be dates and time formats, the join family, redirect status codes, cache
+directives, JavaScript's equality and nullish operators, and SQL's null semantics. Every one is a
+distinction the handbook already explains, so a card cites the page rather than teaching it again.
+
+## 2. Reading code you did not write
+
+Every rep in the library asks you to produce something: a query, a function, a name, a sentence of
+diagnosis. None of them hands you an unfamiliar snippet and asks what it does, which is most of the
+working day and all of a code review.
+
+**The format needs no application code, which is the useful finding.** A prompt is markdown, so a
+fenced snippet plus a `short-text` or `explain` grader is the entire mechanism, and eight of the seed
+files already use predict-the-output prompts in passing. What is missing is the ability to practise
+reading on purpose: those reps sit in categories chosen by topic, so nobody can sit down and read for
+fifteen minutes. That makes this content plus one `path`, which is the object that already exists for
+ordering reps into an hour.
+
+Four question shapes carry it: what does this print, where the answer turns on evaluation order,
+closure capture or async scheduling; what does this function do, in one sentence, which is really
+about naming intent; what breaks when the input is empty, `null`, or very large; and which line is
+the one that matters, over a snippet where most of them are noise. The authoring discipline is the
+hard part. The snippet has to be idiomatic code somebody would really ship rather than a puzzle
+written to have a surprising answer, and the question has to be answerable without being a
+definition. A reading rep that rewards spotting a trick teaches trick-spotting.
+
+Not to be confused with the modules, which already do predict-then-run. A module walks you through an
+API you are being taught and settles the prediction by running it. A reading rep is the opposite
+posture: unfamiliar code, no run, and a grader.
+
+## 3. The rest of the modules
 
 The format ships and `js-date` is written, so everything here is content: a directory, no application
 code. Seven left, and the ten `query-params` problems cited by nothing are the reason
@@ -49,13 +90,14 @@ is a broken module for everybody except its author: `js-date`'s assertions were 
 before it shipped. And a step's assertions are about the API rather than about the reader's edit, so
 they keep holding when the snippet is changed, which is what makes the editor safe to play in.
 
-## 3. Pages missing from sections that already ship
+## 4. Pages missing from sections that already ship
 
 Each of these is named on the curriculum map and absent from `packages/handbook/content/`. Ordered
 by how often the gap is met in ordinary work, not by section.
 
 | Section        | Page                                | Note                                                                                       |
 | -------------- | ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| javascript     | Boolean operators, and what they return | `equality.md` owns comparison. Nothing owns `&&`/`\|\|`/`??` returning an operand rather than a boolean, or inverting a compound condition |
 | databases      | Transactions and ACID               | A prerequisite the systems section already assumes                                          |
 | server-runtime | Middleware, and the order it runs in | The life-of-a-request page covers this in Nest's vocabulary and never says `next()`         |
 | databases      | Query refactorings that matter      | EXISTS against COUNT, OR into UNION, unpicking correlated subqueries                        |
@@ -69,7 +111,7 @@ by how often the gap is met in ordinary work, not by section.
 Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
 so it blocks nothing.
 
-## 4. The rest of the problem queue
+## 5. The rest of the problem queue
 
 | Category         | Roughly | What it is                                                                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -77,6 +119,7 @@ so it blocks nothing.
 | `api-design`     | 12      | Offset against cursor, idempotency keys and check-store-replay, versioning, rate limit algorithms and what to key on, status codes past the basics            |
 | `node`           | 12      | The runtime itself: event loop ordering past what js-apis covers, streams and backpressure, buffers, process against worker threads, what blocks              |
 | `dsa-patterns`   | 30      | Two pointers, sliding window, fast and slow pointers, prefix sum, monotonic stack, top-K with a heap, binary search variants, intervals, BFS and DFS, backtracking, basic DP. Two or three js-code problems per pattern, added in pattern-sized waves |
+| `logic`          | 12      | Boolean algebra where it actually bites: what `&&`, `||` and `??` return (operands, not booleans), short-circuit evaluation and the side effect that therefore never runs, inverting a compound condition without getting it backwards, precedence, and SQL's three-valued logic where `NOT IN` against a set containing `NULL` returns nothing at all. Truth tables stay in as the model behind a conditional; gates as circuits stay out, because this is not a hardware course |
 
 `sql-performance` stores each captured plan with the query and dataset that produced it, so a plan
 can be regenerated when engines update instead of rotting as a string.
@@ -86,7 +129,7 @@ or its own session preset. That needs the one application change in this file: t
 treats every category equally today, so categories need an opt-out flag it respects. Small, but it
 is code rather than content.
 
-## 5. The workout queue
+## 6. The workout queue
 
 Ordered by what the library cannot practise today. Everything here runs on infrastructure that
 already exists (PGlite, the fake Redis and its clock, the fixture API, testing-library) except where
@@ -119,7 +162,7 @@ The build-your-own genre grows further (a wire-protocol Redis clone, a tiny mess
 `json-parser`, `circuit-breaker-node` and `one-recompute-not-fifty` land well, and only then is it
 worth deciding whether multi-part series need real support.
 
-## 6. Sections with no practice behind them yet
+## 7. Sections with no practice behind them yet
 
 Both of these are last because nothing in the problem set is waiting on them.
 

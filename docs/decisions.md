@@ -264,6 +264,29 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   patterns themselves stay in `dsa-patterns` as graded implementations, because a page about sliding
   window teaches less than three of those.
 
+- **"Nothing to practise" is a reason to write reps, not a reason to defer a page.** The B-tree page
+  was deferred on exactly that ground and the deferral was reversed the same day, which is the more
+  useful half of the story. The gap was real and measured: the term appeared six times across
+  `databases`, `sql` and `ai-engineering` and was defined nowhere, while
+  `databases/how-an-index-gets-used.md` taught a sorted-array model that carries selectivity,
+  leftmost prefix and `ORDER BY` elimination without ever saying how the start of a range gets found
+  without scanning to it. The blocker was the one mapping this project enforces, that a page names
+  somewhere to practise it. But the reps were missing rather than impossible, and writing ten of them
+  cost less than waiting for `sql-performance`. The same reversal shipped `databases/search-past-like.md`,
+  which answers a question `how-an-index-gets-used.md` had been raising and handing to nobody.
+  **The rule to carry forward: defer a page when the material cannot be verified or when the reader
+  would not notice its absence, not when the practice behind it merely has not been written yet.**
+
+- **Index reps cannot be `sql` reps, and that constraint is load-bearing.** The SQL practice database
+  carries no indexes on purpose, so a live query can never demonstrate one being used. Everything
+  about index behaviour and full-text search is therefore authored as `short-text` and `explain`
+  against output captured from a real engine, which is the same shape `sql-performance` will need.
+  The engine is PGlite, which is real PostgreSQL, so the captured plans are measured rather than
+  recalled. Two claims died in that process: a rep asserted that a composite index falls back to a
+  sequential scan when the leading column has high cardinality, and it does not, it reads the whole
+  index and reports `Index Searches: 1`; and a page and its rep disagreed about how many lexemes
+  `to_tsvector` returns for one sentence. Both were caught by re-running rather than by review.
+
 - **AI engineering is in scope, and the scope moved once, deliberately.** What a web engineer is
   asked to build now includes an endpoint that streams tokens and a tool server another program
   drives. That is web engineering with an unfamiliar dependency on the end of it, and it fails in
