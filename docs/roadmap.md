@@ -8,6 +8,90 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
+One entry below is different in kind and sits first because of it. **The essentials path adds no
+content.** It orders what already exists, which makes it the cheapest large improvement available and
+the only item here that gets better as everything else ships.
+
+## 0. The essentials path
+
+A curated route through what is already built: a sequence of **one-hour sessions**, each one a slice
+of web development worth understanding properly, each ending with you actually understanding it
+rather than having read about it.
+
+The daily queue answers "what should I practise today". Focused practice answers "drill this
+category". Neither answers **"I want to actually understand how requests work, and I have an hour"**,
+which is the question a curated order is for.
+
+### It is a different mode, and the spec has to say so
+
+Everything else in this project is judged against a 15-minute morning session. This is not: it is the
+deliberate-study mode, for a weekend or an evening, and the two should not be blurred. The morning
+session stays interleaved and spaced, because that is what retention wants. A path is **blocked and
+ordered**, because that is what building a model the first time wants. Both are correct, at different
+stages, for different jobs, and the app should offer them as separate entrances rather than making
+one a setting on the other.
+
+This supersedes the deferred long-session preset in the tail of this file. That was a longer version
+of the daily queue; this is a different thing, and it is the better answer to the same itch.
+
+### The shape of an hour
+
+Roughly, and to be measured against real content rather than assumed:
+
+| Part            | Budget | What it is                                                                    |
+| --------------- | ------ | ----------------------------------------------------------------------------- |
+| Read            | 20 min | Two or three handbook pages, in order, building on each other                 |
+| Prove           | 15 min | Six to ten reps drawn from those pages' `practise` lists, in a fixed order    |
+| Build           | 20 min | One workout, where a fitting one exists                                       |
+| Slack           | 5 min  | Because an hour that needs all sixty minutes is an hour that overruns         |
+
+A session without a workout is fine and should spend the time on more reps. A session that cannot
+fill the read step from existing pages is not ready to be written.
+
+### Rules, and the first one is the one that will get broken
+
+- **The path is a subset, deliberately and permanently.** Most content is not on it and never will
+  be. If every page eventually appears on some session, the path has become an index and has stopped
+  being a recommendation. The test for including something: would leaving it out make the hour's
+  slice incoherent? Not "is it good", which everything here is meant to be.
+- **A session is one slice, not one section.** The most valuable ones cut across sections, because
+  that is how the work does. "Why the page is slow" is a React page, a database page and an N+1 rep,
+  and it is a better hour than anything wholly inside one section.
+- **Order within a session is fixed and meaningful.** Read, then prove, then build. The reps come
+  after the pages that explain them, which is the opposite of the daily queue's job.
+- **It is content, not code.** A session is a manifest listing pages, problem slugs and an optional
+  workout, validated by the same safety net that already checks `practise` slugs resolve. Adding a
+  session touches no application source.
+- **No new progress tracking.** Page-level completion is a standing non-goal and this does not
+  reopen it: the reps inside a session already carry their own progress, and that is the honest
+  measure of whether the hour landed. A path may show you where you left off; it does not score you.
+
+### Candidate first sessions
+
+Named by the question the hour answers, which is also the test of whether the slice is coherent. To
+be checked against what exists before any is written, and to be cut rather than padded:
+
+| Session                                   | The slice                                                                    |
+| ----------------------------------------- | ---------------------------------------------------------------------------- |
+| What actually happens when you call an API | Request and response, status codes, headers, and why it works in curl        |
+| Why the page is slow                       | Render cost against re-render count, N+1, and the index that was not used    |
+| Where state lives                          | URL, server cache, component, and the state that should have been derived    |
+| The browser already does this              | Semantic elements, the accessible name, focus, and validation you rewrote    |
+| Making the query correct before fast       | Joins and row multiplication, `NULL`, grouping, and what you may select      |
+| Not getting owned                          | Untrusted input reaching a parser, tokens, and the headers that matter       |
+| Async, and what the one thread is doing    | The event loop, promises, cleanup, and the fetch race                        |
+
+Seven is a guess at the right number. The path is finished when the sessions cover the slices a web
+engineer cannot do without, not when they cover the handbook.
+
+### What it needs from the app
+
+The only thing here that is not content: a route listing the sessions, and a session view that walks
+the three steps. This is the second item in this file needing application code, alongside the
+`dsa-patterns` queue opt-out. It is small, and it should stay small: if a path starts wanting its own
+progress model, scheduling or scoring, that is the signal it has drifted from being an ordering into
+being a second app.
+
 ## 1. AI engineering
 
 The largest gap against the stated target, and the only place a whole handbook section is blocked by
@@ -240,6 +324,8 @@ Listed so they are decisions rather than oversights. The arguments live in
 - **A FastAPI workout**, which would put a Python runtime in the workout runner.
 - **React Native and desktop**, until the web map is substantially built.
 - **Interactive diagrams**, which are application code per diagram.
-- **A weekly long-session preset**, until lived use answers whether workouts fit a morning at all.
+- **A weekly long-session preset**, superseded by the essentials path above. The preset was a longer
+  daily queue; a curated order is the better answer, and it does not wait on whether workouts fit a
+  morning, because it is explicitly not a morning session.
 - **Progress tracking on modules**, including whether a failed prediction should schedule a review.
   That is a migration, and it waits for real data.
