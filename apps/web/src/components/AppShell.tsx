@@ -12,6 +12,7 @@ const LINKS = [
   { to: '/workouts', label: 'Workouts', end: false },
   { to: '/handbook', label: 'Handbook', end: false },
   { to: '/modules', label: 'Modules', end: false },
+  { to: '/cards', label: 'Cards', end: false },
   { to: '/essentials', label: 'Essentials', end: false },
 ];
 

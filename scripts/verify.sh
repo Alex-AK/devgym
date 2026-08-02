@@ -64,19 +64,20 @@ run_check "format"           pnpm exec prettier --check . &
 # stays fast, and pre-push runs the full suite instead.
 if [ -z "$SKIP_UNIT_TESTS" ]; then
   run_check "tests"          pnpm --filter @devgym/server test &
+  run_check "tests-web"      pnpm --filter @devgym/web test &
 fi
 
 wait
 
 # ── Report results ───────────────────────────────────────────────────────────
-for name in typecheck-shared typecheck-server typecheck-web lint format tests; do
+for name in typecheck-shared typecheck-server typecheck-web lint format tests tests-web; do
   [ -f "$tmpdir/$name.status" ] || continue
   status=$(cat "$tmpdir/$name.status")
   if [ "$status" = "pass" ]; then
     pass "$name"
   else
     fail "$name"
-    if [ "$name" = "tests" ]; then
+    if [ "$name" = "tests" ] || [ "$name" = "tests-web" ]; then
       filtered=$(grep -E '(FAIL|Error|✗|×|expected|received|AssertionError)' "$tmpdir/$name.out" | head -20)
     else
       # Strip pnpm lifecycle noise, keep the meaningful error lines

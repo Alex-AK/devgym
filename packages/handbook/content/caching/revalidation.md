@@ -43,11 +43,11 @@ means `304 Not Modified` with no body, and the cache restarts the freshness cloc
 already has. Changed means an ordinary 200. Prefer `ETag`: a date cannot express two changes inside
 the same second, and MDN notes RFC 9110 would rather you sent both when you can.
 
-**Weak and strong.** An `ETag` prefixed with `W/` is weak. RFC 9110 puts the difference precisely: a
-strong entity tag "will only differ for representations that differ in body and metadata", while a
-weak one "will differ for representations that differ in body, but might be the same for
-representations with equivalent bodies". Weak is the honest label for "same content, different
-bytes". It costs you range requests, which need a strong validator to stay cacheable, and it costs
+**Weak and strong.** An `ETag` prefixed with `W/` is weak. RFC 9110 defines the strong side: a strong
+validator "is representation metadata that changes value whenever a change occurs to the
+representation data that would be observable in the content of a 200 (OK) response to GET". MDN puts
+the weak side in the terms you meet it: weak values "might be semantically equivalent, but not
+byte-for-byte identical". Weak is the honest label for "same content, different bytes". It costs you range requests, which need a strong validator to stay cacheable, and it costs
 you nothing on a 304, because RFC 9110 requires `If-None-Match` to use the weak comparison function:
 two tags match if their opaque parts match character by character, whether or not either is marked
 weak.

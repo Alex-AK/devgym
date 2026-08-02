@@ -1,10 +1,10 @@
 # Writing content
 
-devgym has four content types: problems, handbook pages, workouts and modules. This is the bar each
-one clears and how to write one. Read the section for the type you are adding, then the
-cross-cutting rules at the end, which apply to all four.
+devgym has five content types: problems, handbook pages, workouts, modules and decks. This is the
+bar each one clears and how to write one. Read the section for the type you are adding, then the
+cross-cutting rules at the end, which apply to all five.
 
-A fifth kind of file authors nothing and orders what the four produce: a session on the essentials
+A sixth kind of file authors nothing and orders what the others produce: a session on the essentials
 path. Its section is below, and its bar is different because its material is already written.
 
 What this file does not cover: `WRITING.md` owns the prose and is not optional reading, `CLAUDE.md`
@@ -45,8 +45,9 @@ and the label is what lets a 15-minute session be judged on what it is actually 
 
 **An easy problem is a real thing met in ordinary feature work, answered in under two minutes by
 someone who has just read the page.** A definition to recall is not one. If the only easy rep you
-can think of for a topic is "what is this called", the topic has no easy rep, and writing the card
-anyway teaches that the definition was the point.
+can think of for a topic is "what is this called", the topic has no easy rep, and writing the rep
+anyway teaches that the definition was the point. Where the definition is genuinely worth knowing
+cold, it is a card in a deck, which is entered on purpose rather than dealt to a morning.
 
 ### Picking a grader
 
@@ -404,6 +405,69 @@ so a module that needs a decision tree is two modules. No video, no audio, no an
 replacement for the handbook: a module teaches an API from the beginning, a page answers one
 question when you already know roughly where you are.
 
+## Decks
+
+A deck is a contrast set drilled on purpose: `INNER` against `LEFT` against `FULL`, 301 against 302
+against 307, `null` against `undefined`. Two-sided cards, a few seconds each, one deck at a sitting.
+You flip a card, say whether you had it, and nothing is written down.
+
+The daily queue refuses this material, and that refusal is right: a definitional rep there displaces
+a rep about doing the work. It stops holding the moment you have opted in to drill the distinction,
+because then the definition is exactly the point. So a deck is entered on purpose, sits outside the
+round robin, and is never dealt to a morning session.
+
+### Where it lives
+
+`packages/decks/content/<slug>/deck.json`, one directory per deck with nothing else in it. The server
+reads the directory per request, so a new deck needs no restart. A deck is one JSON file rather than a
+file per card because a card is two sentences: a module step earns a file by being prose plus a
+runnable snippet, and a card has neither.
+
+### The manifest
+
+- `slug` matches the directory name. `order` places the deck and is unique across decks.
+- `title` and `summary` name the contrast set and say what it costs to get it backwards. `minutes`
+  budgets the sitting.
+- `page` is a `section/slug` handbook reference and is **required**. A deck cites the page rather than
+  teaching the material again, which is also what makes a card checkable.
+- `practise` is one or more problem or workout slugs, resolved the way a page's list is. It is how a
+  deck reaches your queue afterwards, and it is the only progress a deck has.
+- `sources` and `verified` mean what they mean everywhere else, and the citation policy applies
+  unchanged.
+- `cards` is 4 to 12 of them. Fewer is not a sitting; more is two decks.
+
+A card is `{ id, front, back }`. `id` is kebab-case, unique within the deck, and the URL fragment.
+`front` and `back` are markdown and **one line each**, capped at 160 and 400 characters. The caps are
+the format rather than a style note: a back that does not fit on one line is a card that has become a
+page, and the deck already cites the page it would become.
+
+### A card drills a distinction, not a definition
+
+The front is a question with a definite answer, and the answer is what separates two things you
+already half know. "What does `LEFT JOIN` do" is a definition and belongs on the page the deck cites.
+"`INNER JOIN` and `LEFT JOIN`, same `ON` condition: what is in one result and not the other" is a
+card, because getting it backwards is a bug you have shipped.
+
+The back answers in its first sentence and spends the rest on the one number or the one query that
+makes it stick. Write it so you can tell whether you had it, because you are the grader: an answer
+that only half matches is a card whose front asked for something vaguer than it meant.
+
+### What the suite enforces
+
+`decks.spec.ts` refuses a deck whose `page` is not a real handbook page, whose `practise` names
+anything that is not a real problem or workout, which cites no source or dates its `verified` in any
+format but `YYYY-MM-DD`, which has fewer than 4 cards or more than 12, or whose `order` collides with
+another deck's. Per card: two non-empty sides, a kebab-case id unique within the deck, no newline in
+either side, and neither side over its cap. It also refuses two cards asking the same question
+anywhere in the library, comparing fronts with case and punctuation stripped, because that is the
+drift a deck falls into and it costs the sitting twice.
+
+**What it cannot check is whether a card is true.** A module gets that free, because its assertions
+run against its own snippet; a card has nothing to run, and a confident wrong sentence looks exactly
+like a confident right one. That is the work `page` and `sources` are doing, and the review rule
+follows from it: every claim on a card has to be checkable against the page it cites. A claim the page
+does not support is a page edit before it is a card.
+
 ## Pairing
 
 The library's halves do not run away from each other, and the rule has two directions:
@@ -467,5 +531,5 @@ the one rule of the eight most easily broken by accident.
 ## Voice
 
 `WRITING.md`, in full, for everything a reader sees: prompts, hints, explanations, grader feedback,
-briefs, checkpoint hints, pages, module steps and UI strings. It is short. The em-dash rules are the
-ones that bite, and never bulk-regex dashes out of prose: it mangles dual-dash asides.
+briefs, checkpoint hints, pages, module steps, cards and UI strings. It is short. The em-dash rules
+are the ones that bite, and never bulk-regex dashes out of prose: it mangles dual-dash asides.

@@ -8,39 +8,7 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. Flash cards, and the distinctions the queue refuses
-
-A mode entered on purpose to drill contrasts: Unix time against ISO 8601, `INNER` against `LEFT`
-against `FULL`, 301 against 302 against 307 against 308, `null` against `undefined`, the `SameSite`
-values, the cache directives. Two-sided cards over a named set, a few seconds each, a deck at a
-sitting rather than a rep in a queue.
-
-**It exists because the problem format refuses this material, and that refusal is right.**
-[content.md](./content.md) says a definition to recall is not an easy problem, and that writing the
-card anyway teaches that the definition was the point. That holds for the daily queue, where a
-definitional rep displaces a rep about doing the work. It stops holding the moment someone has opted
-in to drill a contrast set, because then the definition is exactly the point, and knowing cold which
-join keeps the unmatched rows is worth ninety seconds. So a deck takes the `dsa-patterns` shape
-rather than the problems shape: its own entry point, out of the round-robin, never dealt to a
-morning session.
-
-**It is the largest piece of application code in this file.** A deck itself is content, a directory
-beside paths and modules. Around it sits a card type and a review mode. **Grading is settled: cards
-are self-graded.** You flip, you say whether you had it, and the schedule moves on your word. The
-alternative was reusing the `short-text` matcher, and it was declined because free recall of a phrase
-is exactly where a matcher is wrong often enough to be worth avoiding, and being marked wrong on an
-answer you knew is the fastest way to stop opening a deck. Auto-grading stays available later for
-decks whose answers really are single strings; nothing about the card format forecloses it.
-
-That leaves one open question, which the first deck can answer rather than a design document: whether
-a card feeds `solved_at` and the review ladder at all, or keeps a schedule of its own. The ladder was
-built for reps that produce a verdict, and a self-graded card produces an opinion.
-
-First decks would be dates and time formats, the join family, redirect status codes, cache
-directives, JavaScript's equality and nullish operators, and SQL's null semantics. Every one is a
-distinction the handbook already explains, so a card cites the page rather than teaching it again.
-
-## 2. Practising reading on purpose
+## 1. Practising reading on purpose
 
 Reps that hand you unfamiliar code and ask what it does exist now, in the categories their snippets
 belong to, and the morning queue deals them like any other rep. **What is missing is the entrance.**
@@ -71,7 +39,7 @@ Not to be confused with the modules, which already do predict-then-run. A module
 API you are being taught and settles the prediction by running it. A reading rep is the opposite
 posture: unfamiliar code, no run, and a grader.
 
-## 3. The rest of the modules
+## 2. The rest of the modules
 
 The format ships and `js-date` is written, so everything here is content: a directory, no application
 code. Seven left, and the ten `query-params` problems cited by nothing are the reason
@@ -95,6 +63,24 @@ reader's machine with no fake clock and no fixed timezone, so anything that depe
 is a broken module for everybody except its author: `js-date`'s assertions were checked in five zones
 before it shipped. And a step's assertions are about the API rather than about the reader's edit, so
 they keep holding when the snippet is changed, which is what makes the editor safe to play in.
+
+## 3. The rest of the decks
+
+The format ships and `the-join-family` is written, so everything here is content: one `deck.json` in
+a directory, no application code. Each names the page it cites, because a deck drills a distinction
+the handbook already explains and a card is checked against that page.
+
+| Deck                | Cites                               | The distinction it drills                                                                      |
+| ------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `the-null-family`   | `sql/null-is-not-a-value`           | `= NULL` against `IS NULL`, `NOT IN` against a set holding one, and which aggregates skip them |
+| `equality`          | `javascript/equality`               | `==` against `===` against `Object.is`, and where `NaN` and `-0` split them                    |
+| `cache-directives`  | `caching/no-store-no-cache-max-age` | `no-store` against `no-cache` against `max-age=0`, and which one keeps the page off disk       |
+| `cookie-attributes` | `security/storing-a-token`          | The `SameSite` values against each other, and what `HttpOnly` and `Secure` each stop           |
+
+Two more decks suggest themselves and cannot be written, both for the same reason: `page` is
+mandatory and neither has one. No page owns the redirect codes, 301 against 302 against 307 against
+308. Time formats are a module rather than a page, because there was no model there to write down. A
+deck is not on its own a reason to write a page, so both wait until something else asks for one.
 
 ## 4. Pages missing from sections that already ship
 
@@ -244,3 +230,6 @@ Listed so they are decisions rather than oversights. The arguments live in
   workouts fit a morning, because it is explicitly not a morning session.
 - **Progress tracking on modules**, including whether a failed prediction should schedule a review.
   That is a migration, and it waits for real data.
+- **A schedule on cards**, which is the same migration and a weaker signal, since a self-graded card
+  produces an opinion rather than a verdict. Revisit after a few weeks of using a deck, when you can
+  either name the cards you keep missing or are annoyed that the app cannot.

@@ -23,6 +23,7 @@ import { ErrorState, LoadingState } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Kbd } from '@/components/ui/kbd';
 import { Progress } from '@/components/ui/progress';
 import { api, queryKeys, scopeToParams } from '@/lib/api';
 import { describeScope, isScoped, scopeFromSearch } from '@/lib/scope';
@@ -468,14 +469,6 @@ export function ProblemPage(): React.ReactElement {
         </Card>
       )}
     </div>
-  );
-}
-
-function Kbd({ children }: { children: React.ReactNode }): React.ReactElement {
-  return (
-    <kbd className="rounded border bg-muted px-1 font-mono text-[0.7rem] text-foreground">
-      {children}
-    </kbd>
   );
 }
 

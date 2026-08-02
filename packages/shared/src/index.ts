@@ -507,6 +507,46 @@ export interface ModuleRunResponse {
   passed: boolean;
 }
 
+/* --------------------------------------------------------------------- decks */
+
+/**
+ * A deck is a contrast set drilled on purpose: two-sided cards, a few seconds
+ * each, a sitting rather than a rep in a queue. Cards are self-graded and
+ * nothing is persisted, so a deck has no attempt endpoint and no schedule of
+ * its own: the reps it cites are the progress tracking, exactly as a module's
+ * are. Content lives in `packages/decks/content/<slug>/deck.json`, so adding
+ * one touches no code. The reader sees "Cards"; the code says deck.
+ */
+export interface DeckCard {
+  /** Kebab-case, unique within the deck, and the URL fragment. */
+  id: string;
+  /** The question. Markdown, one line. */
+  front: string;
+  /** The answer. Markdown, one line. */
+  back: string;
+}
+
+/** Row in the deck list (`GET /api/decks`). */
+export interface DeckSummary {
+  slug: string;
+  title: string;
+  summary: string;
+  order: number;
+  minutes: number;
+  cardCount: number;
+}
+
+export interface DeckDetail extends DeckSummary {
+  cards: DeckCard[];
+  /** The page the deck drills, resolved so the cards can point back at it. */
+  page: HandbookPageRef | null;
+  /** Where to practise it afterwards, resolved the way a page's list is. */
+  practiseLinks: HandbookPractiseLink[];
+  sources: HandbookSource[];
+  /** ISO date the deck's claims were last checked against its sources. */
+  verified: string;
+}
+
 /* --------------------------------------------------------------------- paths */
 
 /**

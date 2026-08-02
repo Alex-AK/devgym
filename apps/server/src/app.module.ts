@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { DbModule } from './db/db.module';
+import { DecksModule } from './decks/decks.module';
 import { HandbookModule } from './handbook/handbook.module';
 import { ModulesModule } from './modules/modules.module';
 import { PathsModule } from './paths/paths.module';
@@ -21,6 +22,7 @@ import { WorkoutsModule } from './workouts/workouts.module';
     HandbookModule,
     PathsModule,
     ModulesModule,
+    DecksModule,
   ],
 })
 export class AppModule {}

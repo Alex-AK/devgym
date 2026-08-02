@@ -1,6 +1,6 @@
 # devgym
 
-A local-first practice gym for staying sharp on web-dev fundamentals. Five ways in:
+A local-first practice gym for staying sharp on web-dev fundamentals. Six ways in:
 
 - **Problems** are short reps: type an answer, get tiered feedback (correct / close / not close),
   come back to it on a spaced-repetition schedule.
@@ -10,18 +10,20 @@ A local-first practice gym for staying sharp on web-dev fundamentals. Five ways 
   links to the problems and workouts that make you prove you absorbed it.
 - **Modules** are one sitting with one API: ordered steps, and every step asks you to commit to an
   answer before it runs the code.
-- **The essentials path** is for the hour you have on a weekend: a curated route through the other
-  three, read then prove then build, on one slice of the work at a time.
+- **Cards** drill the distinctions the queue refuses: a deck of two-sided cards over one contrast
+  set, flipped and graded by you, entered on purpose rather than dealt to a morning.
+- **The essentials path** is for the hour you have on a weekend: a curated route through what already
+  exists, read then prove then build, on one slice of the work at a time.
 
 You write every answer yourself and a deterministic grader marks it, so the reps stay yours. No AI
 in the loop at runtime, fully offline, single user, no accounts.
 
 **Status:** built and in daily use. Content grows continuously and is never finished, so this README
 describes the shape rather than counting it; the app and the seed files are the live inventory. The
-same principle governs the docs: [docs/content.md](./docs/content.md) is the bar every problem, page
-and workout clears, [docs/decisions.md](./docs/decisions.md) records why things are the way they are
-and what the project deliberately refuses to do, and [docs/roadmap.md](./docs/roadmap.md) holds only
-what is not built yet.
+same principle governs the docs: [docs/content.md](./docs/content.md) is the bar every problem, page,
+workout, module and deck clears, [docs/decisions.md](./docs/decisions.md) records why things are the
+way they are and what the project deliberately refuses to do, and
+[docs/roadmap.md](./docs/roadmap.md) holds only what is not built yet.
 
 ## Quickstart
 
@@ -37,7 +39,7 @@ keys, no accounts, no network calls at runtime.
 
 ```sh
 pnpm verify     # the gate: typecheck, lint, format and the full test suite, in parallel
-pnpm test       # graders, seed data, workout, handbook, path and module content, queue, sessions
+pnpm test       # graders, seed data, every kind of content, queue, sessions
 pnpm build      # typecheck and build every package
 pnpm seed       # rebuild practice.db and upsert problems by slug
 pnpm grade      # check a grader from the terminal (see below)
@@ -85,7 +87,7 @@ One file per category in `apps/server/src/seed/problems/`, which is the live inv
 - **The browser** — React, the DOM, semantic HTML, accessibility, CSS, forms, dates.
 - **The wire** — HTTP status codes and methods, headers, caching, CORS, SSE and WebSockets, auth
   and security.
-- **Systems** — one concept a card: consistency, replication, sharding, queues, circuit breakers.
+- **Systems** — one concept a rep: consistency, replication, sharding, queues, circuit breakers.
 - **Debugging** — spot-the-bug snippets, mostly the mistakes fast thinking makes.
 
 Every problem declares a **relevance** alongside its difficulty: `daily` for what you write in
@@ -215,6 +217,29 @@ No progress tracking, for the reason handbook pages get none: the problems are t
 tracking, and a module's `practise` list is how it reaches your queue afterwards. See
 `packages/modules/README.md` for the authoring contract.
 
+## Cards
+
+`/cards` lists the decks. A deck is one contrast set drilled on purpose: `INNER` against `LEFT`
+against `FULL`, `null` against `undefined`. Two-sided cards, a few seconds each, 4 to 12 to a deck.
+You flip a card, say whether you had it, and move on.
+
+The daily queue refuses this material, and that refusal is right: a definitional rep there displaces
+a rep about doing the work. It stops holding the moment you have opted in to drill the distinction,
+because then the definition is exactly the point. So a deck is entered on purpose and is never dealt
+to a morning session.
+
+Cards are self-graded because a matcher is wrong often enough on free recall to matter, and being
+marked wrong on an answer you knew is the fastest way to stop opening a deck. Nothing is written
+down: no schedule of its own, no streaks, no percentage complete. Every deck cites the handbook page
+it drills and the problems and workouts to practise it in, and those reps are the progress tracking.
+
+A deck is one `deck.json` under `packages/decks/content/<slug>/`, so adding one touches no
+application code. `pnpm verify` refuses a deck that points at a page or a practise slug that does not
+exist, runs shorter or longer than a sitting, repeats a card id, or lets a card grow past one line a
+side. What it cannot check is whether a card is true, which is why the page citation is required and
+why every claim has to be checkable against it. See `packages/decks/README.md` for the authoring
+contract.
+
 ## The essentials path
 
 `/essentials` is the deliberate-study entrance, and the only part of devgym not written against a
@@ -240,6 +265,7 @@ The path is a subset on purpose: most content is not on it and never will be. Se
   set every workspace resolves against
 - `packages/handbook`: handbook pages · `packages/paths`: the essentials path, one manifest an hour
 - `packages/modules`: modules, one directory each, read by the server at runtime
+- `packages/decks`: decks of cards, one `deck.json` each, nothing persisted about them
 - `apps/server/src/grading`: the four graders plus the sandboxed code runner
 - `apps/server/src/seed/problems`: one file per category, positions generated at seed time
 - `apps/server/src/workouts`: workspace materialisation and the vitest checkpoint runner

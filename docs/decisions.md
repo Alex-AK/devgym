@@ -223,7 +223,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 - **Some pages keep no easy problem behind them, and that is a refusal rather than debt.** An easy
   rep is a real thing met in ordinary feature work, answered in under two minutes by someone who has
   just read the page. Back-of-envelope estimation is performed out loud, consistent hashing is
-  consumed rather than configured, and a card written to fill the row would teach that the
+  consumed rather than configured, and a rep written to fill the row would teach that the
   definition was the point.
 
 - **The easy-rep bar is deliberately not enforced mechanically.** "Has an easy problem" is checkable
@@ -348,7 +348,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   the work. There is nothing to read first, because reading is a skill rather than a model several
   reps share, so the read step could only be padded with pages about whatever the snippets happen to
   touch. The order would carry no meaning either, since no reading rep builds on the one before it.
-  What is missing is an entrance rather than an ordering, and that is application code: roadmap §2.
+  What is missing is an entrance rather than an ordering, and that is application code: roadmap §1.
 
 - **The reader sees "Essentials"; the code says "path".** The route is `/essentials` because that is
   what the thing is to someone deciding how to spend an hour, and everything behind it, the package,
@@ -413,6 +413,39 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 - **Not a course platform.** No enrolment, no certificates, no percentage complete, no streaks, no
   video or audio. No branching either: steps are linear, and a module that needs a decision tree is
   two modules.
+
+## Decks
+
+- **Cards are self-graded.** You flip, you say whether you had it, and the app takes your word.
+  Reusing the `short-text` matcher was considered and declined: free recall of a phrase is exactly
+  where a matcher is wrong often enough to matter, and being marked wrong on an answer you knew is
+  the fastest way to stop opening a deck. Auto-grading is not foreclosed by this. A deck whose
+  answers really are single strings could take one optional field per card later, and nothing about
+  the format stands in the way.
+
+- **v1 persists nothing: no table, no migration, no write path.** The reps a deck cites are the
+  progress tracking, as they are for modules and pages. The binding precedent is in the section
+  above: modules get no progress tracking and do not touch the review ladder, and wiring the ladder
+  in waits for real data and a migration rather than being built speculatively. A self-graded card is
+  a weaker signal than a failed module prediction, so if modules wait, cards do not skip the queue.
+  Revisit when a deck has been in use for a few weeks and its owner can either name the cards they
+  keep missing or is annoyed that the app cannot.
+
+- **A deck is one JSON file, not one markdown file per card.** A module step is prose plus a runnable
+  snippet and genuinely needs a file; a card is two sentences, and eight files with frontmatter for
+  sixteen lines of text is ceremony. The size caps then do authorial work rather than merely bounding
+  a field: a back that does not fit on one line is a card that has become a page, and the page is
+  already cited.
+
+- **The reader sees "Cards"; the code, the package and the API say "deck".** The same boundary
+  translation as Essentials and `path`, for the same reason. "Cards" is what the thing is to someone
+  deciding how to spend ten minutes, and "deck" is the word the content and the types use.
+
+- **The suite cannot check whether a card is true, and the format is built around that gap.** A
+  module's assertions run against its own snippet, so a module that teaches something untrue fails
+  the build. A card has nothing to run. That is why `page` and `sources` are required rather than
+  optional, and why the review rule is that every claim on a card must be checkable against the page
+  it cites.
 
 ## Grading and safety
 

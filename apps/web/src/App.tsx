@@ -4,6 +4,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { AboutPage } from '@/pages/AboutPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { DeckPage } from '@/pages/DeckPage';
+import { DecksPage } from '@/pages/DecksPage';
 import { HandbookPage } from '@/pages/HandbookPage';
 import { HandbookPageView } from '@/pages/HandbookPageView';
 import { HowItTeachesPage } from '@/pages/HowItTeachesPage';
@@ -34,6 +36,10 @@ export function App(): React.ReactElement {
         <Route path="essentials/:slug" element={<PathPage />} />
         <Route path="modules" element={<ModulesPage />} />
         <Route path="modules/:slug" element={<ModulePage />} />
+        {/* "Cards" is what a reader sees; "deck" is what the code and the API
+            call it, the same split the essentials path already makes. */}
+        <Route path="cards" element={<DecksPage />} />
+        <Route path="cards/:slug" element={<DeckPage />} />
         <Route path="handbook" element={<HandbookPage />} />
         <Route path="handbook/:section/:slug" element={<HandbookPageView />} />
         <Route path="about" element={<AboutPage />} />

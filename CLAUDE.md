@@ -4,12 +4,13 @@ A local-first practice app for keeping web-dev fundamentals sharp. Read `README.
 does and how to run it. This file covers what an agent needs to change it safely.
 
 **The code is the source of truth for what exists.** No document in this repo lists what has shipped,
-by design: the seed files, `packages/handbook/content/`, `packages/workouts/content/` and
-`packages/paths/content/` are the live inventory, and a status line would only go stale. Three
-documents hold what the code cannot say, and this file is the entry point to them:
+by design: the seed files and the `content/` directories under `packages/handbook`,
+`packages/workouts`, `packages/modules`, `packages/paths` and `packages/decks` are the live
+inventory, and a status line would only go stale. Three documents hold what the code cannot say, and
+this file is the entry point to them:
 
-- **`docs/content.md`** — the bar every problem, handbook page, workout and module clears, and how to
-  write each one. Read the relevant section before adding content.
+- **`docs/content.md`** — the bar every problem, handbook page, workout, module and deck clears, and
+  how to write each one. Read the relevant section before adding content.
 - **`docs/decisions.md`** — why things are the way they are, and what this project deliberately
   refuses to do. Read it before reopening a settled question or filling a gap that looks obvious;
   several of those gaps are recorded refusals.
@@ -59,6 +60,7 @@ packages/shared/src/index.ts       types + const tuples, no runtime deps
 packages/workouts/content/<slug>/  workout content: manifest, brief, files, tests, solution
 packages/paths/content/<slug>/     the essentials path: one path.json an hour, ordering the above
 packages/modules/content/<slug>/   modules: a manifest and one markdown file per predict-run step
+packages/decks/content/<slug>/     decks: one deck.json of two-sided cards over one contrast set
 apps/server/src/
   db/                              Drizzle schema, client, migrations module
   grading/                         four graders + the sandboxed code runner
@@ -66,6 +68,7 @@ apps/server/src/
   problems/ progress/ sessions/    Nest modules
   paths/                           the essentials path: loader, safety net, read-only API
   modules/                         modules: loader, safety net, and the step run endpoint
+  decks/                           decks: loader, safety net, read-only API (nothing is persisted)
   workouts/                        workspace materialisation + the vitest checkpoint runner
   cli/grade.ts                     `pnpm grade` grader-inspection tool
 apps/web/src/
@@ -102,6 +105,12 @@ apps/web/src/
   step's assertions against its own snippet, so a module that teaches something untrue fails the
   build. Assertions run on the reader's machine with no fake clock or fixed timezone: write ones that
   hold in any zone, and see `docs/content.md` before authoring.
+- **Adding a deck** is a `deck.json` under `packages/decks/content/`, and no application code moves.
+  `decks.spec.ts` resolves the required `page` and every `practise` slug, holds a deck to 4 to 12
+  cards and each card to one line a side within its cap, and refuses two cards asking the same
+  question anywhere in the library. What it cannot check is whether a card is true, so every claim
+  has to be checkable against the page the deck cites. Cards are self-graded and nothing is
+  persisted: no table, no migration, no write path.
 - **Adding a session to the essentials path** is a `path.json` under `packages/paths/content/`. It
   authors nothing: it orders pages, reps and workouts that already exist, and `paths.spec.ts` refuses
   a ref that resolves to nothing or a rep placed before the page explaining it. The path is a subset

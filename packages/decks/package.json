@@ -1,0 +1,7 @@
+{
+  "name": "@devgym/decks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deck content: two-sided cards over one contrast set, self-graded, read by the server at runtime",
+  "license": "MIT"
+}

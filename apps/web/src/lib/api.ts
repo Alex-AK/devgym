@@ -1,6 +1,8 @@
 import type {
   AttemptResponse,
   CreateSessionRequest,
+  DeckDetail,
+  DeckSummary,
   HandbookPageDetail,
   HandbookSectionSummary,
   ModuleDetail,
@@ -101,6 +103,11 @@ export const api = {
   runModuleStep: (slug: string, stepId: string, code: string): Promise<ModuleRunResponse> =>
     post(`/modules/${slug}/steps/${stepId}/run`, { code }),
 
+  // Read-only on purpose: cards are self-graded and nothing is persisted, so
+  // there is no attempt to post.
+  decks: (): Promise<DeckSummary[]> => request('/decks'),
+  deck: (slug: string): Promise<DeckDetail> => request(`/decks/${slug}`),
+
   paths: (): Promise<PathSummary[]> => request('/paths'),
   path: (slug: string): Promise<PathDetail> => request(`/paths/${slug}`),
 
@@ -158,6 +165,8 @@ export const queryKeys = {
   handbookPage: (section: string, slug: string) => ['handbook', section, slug] as const,
   modules: ['modules'] as const,
   module: (slug: string) => ['module', slug] as const,
+  decks: ['decks'] as const,
+  deck: (slug: string) => ['deck', slug] as const,
   paths: ['paths'] as const,
   path: (slug: string) => ['path', slug] as const,
 };
