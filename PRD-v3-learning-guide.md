@@ -1,11 +1,12 @@
 # devgym — PRD v3: the learning guide
 
 > **Status: in progress.** The shape is built: `packages/handbook/content/`, the safety net in
-> `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 3 (moving
-> data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases) and 8 (the server runtime) are underway.
-> Sections 2 (React), 9 (systems) and 10 (trade-offs) are not started, though the `systems` problem
-> category that section 9 pairs with has shipped. Two further sections were added by the pairing
-> rule below: TypeScript, and the browser you are writing for.
+> `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 2 (React), 3
+> (moving data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases) and 8 (the server runtime) are
+> underway. Section 9 (systems) has started: load balancers, service discovery, circuit breakers and
+> replication are written, and the rest of its card list is not. Section 10 (trade-offs) is not
+> started. Two further sections were added by the pairing rule below: TypeScript, and the browser you
+> are writing for.
 >
 > This extends [PRD-v2](./PRD-v2.md), which remains the live spec for the workout platform and for
 > what a handbook page is (its phase 4). This document is the map
@@ -95,8 +96,8 @@ Where it stands, and it is lopsided in one direction:
 | -------------------------------------------------------------- | ------------------------- | ----- | ------------------------------ |
 | Moving data, headers, caching, APIs, databases, server runtime | yes                       | yes   | paired                         |
 | JavaScript under the hood                                      | yes                       | yes   | no workout yet                 |
-| **React**                                                      | 30+ problems, one workout | none  | **section owed**               |
-| **Systems**                                                    | ~19 cards                 | none  | **section owed**               |
+| React                                                          | 30+ problems, one workout | yes   | paired                         |
+| **Systems**                                                    | ~19 cards                 | some  | **cards still owed**           |
 | **TypeScript**                                                 | 30+ problems              | none  | **decision to revisit, below** |
 | **HTML, accessibility, CSS, forms**                            | ~48 problems              | none  | **section owed**               |
 | **Dates and time, testing**                                    | ~18 problems              | none  | thinner, but unexplained       |
@@ -144,6 +145,12 @@ re-render); context and re-render scope (why every consumer re-renders, splittin
 dispatch); where state lives (URL, server cache, component; from v2 4d); code splitting and lazy
 loading (including when it makes the bundle bigger, which the notes measured firsthand); long
 lists (windowing, and when pagination beats it); the main thread (long tasks, yielding, workers).
+
+Two pages were added to that list while writing it, both by the pairing rule rather than by taste.
+**Effects, and what cleanup has to undo** covers the largest unpaired cluster in the category
+(cleanup, object dependencies, stale closures, fetch races, aborting on unmount) and is the page the
+autocomplete workout is the practical half of. **Memo, and what it cannot fix** covers four more that
+the render page could only have carried by trying to teach two things at once.
 
 ### 3. Moving data between machines
 
@@ -276,15 +283,16 @@ Authoring Practices Guide, web.dev.
 
 ## Build order
 
-Sections 1 to 8 of this order are done or underway: moving data, databases, JavaScript, APIs,
-headers, caching and the server runtime have all landed. What remains, ordered by how much
-unexplained practice is sitting behind each:
+Moving data, databases, JavaScript, APIs, headers, caching, the server runtime and React have all
+landed. What remains, ordered by how much unexplained practice is sitting behind each:
 
-1. **React, beyond the API** — the biggest gap by problem count, and one workout already points here
-2. **Systems** — the `systems` category shipped ahead of it, so the reps are already waiting
-3. **The browser you are writing for** — the largest unpaired block once React is done
-4. **TypeScript, at the type level**
-5. **Trade-offs and architecture** — last, as before, because it resists the page shape
+1. **Systems** — started, and the rest of its cards are the next thing owed. The concepts still
+   without a card are the spine (what happens on a request), scaling up and out, latency and
+   throughput, CAP and consistency, sharding, consistent hashing, caching patterns, queues and
+   delivery semantics, and back-of-envelope estimation
+2. **The browser you are writing for** — the largest unpaired block now that React is done
+3. **TypeScript, at the type level**
+4. **Trade-offs and architecture** — last, as before, because it resists the page shape
 
 The gate for shipping any page is unchanged: the safety net plus the citation policy, not
 completeness of its section. A section is never finished and a page at a time is a fine pace.
