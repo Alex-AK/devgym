@@ -281,7 +281,8 @@ than making one a setting on the other.
 `packages/paths/content/<slug>/path.json`, one directory per session. The manifest carries `slug`,
 `title`, `question`, `summary`, `order`, `minutes` and `steps`. A step is `{ kind, ref, note? }`,
 where `kind` is `page`, `problem` or `workout` and `ref` is `section/slug` for a page and a bare slug
-for anything else. `module` is reserved in the type and refused by the loader until modules exist.
+for anything else. A `module` step counts as a read step, because it is what a session about an API
+has instead of a page.
 
 ### The shape of an hour
 
@@ -314,8 +315,8 @@ read step from existing pages is not ready to be written.
 ### What the suite enforces
 
 `paths.spec.ts` refuses a session whose `ref` resolves to nothing, whose steps run out of order,
-which has no page step or no problem step, which names a reserved kind, or whose `order` collides
-with another session's. It is the same net that already checks a page's `practise` slugs resolve,
+which has no page step or no problem step, which names a kind nobody has heard of, or whose `order`
+collides with another session's. It is the same net that already checks a page's `practise` slugs resolve,
 which is what makes an ordering safe to edit: content moves, and a stale reference fails the build
 rather than the reader.
 

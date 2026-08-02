@@ -15,10 +15,12 @@ export function AboutPage(): React.ReactElement {
         <section>
           <h2>What this is</h2>
           <p>
-            devgym is a practice gym for web-dev fundamentals: short daily problems, timed workouts
-            against real toolchains, and a <Link to="/handbook">handbook</Link> to study from. It
-            runs entirely on your machine, fully offline. Grading is deterministic; there is no AI
-            anywhere in the loop at runtime.
+            devgym is a practice gym for web-dev fundamentals: short daily problems, timed{' '}
+            <Link to="/workouts">workouts</Link> against real toolchains, a{' '}
+            <Link to="/handbook">handbook</Link> to study from, <Link to="/modules">modules</Link>{' '}
+            that walk one API a step at a time, and an <Link to="/essentials">essentials path</Link>{' '}
+            for the hour you have at the weekend. It runs entirely on your machine, fully offline.
+            Grading is deterministic; there is no AI anywhere in the loop at runtime.
           </p>
           <p>
             It exists because of a simple worry: the more the day job leans on LLMs, the fewer reps
