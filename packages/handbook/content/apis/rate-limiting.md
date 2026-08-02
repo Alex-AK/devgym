@@ -6,6 +6,7 @@ practise:
   - rate-limit-express
   - http-429-backoff
   - security-rate-limit-auth
+  - sys-rate-limiting-algorithms
 sources:
   - author: Paul Tarjan
     title: Scaling your API with rate limiters
