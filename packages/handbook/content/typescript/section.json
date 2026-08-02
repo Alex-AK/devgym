@@ -1,0 +1,6 @@
+{
+  "slug": "typescript",
+  "title": "TypeScript, at the type level",
+  "order": 2,
+  "summary": "What the compiler is actually checking, and what it stops checking the moment you write `as`. The type level turns out to be its own small language, with its own control flow and its own way of losing information, and most TypeScript pain is a value crossing into the program without anybody having looked at it."
+}

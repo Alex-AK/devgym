@@ -1,6 +1,6 @@
 {
   "slug": "moving-data",
   "title": "Moving data between machines",
-  "order": 3,
+  "order": 5,
   "summary": "Picking a transport, and living with the one you picked. Four questions decide it: who starts the conversation, how many messages go which way, what has to be true about delivery, and what it costs to hold open."
 }

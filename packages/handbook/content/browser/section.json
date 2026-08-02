@@ -1,0 +1,6 @@
+{
+  "slug": "browser",
+  "title": "The browser you are writing for",
+  "order": 3,
+  "summary": "Semantics, the accessibility tree, layout and forms as one subject rather than four, because the through-line is the same in each: the platform already does most of this, and the bug is usually that something reimplemented it badly. The element you did not use is doing work you would otherwise have to write."
+}

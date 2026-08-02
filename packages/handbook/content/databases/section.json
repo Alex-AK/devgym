@@ -1,6 +1,6 @@
 {
   "slug": "databases",
   "title": "Databases",
-  "order": 8,
+  "order": 10,
   "summary": "What the database does with the query you sent it: which index it picks, why it sometimes picks none, and the access patterns that turn one page load into hundreds of round trips. Every page names the engine it means, because the workouts run Postgres and the SQL problems run SQLite."
 }

@@ -1,6 +1,6 @@
 {
   "slug": "caching",
   "title": "Caching, client and server",
-  "order": 5,
+  "order": 7,
   "summary": "One response can be answered by eight different caches, and only the last of them is your handler. Naming which layer is holding the stale value is most of the fix; the rest is picking a key, picking a lifetime, and deciding what happens when it expires."
 }
