@@ -52,6 +52,46 @@ export const securityProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'security-samesite-none-secure',
+    title: 'The cookie the browser threw away',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'An embedded widget needs the session cookie on cross-site requests, so the login route now',
+      'sends:',
+      '',
+      code('http', 'Set-Cookie: session=abc123; HttpOnly; SameSite=None; Path=/'),
+      '',
+      'The header is right there in devtools and the cookie is not stored at all, with nothing logged',
+      'and no error.',
+      '',
+      'Name the attribute whose absence makes the browser drop it.'
+    ),
+    graderConfig: {
+      accept: ['secure', 'secure attribute', 'secure flag', 'the secure attribute'],
+      acceptPatterns: ['\\bsecure\\b'],
+      nearMisses: {
+        domain:
+          'Domain widens which hosts receive the cookie. It has no say in whether SameSite=None is allowed.',
+        httponly: 'HttpOnly is already on the cookie, and it is unrelated to SameSite.',
+        'samesite=lax':
+          'Lax gets stored, and then the widget stops receiving the cookie, which is the problem you started with.',
+      },
+      hints: [
+        'The cookie is not repaired and stored. It is refused whole, which is why nothing appears anywhere.',
+        'SameSite=None means "send this on every cross-site request", and the specification refuses that promise over an unencrypted connection.',
+        '`Secure`',
+      ],
+    },
+    canonicalAnswer: 'Secure',
+    solution: code('http', 'Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=None; Path=/'),
+    explanation:
+      '`SameSite=None` and `Secure` ship together or not at all: the specification says to abort and ignore the cookie entirely unless the secure-only flag is set, so what you get is no cookie rather than a corrected one. The silence is the part worth remembering, because devtools shows you a `Set-Cookie` header that looks perfect while the cookie jar stays empty. The other `Set-Cookie` rejections behave the same way: a `__Host-` name sent with a `Domain` attribute or a `Path` other than `/`, and `Secure` over plain `http` on any host that is not localhost. Note what `Secure` does and does not buy once it is there. It constrains the transport, so the cookie never rides a plaintext request, and it says nothing about who can read the value once it arrives, which is `HttpOnly`.',
+  },
+
+  {
     slug: 'security-xss-source',
     title: 'The rendering call that trusts too much',
     category: 'security',
@@ -227,6 +267,53 @@ export const securityProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'security-password-compare',
+    title: 'The hash that never matches',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A login route hashes the submitted password and compares it to the stored one:',
+      '',
+      code(
+        'js',
+        'const attempt = await bcrypt.hash(password, 12);',
+        'if (attempt === user.passwordHash) {',
+        '  // never reached, even for the right password',
+        '}'
+      ),
+      '',
+      'Name the call that compares them correctly.'
+    ),
+    graderConfig: {
+      accept: ['bcrypt.compare', 'compare', 'comparesync', 'argon2.verify', 'verify'],
+      acceptPatterns: ['\\bcompare\\b', '\\bverify\\b'],
+      nearMisses: {
+        timingsafeequal:
+          'Right instinct about timing, wrong layer. You still cannot re-hash and compare, because the new hash carries a different salt.',
+        sha256: 'Changing the algorithm does not help. The problem is re-hashing at all.',
+        'store the salt separately':
+          'The salt is already in the stored string. Name the call that reads it back out.',
+      },
+      hints: [
+        'Every call to `hash` generates a fresh salt, so the same password gives a different string every time.',
+        'The stored string already carries its salt and its cost factor. Something has to read them back out.',
+        '`bcrypt.compare(password, storedHash)`, or `argon2.verify(storedHash, password)`.',
+      ],
+    },
+    canonicalAnswer: 'bcrypt.compare',
+    solution: code(
+      'js',
+      'const ok = await bcrypt.compare(password, user.passwordHash);',
+      '',
+      '// argon2.verify(user.passwordHash, password) is the same idea'
+    ),
+    explanation:
+      'A password hash is salted per call, so hashing the same password twice gives two different strings and an equality check can only ever fail. The stored value is not a bare digest: it packs the algorithm, the cost factor and the salt alongside the hash, which is what lets `compare` re-derive the digest exactly the way it was made the first time. That packing is also why raising the cost factor does not lock existing users out, since their rows still carry the settings they were hashed with. And `compare` runs in constant time, so it does not leak how much of the digest matched the way a `===` on two strings would.',
+  },
+
+  {
     slug: 'security-secrets-in-frontend',
     title: 'The API key in the bundle',
     category: 'security',
@@ -355,6 +442,50 @@ export const securityProblems: ProblemDraft[] = [
     ),
     explanation:
       'The value of an open redirect to an attacker is that the link genuinely begins on your domain, so it survives a careful look at the hostname and any filter that trusts your domain. The `//evil.com` case is the one hand-rolled checks miss: it is protocol-relative, so it looks like a path and behaves like an absolute URL. Parsing with `new URL(next, origin)` and comparing the resulting origin is the robust version. The same trap appears in `window.location = userValue` on the client, where a `javascript:` URL is XSS as well.',
+  },
+
+  {
+    slug: 'security-open-redirect-relative-check',
+    title: 'The check that starts with a slash',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'After login the app sends the user wherever `?next=` says, once it has checked that the value',
+      'is a path on this site:',
+      '',
+      code('js', "if (next.startsWith('/')) res.redirect(next);"),
+      '',
+      'Write a value of `next` that passes that check and still lands the user on `evil.com`.'
+    ),
+    graderConfig: {
+      accept: ['//evil.com', '/\\evil.com'],
+      acceptPatterns: ['(^|[^:])//evil\\.com', '/\\\\evil\\.com'],
+      nearMisses: {
+        'https://evil.com':
+          'That one the check does catch, because it does not start with a slash. You want a value that does.',
+        '/evil.com':
+          'One slash is an ordinary path on your own origin, so this redirects to your own 404.',
+      },
+      hints: [
+        'The check reads the value as a string. The browser reads it with a URL parser, and the two disagree.',
+        'A URL that opens with two slashes has no scheme and does have a host: the scheme is inherited from the page it resolves against.',
+        '`//evil.com`, which starts with `/` and resolves to `https://evil.com`.',
+      ],
+    },
+    canonicalAnswer: '//evil.com',
+    solution: code(
+      'js',
+      "new URL('//evil.com', 'https://your-site.com/login').origin; // 'https://evil.com'",
+      '',
+      '// the check that holds: parse first, compare the origin, redirect to what you rebuilt',
+      'const url = new URL(next, SITE);',
+      "if (url.origin !== SITE) return res.redirect('/');",
+      'res.redirect(url.pathname + url.search);'
+    ),
+    explanation:
+      "`//evil.com` starts with a slash and carries no scheme, so the parser reads the two slashes as the start of an authority, takes `evil.com` as the host, and inherits `https:` from the page. It is not the only spelling. For `http` and `https` the URL Standard treats a backslash like a slash in that position, so `/\\evil.com` reaches the same host, and `https:/\\evil.com` reaches it without containing `://` for a check to search for. Each of those beats a different piece of string surgery, which is why the check that holds does not inspect the string at all: resolve with `new URL(next, SITE)` and compare `url.origin`. Redirect to the path you rebuilt from the parsed URL rather than to the string that passed, and `javascript:` is rejected for free, since its origin is the string `'null'`.",
   },
 
   {
@@ -938,6 +1069,48 @@ export const securityProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'security-trust-proxy-hops',
+    title: 'Every request from the same address',
+    category: 'security',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'An Express app runs behind exactly one load balancer. Its rate limiter keys on `req.ip`, the',
+      'access log shows a single address for the entire internet, and one noisy client gets everybody',
+      'a 429.',
+      '',
+      'Write the one line that makes `req.ip` the address the load balancer recorded.'
+    ),
+    graderConfig: {
+      accept: ["app.set('trust proxy', 1)"],
+      acceptPatterns: ['set\\([^)]*trust proxy[^)]*,\\s*1\\s*\\)'],
+      nearMisses: {
+        "app.set('trust proxy', true)":
+          'true believes the whole chain, the entry the client wrote included. Give it the number of hops you actually run.',
+        "req.headers['x-forwarded-for']":
+          'Reading the header yourself trusts every entry in it, and the leftmost one is the entry an attacker sets.',
+      },
+      hints: [
+        'Express knows how to read `X-Forwarded-For`. It refuses to until you tell it how far along the chain to trust.',
+        'The setting takes a hop count, because Express counts in from the right, past the proxies you operate.',
+        "`app.set('trust proxy', 1)`",
+      ],
+    },
+    canonicalAnswer: "app.set('trust proxy', 1)",
+    solution: code(
+      'js',
+      "app.set('trust proxy', 1); // one hop, counted from the right",
+      '',
+      '// before: req.ip is the load balancer, identically for every request on earth',
+      '// after:  req.ip is the address that load balancer wrote down',
+      "// never:  app.set('trust proxy', true), which believes the client too"
+    ),
+    explanation:
+      '`req.ip` is the socket address until you say otherwise, and behind a load balancer that address is the load balancer, so a limiter keyed on it has one bucket for everyone. The number is the load-bearing part. A count tells Express how many entries at the right-hand end of `X-Forwarded-For` its own infrastructure appended, so it walks in that far and stops at the first address it did not write. Set it to `true` instead and Express believes the whole chain, which makes `req.ip` the leftmost entry, the one a client can invent, and now the limiter hands out a fresh bucket per request rather than one for everyone. The same setting decides whether `req.protocol` reads `X-Forwarded-Proto`, which is what a redirect-to-HTTPS middleware needs before it stops looping behind a proxy that terminated TLS.',
+  },
+
+  {
     slug: 'security-cookie-flags',
     title: 'One cookie, three attributes, three attacks',
     category: 'security',
@@ -987,12 +1160,12 @@ export const securityProblems: ProblemDraft[] = [
       ],
     },
     canonicalAnswer:
-      "HttpOnly, Secure and SameSite. HttpOnly keeps JavaScript from reading the cookie through document.cookie, which is what stops a single XSS from exfiltrating it. Secure sends the cookie only over HTTPS, so a network attacker on the same coffee-shop wifi can't read it off a plaintext request the way they could without the flag. SameSite, Lax by default in modern browsers, stops the cookie riding along on a cross-site POST that another site's page triggers, which is CSRF.",
+      "HttpOnly, Secure and SameSite. HttpOnly keeps JavaScript from reading the cookie through document.cookie, which is what stops a single XSS from exfiltrating it. Secure sends the cookie only over HTTPS, so a network attacker on the same coffee-shop wifi can't read it off a plaintext request the way they could without the flag. SameSite=Lax stops the cookie riding along on a cross-site POST that another site's page triggers, which is CSRF.",
     solution: code(
       'http',
       'Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=3600'
     ),
     explanation:
-      "None of the three cover for each other. HttpOnly keeps document.cookie from returning it, but a same-origin fetch still attaches the cookie automatically, since HttpOnly blocks the JavaScript read, not the browser's own send. Secure only constrains the transport: a cookie readable by an injected script because HttpOnly is missing is exactly as stealable over HTTPS as over HTTP. SameSite=Lax is the default now in evergreen browsers when no attribute is set at all, which covers the classic hidden-form CSRF but still sends the cookie on an ordinary top-level GET link, so a state-changing action still needs to happen on POST rather than GET for SameSite to be doing any of the work. Set all three. They cost nothing and each closes a door the others do not.",
+      "None of the three cover for each other. HttpOnly keeps document.cookie from returning it, but a same-origin fetch still attaches the cookie automatically, since HttpOnly blocks the JavaScript read, not the browser's own send. Secure only constrains the transport: a cookie readable by an injected script because HttpOnly is missing is exactly as stealable over HTTPS as over HTTP. SameSite is the one to set explicitly rather than inherit, because browsers disagree about what an absent attribute means: Chromium treats it as Lax, Firefox as None. Lax covers the classic hidden-form CSRF but still sends the cookie on an ordinary top-level GET link, so a state-changing action still needs to happen on POST rather than GET for SameSite to be doing any of the work. Set all three. They cost nothing and each closes a door the others do not.",
   },
 ];

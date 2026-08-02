@@ -3,6 +3,7 @@ title: The event loop
 question: What does blocking actually mean when there is only one thread?
 order: 5
 practise:
+  - debug-blocked-render
   - js-microtask-order
   - debug-async-foreach
   - js-await-in-loop

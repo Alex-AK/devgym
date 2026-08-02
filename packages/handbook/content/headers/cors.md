@@ -3,6 +3,7 @@ title: CORS
 question: Why does the browser block this when curl gets a 200?
 order: 4
 practise:
+  - http-cors-expose-headers
   - http-cors-preflight
   - http-preflight-cache
   - security-cors-not-auth

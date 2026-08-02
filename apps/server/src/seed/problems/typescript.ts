@@ -1789,4 +1789,156 @@ export const typescriptProblems: ProblemDraft[] = [
     explanation:
       '`asserts value is User` describes an effect on control flow rather than a value: if the call returns at all, the narrowing holds from there on. Two things to remember before using it. TypeScript requires the call target to have an explicit type annotation, so `const assertIsUser = (v: unknown): asserts v is User => { … }` fails at every call site with TS2775 until you annotate the const, which is why these are usually written as function declarations. And, exactly like a predicate, the compiler takes the signature on trust: a body that checks the wrong thing narrows to a lie. The related `asserts value` form, with no `is T`, narrows the argument to truthy, which is how `node:assert` is typed.',
   },
+
+  {
+    slug: 'ts-falsy-vs-nullish',
+    title: 'The count of zero that went missing',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      '`0` is a real count, and this reports it as no count at all:',
+      '',
+      code(
+        'ts',
+        'function label(count: number | undefined): string {',
+        "  if (!count) return 'none';",
+        '  return `${count} items`;',
+        '}',
+        '',
+        "label(0); // 'none', and it should be '0 items'"
+      ),
+      '',
+      'Rewrite the guard so only a missing count takes the first branch.'
+    ),
+    graderConfig: {
+      accept: [],
+      acceptPatterns: [
+        'count\\s*[!=]==?\\s*undefined',
+        'count\\s*[!=]==?\\s*null',
+        'typeof\\s+count\\s*[!=]==?\\s*\\W?undefined',
+      ],
+      closeSubstrings: {
+        '!count':
+          'That is the check you already have. `!` asks about truthiness, and `0` is falsy.',
+        'count > 0':
+          'That still sends `0` down the missing branch. The question is whether a count arrived at all.',
+      },
+      hints: [
+        '`!count` asks whether the value is falsy, and MDN lists `0`, `-0`, `0n`, `""` and `NaN` alongside `null` and `undefined`.',
+        'You want a check for presence, not for truthiness.',
+        "`if (count === undefined) return 'none';`, or `count == null` when either nullish value can arrive.",
+      ],
+    },
+    canonicalAnswer: "if (count === undefined) return 'none';",
+    solution: code(
+      'ts',
+      'function label(count: number | undefined): string {',
+      "  if (count === undefined) return 'none';",
+      '  return `${count} items`;',
+      '}',
+      '',
+      '// count == null when null can arrive as well as undefined'
+    ),
+    explanation:
+      'Truthiness and presence are different questions, and the falsy list is longer than most people hold in their head. On a `number | undefined` this routes a real zero down the missing path, and on a `string | undefined` it does the same to an empty search box, which is how a price of 0 and a blank filter both turn into "nothing here". Write the check you mean: `count === undefined` for one nullish value, `count == null` for both, and that loose comparison is the one worth keeping, because it is true for `null` and `undefined` and nothing else. `count || 10` is the same bug in expression form and `count ?? 10` is its fix, for the same reason.',
+  },
+
+  {
+    slug: 'ts-as-const-not-frozen',
+    title: 'as const did not freeze anything',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'The config is `as const`, and a module that never met the types writes to it anyway:',
+      '',
+      code(
+        'ts',
+        'const config = { retries: 3 } as const;',
+        '',
+        "config.retries = 5;      // TS2540: Cannot assign to 'retries'",
+        'Object.isFrozen(config); // false'
+      ),
+      '',
+      'Name the call that makes the object read-only at runtime too.'
+    ),
+    graderConfig: {
+      accept: ['object.freeze', 'object.freeze()', 'freeze', 'object.freeze(config)'],
+      acceptPatterns: ['Object\\.freeze'],
+      nearMisses: {
+        'as const': 'That is what it already has, and it is erased before the first line runs.',
+        readonly: '`readonly` is a compile-time promise, the same one `as const` already made.',
+        const: '`const` stops the binding being reassigned. It says nothing about the object.',
+      },
+      hints: [
+        'Types are erased, so anything at the type level is gone by the time the code runs.',
+        'You need a runtime call from the standard library, not a type-level one.',
+        '`Object.freeze(config)`, and note that MDN calls it shallow.',
+      ],
+    },
+    canonicalAnswer: 'Object.freeze',
+    solution: code(
+      'ts',
+      'const config = Object.freeze({ retries: 3 } as const);',
+      '// as const keeps the literal type; Object.freeze makes the write throw',
+      '',
+      '// freeze is shallow, so a nested object needs its own call',
+      'const nested = Object.freeze({ retry: Object.freeze({ times: 3 }) });'
+    ),
+    explanation:
+      '`as const` and `readonly` are promises to the compiler, and the compiler is gone by the time the code runs, which is what `Object.isFrozen` is reporting. `Object.freeze` is the runtime half, and MDN notes it is shallow, the opposite of `as const` going all the way down. In strict mode, which is every ES module, writing to a frozen property throws a `TypeError` rather than failing quietly. Most application code never needs the runtime half, because everything touching the object was type-checked. Reach for it at a boundary: an object handed to a library, exported from a package, or shared with code the compiler never saw.',
+  },
+
+  {
+    slug: 'ts-readonly-shallow',
+    title: 'readonly, and the mutation it did not stop',
+    category: 'typescript',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      "The parameter is `readonly` and the second line still edits the caller's data:",
+      '',
+      code(
+        'ts',
+        'type Row = { id: string; tags: string[] };',
+        '',
+        'function archive(rows: readonly Row[]) {',
+        "  rows.push(newRow);                                 // Property 'push' does not exist",
+        "  for (const row of rows) row.tags.push('archived'); // no error",
+        '}'
+      ),
+      '',
+      'In one word, what is `readonly` here?'
+    ),
+    graderConfig: {
+      accept: ['shallow', 'shallow only', 'it is shallow', 'only shallow'],
+      acceptPatterns: ['\\bshallow\\b'],
+      nearMisses: {
+        deep: 'It is the opposite. Only the array itself is protected.',
+        immutable: 'The array is. The objects it holds are not.',
+      },
+      hints: [
+        '`readonly Row[]` removes the array’s own mutating methods: `push`, `sort`, `splice`.',
+        'It says nothing about the objects the array holds. `row.tags` is still a plain `string[]`.',
+        'One word, and it is what `readonly`, `Readonly<T>` and `Object.freeze` all have in common.',
+      ],
+    },
+    canonicalAnswer: 'shallow',
+    solution: code(
+      'ts',
+      '// readonly has to be written at every level you want protected',
+      'type Row = { readonly id: string; readonly tags: readonly string[] };',
+      '',
+      'function archive(rows: readonly Row[]) {',
+      '  rows.push(newRow); // error',
+      "  for (const row of rows) row.tags.push('archived'); // error too",
+      '}'
+    ),
+    explanation:
+      '`readonly T[]` removes `push`, `sort`, `splice` and the rest from the array type, and stops there. The elements keep whatever types they already had, so one `readonly` protects exactly one level. TypeScript ships no deep version, so you either repeat it at each level you care about or reach for a recursive mapped type, which is what type-fest publishes as `ReadonlyDeep`. The direction is worth knowing too: a `number[]` is assignable to a `readonly number[]` parameter and not the other way round, which makes `readonly` cheap to add to a function that only reads and awkward to add to what one returns.',
+  },
 ];

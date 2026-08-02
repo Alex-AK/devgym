@@ -8,6 +8,7 @@ practise:
   - ts-satisfies-keeps-literals
   - ts-as-const
   - ts-excess-property
+  - ts-as-const-not-frozen
 sources:
   - author: TypeScript
     title: 'Everyday Types: Type Assertions'

@@ -3,6 +3,7 @@ title: What a join actually does
 question: Why did joining one table to another multiply my rows?
 order: 2
 practise:
+  - sql-join-author-name
   - sql-orders-per-customer
   - sql-anti-join
   - sql-self-join

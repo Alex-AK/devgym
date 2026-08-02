@@ -1091,4 +1091,700 @@ export const httpProblems: ProblemDraft[] = [
     explanation:
       'The four questions that pick a transport answer themselves here: the server starts it, the messages go one way, nothing needs a reply, and the cost is one held-open connection. SSE is the option people skip past, and skipping it means reimplementing reconnection, resumption and backoff by hand, because the WebSocket API gives you none of them. The honest limits are worth knowing before you commit: an event stream is UTF-8 text by specification, so binary has to be encoded into it; `EventSource` cannot set request headers, so bearer-token auth needs a cookie or a query parameter; and over HTTP/1.1 the six-connections-per-domain cap is per browser rather than per tab, so a handful of open dashboards will hang the seventh. Over HTTP/2 the streams are multiplexed and that particular cap stops mattering.',
   },
+
+  {
+    slug: 'http-idempotency-key-scope',
+    title: 'A new key on every attempt',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'This loop sends an `Idempotency-Key` on every attempt, and the customer is charged three times:',
+      '',
+      code(
+        'js',
+        'for (let attempt = 0; attempt < 3; attempt += 1) {',
+        '  const key = crypto.randomUUID();',
+        '',
+        "  const res = await fetch('/payments', {",
+        "    method: 'POST',",
+        "    headers: { 'Idempotency-Key': key, 'Content-Type': 'application/json' },",
+        '    body: JSON.stringify(payment),',
+        '  });',
+        '  if (res.ok) return res;',
+        '}'
+      ),
+      '',
+      'Name the line to move, and say what the server makes of each attempt until you move it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'above the loop',
+            'outside the loop',
+            'out of the loop',
+            'before the loop',
+            'once per',
+            'one key',
+            'same key',
+            'per operation',
+            'per intent',
+          ],
+          missingFeedback: 'Where does the key have to be created for a retry to be recognisable?',
+        },
+        {
+          synonyms: [
+            'new key',
+            'fresh key',
+            'different key',
+            'another key',
+            'per attempt',
+            'each attempt',
+            'every attempt',
+            'unrelated',
+            'separate payment',
+            'new payment',
+            'never seen',
+          ],
+          missingFeedback: 'What does the server see arriving when the key changes each time?',
+        },
+      ],
+      hints: [
+        'Every attempt does carry a key. Look at where the key comes from.',
+        'The key names the operation, not the attempt.',
+        'Move `crypto.randomUUID()` above the loop so all three attempts send the same key.',
+      ],
+    },
+    canonicalAnswer:
+      'Move crypto.randomUUID() above the loop so one key covers the whole payment. While it stays inside, every attempt carries a new key, so the server has never seen it before and treats each retry as a separate payment.',
+    solution: code(
+      'js',
+      'const key = crypto.randomUUID(); // once, when the user pressed the button',
+      '',
+      'for (let attempt = 0; attempt < 3; attempt += 1) {',
+      "  const res = await fetch('/payments', {",
+      "    method: 'POST',",
+      "    headers: { 'Idempotency-Key': key, 'Content-Type': 'application/json' },",
+      '    body: JSON.stringify(payment),',
+      '  });',
+      '  if (res.ok) return res;',
+      '}'
+    ),
+    explanation:
+      "A key generated per attempt is no key at all. The server's whole job is to recognise the second copy of a request it already handled, and a fresh UUID makes every attempt look like a new payment, so the mechanism is fitted, the header is present, and nothing is protected. The key belongs to the intent: mint it where the intent is formed, when the form is rendered or the button is pressed, and reuse it unchanged. That also means it has to outlive whatever created it, so a component that remounts and mints a new one has the same bug with a longer fuse. Stripe keeps the stored result for at least 24 hours, which is the window a retry has to land in.",
+  },
+
+  {
+    slug: 'http-cursor-tiebreaker',
+    title: 'The post that never appears on any page',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A feed pages twenty at a time, ordered by `created_at DESC`, with the cursor applied as `WHERE created_at < ?`.',
+      '',
+      'Three posts were published in the same second. One of them never appears on any page.',
+      '',
+      'Name the column to add to both the `ORDER BY` and the cursor.'
+    ),
+    graderConfig: {
+      accept: ['id', 'the id', 'primary key', 'the primary key', 'post id', 'the id column'],
+      acceptPatterns: ['(^|[^\\w])ids?\\b', 'primary key'],
+      nearMisses: {
+        created_at: 'That is the column that ties. You need a second one that cannot.',
+        updated_at: 'Another timestamp has the same problem: two rows can share it.',
+        timestamp: 'Any timestamp can tie. The tiebreaker has to be unique per row.',
+        '<=': 'Switching to `<=` returns all three of them again instead of dropping them.',
+      },
+      hints: [
+        'Two rows sharing a `created_at` look identical to the cursor.',
+        'A cursor names a row only if the sort key is unique. Make it unique.',
+        '`ORDER BY created_at DESC, id DESC`, with both values carried in the cursor.',
+      ],
+    },
+    canonicalAnswer: 'id',
+    solution: code(
+      'sql',
+      'SELECT id, title, created_at',
+      'FROM posts',
+      "WHERE (created_at, id) < ('2026-03-14 09:12:00', 8931)",
+      'ORDER BY created_at DESC, id DESC',
+      'LIMIT 20;'
+    ),
+    explanation:
+      'A cursor identifies a row only if the sort key is unique. When rows tie, the page boundary lands in the middle of them: `<` drops every row sharing that second, including ones nobody has seen, and `<=` returns them all a second time. Both are wrong, in opposite directions, and the primary key fixes both. It has to go in three places at once: the `ORDER BY`, the cursor you hand back, and the index, or the database sorts rows the index could have handed over in order already. Keep the cursor opaque on the wire, because the moment a client parses it your sort key is part of the public contract and adding a tiebreaker becomes a breaking change.',
+  },
+
+  {
+    slug: 'http-rate-limit-window-expiry',
+    title: 'The client that is limited forever',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A fixed-window limiter counts in Redis. One client is stuck at `429` long after it went quiet, and its key never expires:',
+      '',
+      code(
+        'js',
+        'const used = await redis.incr(key);',
+        'await redis.expire(key, 60);',
+        '',
+        "if (used > limit) return res.status(429).json({ error: 'Too many requests' });"
+      ),
+      '',
+      'Explain what the second line does to a client that keeps calling, and name the condition it needs.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'every request',
+            'each request',
+            'every call',
+            'refresh',
+            'resets',
+            'pushes',
+            'moves the',
+            'extends',
+            'renews',
+            'never expires',
+            'outruns',
+            'restarts',
+          ],
+          missingFeedback: 'What happens to the deadline when another request arrives inside it?',
+        },
+        {
+          synonyms: [
+            'used === 1',
+            'used == 1',
+            'is 1',
+            'equals 1',
+            'returns 1',
+            'first request',
+            'new key',
+            'counter is created',
+            'when it is created',
+            'created',
+            'no ttl',
+            'does not exist',
+          ],
+          missingFeedback: 'When is the only moment the expiry should be set?',
+        },
+      ],
+      hints: [
+        '`INCR` on a missing key creates it with no deadline at all, which is why the expiry is there.',
+        'Calling `EXPIRE` unconditionally pushes that deadline forward on every request.',
+        'Guard it: `if (used === 1) await redis.expire(key, 60);`',
+      ],
+    },
+    canonicalAnswer:
+      'Every request pushes the deadline another 60 seconds out, so a client that keeps calling never lets the key expire and its counter never resets back to zero. Set the expiry only when the counter is created, which is when INCR returns 1.',
+    solution: code(
+      'js',
+      'const used = await redis.incr(key);',
+      '',
+      '// INCR creates a missing key with no deadline, so the first request sets one.',
+      '// Setting it again on every request means the counter never expires.',
+      'if (used === 1) await redis.expire(key, 60);'
+    ),
+    explanation:
+      'An `INCR` against a key that does not exist creates it at 1 with no TTL, so something has to set one, and the first request is the only safe moment. Set it again on every request and the deadline outruns the traffic: the counter never resets, the client stays over the limit, and the harder it retries the longer it stays there. Testing misses this because a quiet key does eventually expire, so it only appears under the load the limiter was written for. One honest weakness survives the fix, which is the boundary: a client that spends its allowance at the end of one window and again at the start of the next gets double the limit in a couple of seconds.',
+  },
+
+  {
+    slug: 'http-cache-immutable-asset',
+    title: 'Caching a fingerprinted bundle',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'The build emits `/assets/app.4f2c9d.js`, and the next build emits a different filename. The bytes behind a given name can never change.',
+      '',
+      'Write the `Cache-Control` value for that response.'
+    ),
+    graderConfig: {
+      accept: [
+        'public, max-age=31536000, immutable',
+        'max-age=31536000, immutable',
+        'public,max-age=31536000,immutable',
+      ],
+      acceptPatterns: ['(?=[\\s\\S]*max-?age\\s*=\\s*\\d{4,})(?=[\\s\\S]*immutable)'],
+      nearMisses: {
+        'max-age=31536000':
+          'The lifetime is right. One more token tells the browser not to revalidate it on a reload either.',
+        'no-store':
+          'These bytes are safe to keep. Nothing about this file has to stay off the disk.',
+        'no-cache':
+          'That stores it and revalidates before every reuse. Right for the HTML, wasteful here.',
+        public: '`public` says shared caches may store it, and says nothing about for how long.',
+      },
+      hints: [
+        'The filename carries a hash of the contents, so this URL can never go stale.',
+        'Give it the longest lifetime you are willing to write, and stop the reload revalidation too.',
+        '`public, max-age=31536000, immutable`. A year, which is the conventional ceiling.',
+      ],
+    },
+    canonicalAnswer: 'public, max-age=31536000, immutable',
+    solution: code(
+      'http',
+      '# The hashed asset. The name changes when the bytes change.',
+      'Cache-Control: public, max-age=31536000, immutable',
+      '',
+      '# The HTML that names it. Cheap to check, and must never be a version behind.',
+      'Cache-Control: no-cache'
+    ),
+    explanation:
+      'The hash in the filename is what makes a year safe: changed bytes are a changed URL, so a stored copy can never be wrong. `immutable` is the second half of that promise, and it earns its place because a reload otherwise sends a conditional request for every asset on the page, and a screenful of `304`s is still a screenful of round trips. The pairing is the part worth memorising: the asset gets a year, the HTML that names it gets `no-cache`, and one cheap revalidation picks up every new filename at once. Put a long `max-age` on an unhashed URL instead and you have shipped something you cannot recall.',
+  },
+
+  {
+    slug: 'http-stale-while-revalidate',
+    title: 'The request that pays for everyone else',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A report takes two seconds to build and is served with `Cache-Control: max-age=60`. Once a minute, one unlucky request waits the full two seconds while every other request is instant.',
+      '',
+      'Name the `Cache-Control` directive that hands that request the stored copy and refreshes it behind the response.'
+    ),
+    graderConfig: {
+      accept: ['stale-while-revalidate', 'stale while revalidate'],
+      acceptPatterns: ['stale-?\\s*while-?\\s*revalidate'],
+      nearMisses: {
+        'stale-if-error':
+          'Same RFC, different trigger: that one covers a 5xx from upstream, not plain staleness.',
+        'must-revalidate':
+          'That forbids serving a stale copy. You want the directive that permits it, briefly.',
+        'no-cache':
+          'That makes every reuse wait for the server, which is the waiting you are removing.',
+        'max-age': 'max-age sets how long it stays fresh. This is about the moment after that.',
+      },
+      hints: [
+        'The stored copy is seconds past its freshness. It is late rather than wrong.',
+        'RFC 5861 adds a directive for exactly this: serve the stale copy now, fetch a new one behind it.',
+        '`Cache-Control: max-age=60, stale-while-revalidate=600`',
+      ],
+    },
+    canonicalAnswer: 'stale-while-revalidate',
+    solution: code(
+      'text',
+      'Cache-Control: max-age=60, stale-while-revalidate=600',
+      '',
+      '0-60s      fresh:  served from cache, no request at all',
+      '60-660s    stale:  served from cache immediately, revalidated in the background',
+      '660s+      stale:  the next request waits for the origin'
+    ),
+    explanation:
+      '`max-age` is a cliff, and the request that arrives one second after it lapses pays for everybody. That is why a cheap endpoint has an expensive tail, and why the tail gets worse the more traffic you have, because more clients queue behind the one rebuild. `stale-while-revalidate` turns the cliff into a ramp: for that many seconds past freshness a cache may answer with what it holds and refresh behind the response, so nobody waits. What you are buying it with is bounded staleness, so pick the window from how out of date the number is allowed to be. RFC 5861 has a companion, `stale-if-error`, that does the same for a 500, 502, 503 or 504 upstream: keep serving the old copy rather than passing the error on.',
+  },
+
+  {
+    slug: 'http-age-header',
+    title: 'Finding out who answered',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A price is wrong for everyone, including a browser that has never visited the site. `curl -sI` against the public URL shows:',
+      '',
+      code('http', 'HTTP/2 200', 'cache-control: public, max-age=60', 'etag: "8f21c"'),
+      '',
+      'Name the response header that would tell you a cache in the middle answered rather than your server.'
+    ),
+    graderConfig: {
+      accept: ['age', 'the age header', 'age header'],
+      acceptPatterns: ['(^|[^-\\w])age\\b'],
+      nearMisses: {
+        'max-age':
+          'That is the lifetime the origin set. You want the one saying how much is spent.',
+        etag: 'The ETag identifies the version, not who handed it to you.',
+        date: 'Date is when the response was generated, and every response carries one.',
+        'x-cache': 'Some CDNs do send that, and it is not standardised. There is one in the spec.',
+        'cache-control': 'Cache-Control is instructions going out. You want what came back.',
+      },
+      hints: [
+        'Your server never sends it with a meaningful value. Only something holding a copy does.',
+        'RFC 9111 defines it as the time since the response was generated or validated at the origin.',
+        '`Age`. Anything above zero means a cache answered.',
+      ],
+    },
+    canonicalAnswer: 'Age',
+    solution: code(
+      'text',
+      '$ curl -sI https://shop.example.com/api/prices',
+      'cache-control: public, max-age=60',
+      'age: 47      <- an edge answered, with 13 seconds of freshness left',
+      '',
+      '$ curl -sI https://origin.shop.example.com/api/prices',
+      'age: 0       <- the origin. Still wrong here means the edge is innocent.'
+    ),
+    explanation:
+      "`Age` is the sender's estimate of the time since the response was generated or validated at the origin, so anything above zero means a cache answered and your handler never ran. One number splits the search in half: subtract it from `max-age` to see how long the bad copy has left, then repeat the request against the origin hostname to find out which side of the network line it is coming from. It only sees HTTP caches, though. Below your own front door, the `Map` in module scope, the Redis entry, the ORM identity map and the database buffer pool each have their own lifetime, and none of them will ever show up in a header.",
+  },
+
+  {
+    slug: 'http-offset-cost',
+    title: 'What a deep OFFSET costs',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      "A list endpoint's query ends `ORDER BY created_at DESC LIMIT 20 OFFSET 100000`. Page 1 is instant, this page takes seconds, and the index is being used.",
+      '',
+      'How many rows does the database produce in sorted order before it can return those twenty?'
+    ),
+    graderConfig: {
+      accept: ['100020', '100,020', '100 020'],
+      acceptPatterns: ['\\b100[,. ]?020\\b'],
+      nearMisses: {
+        '20': 'Twenty come back. The question is how many had to exist for that to happen.',
+        '100000': 'That is how many get discarded. You still asked for twenty on top.',
+        '100,000': 'That is how many get discarded. You still asked for twenty on top.',
+      },
+      hints: [
+        '`OFFSET` is not a place to start reading from.',
+        'The server computes everything up to and including your window, then throws the skipped rows away.',
+        '100,020: the hundred thousand it skips, plus the twenty you asked for.',
+      ],
+    },
+    canonicalAnswer: '100020',
+    solution: code(
+      'sql',
+      '-- 100,020 rows produced, 100,000 discarded, and worse on every page.',
+      'SELECT id, created_at FROM orders ORDER BY created_at DESC LIMIT 20 OFFSET 100000;',
+      '',
+      '-- Keyset: 20 rows produced, and the same plan on page 5000 as on page 1.',
+      'SELECT id, created_at FROM orders',
+      ' WHERE (created_at, id) < ($1, $2)',
+      ' ORDER BY created_at DESC, id DESC',
+      ' LIMIT 20;'
+    ),
+    explanation:
+      'The Postgres docs put it plainly: rows skipped by `OFFSET` still have to be computed inside the server. So a page costs what its depth costs rather than what its size costs, and nothing about that is visible while you are testing on page 1. It arrives a year late, when the table has grown, and it arrives first for whoever pages deepest, which is usually a script rather than a person. Keyset pagination replaces the count with a value the index can seek to, so twenty rows are produced for twenty returned. What you give up is real: no jumping to page 47, and a total count still costs a second query.',
+  },
+
+  {
+    slug: 'http-cors-expose-headers',
+    title: 'The header the browser hides',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A paginated list endpoint answers with `X-Total-Count: 482`. curl shows the header and so does the network tab, but in the page:',
+      '',
+      code(
+        'js',
+        "const res = await fetch('https://api.example.com/orders'); // cross-origin",
+        "res.headers.get('X-Total-Count'); // null"
+      ),
+      '',
+      'Name the response header the server has to add.'
+    ),
+    graderConfig: {
+      accept: [
+        'access-control-expose-headers',
+        'expose-headers',
+        'access control expose headers',
+        'expose headers',
+      ],
+      acceptPatterns: ['expose-?\\s*headers'],
+      nearMisses: {
+        'access-control-allow-headers':
+          'Allow-Headers covers request headers the browser may send. This is about reading the response.',
+        'access-control-allow-origin':
+          'That decides whether the response can be read at all, and it is already working.',
+        vary: 'Vary keeps a shared cache honest. It says nothing about what script may read.',
+      },
+      hints: [
+        'The response arrived intact. What script may read off it is a separate decision.',
+        'A cross-origin response exposes seven headers by default, and yours is not one of them.',
+        '`Access-Control-Expose-Headers: X-Total-Count`',
+      ],
+    },
+    canonicalAnswer: 'Access-Control-Expose-Headers',
+    solution: code(
+      'js',
+      "res.setHeader('X-Total-Count', String(total));",
+      "res.setHeader('Access-Control-Expose-Headers', 'X-Total-Count');"
+    ),
+    explanation:
+      'CORS gates two things separately. Whether script may read the response at all is `Access-Control-Allow-Origin`, and which of its headers script may see defaults to a safelist of seven: `Cache-Control`, `Content-Language`, `Content-Length`, `Content-Type`, `Expires`, `Last-Modified` and `Pragma`. Your own header is not on it, so `headers.get` returns `null` while every tool outside the browser shows the header plainly, which is what makes this look like the server dropping it. List what you want exposed, comma separated, and put it on the real response rather than on the preflight. Same-origin calls never meet any of this, so the bug appears the day the API moves to its own subdomain.',
+  },
+
+  {
+    slug: 'http-transport-queue',
+    title: 'The work that has to wait',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A user uploads a video. It then has to be transcoded, scanned and emailed about, and the transcoder is down for ten minutes.',
+      '',
+      'The upload itself is a request. Name what the work behind it belongs on, so that ten minutes down costs nothing.'
+    ),
+    graderConfig: {
+      accept: [
+        'queue',
+        'a queue',
+        'message queue',
+        'a message queue',
+        'job queue',
+        'a job queue',
+        'task queue',
+      ],
+      acceptPatterns: ['\\bqueue\\b'],
+      nearMisses: {
+        websocket: 'A socket delivers to whoever is connected now, and nobody is connected.',
+        webhook: 'That is someone else pushing to you, and the retry policy would be theirs.',
+        sse: 'An event stream loses what it sends while nobody is listening.',
+        polling: 'Polling asks again. It does not hold the work while the worker is away.',
+        retry: 'Retrying inside the handler keeps the user waiting for work that is not theirs.',
+      },
+      hints: [
+        'Ask what happens to the message while nobody is listening: is it lost, or does it wait?',
+        'Every transport on the page loses it. One thing holds it.',
+        'A queue. The upload answers straight away and the work runs when the worker is back.',
+      ],
+    },
+    canonicalAnswer: 'a queue',
+    solution: code(
+      'text',
+      'Who starts it      the upload is the user; the work is started by whatever drains the queue',
+      'Directions         one way, deferred',
+      'Nobody listening   it waits. That is the whole difference from a transport',
+      'Cost               infrastructure you now run'
+    ),
+    explanation:
+      'Four questions pick a transport, and the third one decides whether you want a transport at all: what happens to a message sent while nobody is listening. Request/response, server-sent events and WebSockets all lose it. A queue holds it, which is why "this must happen eventually" is a different requirement from "this must happen now". The tell is in the sentence people use to describe the work: transcode it, scan it, email someone. None of that is the user\'s request, and none of it should sit inside their round trip. Answer as soon as the bytes are safe, enqueue the rest, and a ten-minute outage becomes a queue ten minutes deep instead of an error page.',
+  },
+
+  {
+    slug: 'http-webhook-raw-body',
+    title: 'The signature that never matches',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A GitHub webhook handler computes the HMAC exactly as the docs describe, and the signature never matches. The payload logs perfectly:',
+      '',
+      code(
+        'js',
+        'app.use(express.json());',
+        '',
+        "app.post('/webhooks/github', (req, res) => {",
+        '  const body = JSON.stringify(req.body);',
+        "  const expected = 'sha256=' + createHmac('sha256', SECRET).update(body).digest('hex');",
+        "  if (expected !== req.get('X-Hub-Signature-256')) return res.sendStatus(401);",
+        '});'
+      ),
+      '',
+      'Explain why it never matches, and name the fix.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'raw body',
+            'raw request',
+            'raw bytes',
+            'exact bytes',
+            'bytes they sent',
+            'bytes that were sent',
+            'original bytes',
+            'byte for byte',
+            'unparsed',
+            'as sent',
+            'express.raw',
+          ],
+          missingFeedback: 'What exactly did the sender sign, and what do you have to hash?',
+        },
+        {
+          synonyms: [
+            'json.stringify',
+            'stringify',
+            're-serial',
+            'reserial',
+            'serialis',
+            'serializ',
+            'express.json',
+            'body parser',
+            'json parser',
+            'already parsed',
+            'key order',
+            'whitespace',
+            'escap',
+            'different bytes',
+          ],
+          missingFeedback: 'What has already happened to the body by the time your handler runs?',
+        },
+      ],
+      hints: [
+        'The signature covers bytes, and you are hashing a re-serialisation of an object.',
+        'express.json() consumed the request; stringifying it back gives different key order, whitespace and escapes.',
+        'Mount `express.raw({ type: "application/json" })` on this route and HMAC `req.body` directly.',
+      ],
+    },
+    canonicalAnswer:
+      'express.json() parsed the request before the handler ran, and JSON.stringify of that object produces different bytes: another key order, other whitespace, a different escape. The HMAC covers the exact bytes GitHub sent, so hash the raw body instead by mounting express.raw on this route and leaving the JSON parser everywhere else.',
+    solution: code(
+      'js',
+      '// express.raw, not express.json: the signature covers the exact bytes they sent.',
+      "app.post('/webhooks/github', express.raw({ type: 'application/json' }), (req, res) => {",
+      "  const expected = 'sha256=' + createHmac('sha256', SECRET).update(req.body).digest('hex');",
+      "  const sent = req.get('X-Hub-Signature-256') ?? '';",
+      '',
+      '  // timingSafeEqual throws on a length mismatch, so compare lengths first.',
+      '  const signed =',
+      '    sent.length === expected.length &&',
+      '    timingSafeEqual(Buffer.from(sent), Buffer.from(expected));',
+      '  if (!signed) return res.sendStatus(401);',
+      '});'
+    ),
+    explanation:
+      'A signature is over bytes, and there is no route back from a parsed object to the bytes it came from: key order, whitespace and Unicode escaping are all free choices the sender already made and your serialiser will make differently. The raw body is the only thing you can hash, which is why the webhook route gets `express.raw` while everything else keeps the JSON parser. Two things belong on the same line. Compare with `timingSafeEqual` rather than `===`, checking the lengths first because it throws on a mismatch, so a comparison cannot leak the correct signature a byte at a time. And a valid signature says nothing about when: anyone who captured one delivery can replay it for as long as the secret lives, which is why Stripe signs a timestamp alongside the body.',
+  },
+
+  {
+    slug: 'http-websocket-auth-header',
+    title: 'Authenticating a socket',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'The API is behind `Authorization: Bearer …`, and this is the whole of the browser API for opening a socket:',
+      '',
+      code('js', "const socket = new WebSocket('wss://api.example.com/room/42');"),
+      '',
+      'Explain the problem that leaves you with, and name a way round it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'no headers',
+            'cannot set headers',
+            "can't set headers",
+            'no way to set headers',
+            'no request headers',
+            'cannot send headers',
+            'no authorization header',
+            'no auth header',
+            'takes a url',
+            'only a url',
+            'no options',
+            'no second argument',
+          ],
+          missingFeedback: 'What can the constructor not do that `fetch` can?',
+        },
+        {
+          synonyms: [
+            'cookie',
+            'ticket',
+            'query string',
+            'query param',
+            'in the url',
+            'subprotocol',
+            'sub-protocol',
+            'sec-websocket-protocol',
+            'first message',
+          ],
+          missingFeedback: 'Name a way to get the credential to the server anyway.',
+        },
+      ],
+      hints: [
+        'Compare it with `fetch`. What is the second argument here?',
+        'The handshake is an HTTP request the browser builds, and the API gives you no way into it.',
+        'A cookie on the handshake, a short-lived ticket in the query string, or the token as a subprotocol.',
+      ],
+    },
+    canonicalAnswer:
+      'The constructor takes a url and an optional subprotocol list, so there is nowhere to set an Authorization header on the handshake. The ways round it are a cookie sent with the handshake, a short-lived single-use ticket in the query string, or passing the token as a subprotocol.',
+    solution: code(
+      'js',
+      '// A short-lived, single-use ticket, fetched over the authenticated HTTP API.',
+      "const { ticket } = await fetch('/ws-ticket', { headers: auth }).then((r) => r.json());",
+      'const socket = new WebSocket(`wss://api.example.com/room/42?ticket=${ticket}`);',
+      '',
+      '// Or, same origin: a cookie the browser attaches to the handshake by itself.'
+    ),
+    explanation:
+      'The handshake is an ordinary HTTP GET, so the server can authenticate it exactly as it authenticates anything else. The browser is the constraint: `new WebSocket(url, protocols)` takes a URL and an optional subprotocol list, and there is no place to put a header. A cookie is the least surprising answer when the socket shares an origin with the app, because the browser attaches it to the handshake without being asked. A ticket in the query string is the answer when it does not, and the two words that make it safe are short-lived and single-use, because URLs end up in access logs, referrers and error reports. Authenticating in the first message after `open` also works, and then the deadline is yours to enforce: a socket that is allowed to sit there unauthenticated is a socket anybody can open.',
+  },
+
+  {
+    slug: 'http-retry-amplification',
+    title: 'Retries that multiply',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A slow dependency turned into an outage. The HTTP client retries three times, the service wrapper around it retries three times, and the caller retries three times.',
+      '',
+      'Work out how many requests one user action sends, and name the fix.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            '27',
+            'twenty-seven',
+            'twenty seven',
+            'multiply',
+            'multiplies',
+            'multiplied',
+            'compound',
+            'cubed',
+            'product',
+          ],
+          missingFeedback: 'Three layers of three attempts each. How many requests is that?',
+        },
+        {
+          synonyms: [
+            'one layer',
+            'a single layer',
+            'single layer',
+            'only one',
+            'one place',
+            'single place',
+            'one level',
+            'outermost',
+            'top level',
+          ],
+          missingFeedback: 'Name the fix. Where should the retrying live?',
+        },
+      ],
+      hints: [
+        'The retries do not add up. Work out what three layers of three attempts come to.',
+        'Twenty-seven requests for one user action, all aimed at something already struggling.',
+        'Retry at one layer, cap the attempts, and put the deadline on the whole operation.',
+      ],
+    },
+    canonicalAnswer:
+      'Twenty-seven. The layers multiply rather than add, so three attempts at each of three levels is 27 requests for one user action, aimed at something that is already struggling. Retry in one layer only, cap the attempts, and put the deadline on the whole operation rather than on each attempt.',
+    solution: code(
+      'text',
+      'caller          3 attempts',
+      '  service     x 3 attempts',
+      '    client    x 3 attempts',
+      '              = 27 requests for one user action',
+      '',
+      'Retry in one place. Cap the attempts. One deadline for the whole operation.'
+    ),
+    explanation:
+      "Retry counts multiply through a stack rather than adding, so every layer that quietly helps makes the incident worse, and the layers are easy to miss because two of them are usually somebody else's defaults. Time multiplies too: three attempts against a three-second timeout is nine seconds per layer, so the request is still open long after the user gave up. Pick one layer to retry at, usually the one that knows whether the call is safe to repeat at all, and give the whole operation a single deadline the attempts have to fit inside. `Retry-After` beats your formula whenever the server sends one, and full jitter, `random(0, min(cap, base * 2 ** attempt))`, is what stops every client that failed together from arriving back together.",
+  },
 ];

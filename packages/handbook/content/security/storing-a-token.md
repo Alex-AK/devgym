@@ -3,6 +3,7 @@ title: Storing a token
 question: Should the session token live in a cookie or in localStorage, and what does each expose?
 order: 4
 practise:
+  - security-samesite-none-secure
   - security-token-storage
   - security-cookie-flags
 sources:

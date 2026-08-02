@@ -3,6 +3,7 @@ title: Focus, and the three things that break it
 question: Where does the keyboard go after this, and can anyone see where it went?
 order: 4
 practise:
+  - a11y-tabindex-programmatic-focus
   - a11y-focus-visible
   - a11y-focus-trap-modal
   - html-dialog-showmodal

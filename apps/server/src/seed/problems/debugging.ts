@@ -210,6 +210,149 @@ export const debuggingProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'debug-blocked-render',
+    title: 'The spinner that never appears',
+    category: 'debugging',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A "Download all" button shows a spinner, then formats fifty thousand rows:',
+      '',
+      code(
+        'js',
+        "button.addEventListener('click', () => {",
+        '  spinner.hidden = false;',
+        '  const csv = rowsToCsv(rows); // about two seconds of plain JavaScript',
+        '  download(csv);',
+        '  spinner.hidden = true;',
+        '});'
+      ),
+      '',
+      'The page freezes for two seconds and the file downloads. The spinner never appears at all.',
+      '',
+      'Explain why it never appears.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'one thread',
+            'single thread',
+            'same thread',
+            'one job',
+            'same job',
+            'one task',
+            'block',
+          ],
+          missingFeedback: 'What else gets to run while rowsToCsv is working?',
+        },
+        {
+          synonyms: ['render', 'repaint', 'paint', 'redraw', 'update the screen'],
+          missingFeedback: 'What is it that the browser only gets to do between jobs?',
+        },
+        {
+          synonyms: ['returns', 'returned', 'finishes', 'finished', 'completes', 'is done'],
+          missingFeedback: 'Say when the browser gets its turn: what has to happen first?',
+        },
+      ],
+      hints: [
+        'Everything in the handler is one job, and the loop runs one job at a time, all the way to the end.',
+        'Rendering happens between jobs, never during one.',
+        'By the time the handler returns and the browser can paint, `spinner.hidden` is already true again.',
+      ],
+    },
+    canonicalAnswer:
+      'The handler is one job on the one thread that runs JavaScript, so nothing else happens between the first line and the last. The browser only renders between jobs, so it cannot paint the spinner until the handler returns, and by then spinner.hidden is back to true. The DOM was written twice and drawn zero times.',
+    solution: code(
+      'js',
+      '// yield once so the loop can render before the work starts',
+      "button.addEventListener('click', async () => {",
+      '  spinner.hidden = false;',
+      '  await new Promise((resolve) => setTimeout(resolve, 0));',
+      '',
+      '  const csv = rowsToCsv(rows); // the two seconds are still frozen',
+      '  download(csv);',
+      '  spinner.hidden = true;',
+      '});',
+      '',
+      '// nothing freezes at all if the work is not on this thread',
+      "const worker = new Worker('/csv-worker.js');"
+    ),
+    explanation:
+      'One thread runs your JavaScript and a job runs to completion, so the handler holds that thread from its first line to its last: no rendering, no other handler, no timer. Both writes to `spinner.hidden` land in the DOM, the second one before the browser has drawn the first, so there is nothing left to show by the time it can draw. Yielding to the **task** queue is what buys a frame, and awaiting an already-resolved promise does not: microtasks are drained before the loop moves on, so the rendering step never arrives. Chunking the work across tasks keeps the page responsive and makes the whole thing take longer. Moving it to a `Worker` is the version where the page never freezes, because the computation was never on this thread.',
+  },
+
+  {
+    slug: 'debug-fire-and-forget-work',
+    title: 'The export that vanished with the deploy',
+    category: 'debugging',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'An export endpoint answers straight away and does the work afterwards:',
+      '',
+      code(
+        'js',
+        "app.post('/exports', (req, res) => {",
+        '  res.status(202).json({ ok: true });',
+        '  buildExport(req.body); // returns a promise nobody holds',
+        '});'
+      ),
+      '',
+      'It works locally. In production, every export that was running during a deploy never appears,',
+      'and nothing is logged.',
+      '',
+      'Name where the job has to be recorded before the response goes out, so a restart cannot lose it.'
+    ),
+    graderConfig: {
+      accept: [
+        'a queue',
+        'a table',
+        'a row in a table',
+        'a database table',
+        'a message in a queue',
+      ],
+      acceptPatterns: [
+        '\\bqueue\\b',
+        '\\btable\\b',
+        '\\bdatabase\\b',
+        '\\brow\\b',
+        '\\bpersist',
+        '\\bdurable\\b',
+      ],
+      nearMisses: {
+        'await it':
+          'Awaiting it holds the connection open for the whole export, which is what the 202 was avoiding, and a restart still loses the work.',
+        'a try/catch':
+          'A catch turns the silent unhandled rejection into a log line. The work is still gone after a restart.',
+        setTimeout: 'Still this process. A deploy takes the timer with it.',
+      },
+      hints: [
+        'The promise lives in the process. What happens to it when that process is replaced?',
+        'Work that survives a restart has to exist somewhere the process does not.',
+        'Write a row, or send a queue message, before you respond, and have a worker pick it up.',
+      ],
+    },
+    canonicalAnswer: 'a row in a table, or a message in a queue',
+    solution: code(
+      'js',
+      "app.post('/exports', async (req, res) => {",
+      '  const id = crypto.randomUUID();',
+      '',
+      '  // the row first, so a worker can never be handed an id that does not exist yet',
+      "  await db.insert(exports).values({ id, ownerId: req.user.id, status: 'queued', params });",
+      '  await queue.send({ exportId: id });',
+      '',
+      "  res.status(202).location(`/exports/${id}`).json({ id, status: 'queued' });",
+      '});'
+    ),
+    explanation:
+      'A promise nobody is holding is not background work, it is work that exists only inside one process, so a deploy, a crash or a scale-in takes it with it and leaves no record that it was ever meant to happen. The rejection goes the same way, into an unhandled rejection nobody is watching. Writing the job down first inverts that: the 202 now promises something that already exists, and a worker can pick it up on the next boot. Two details make it hold. Commit the row before publishing the message, because the other order hands a worker an id it cannot find yet. And make a second delivery cheap, since a queue will hand you the same message twice sooner or later, and reading your own state and returning early when it is already done costs one query.',
+  },
+
+  {
     slug: 'debug-json-date',
     title: 'The date that became a string',
     category: 'debugging',

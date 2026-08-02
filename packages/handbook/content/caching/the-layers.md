@@ -3,6 +3,7 @@ title: The layers
 question: Something on the screen is out of date. Which cache is holding it?
 order: 1
 practise:
+  - http-age-header
   - http-cache-control
   - http-etag-conditional
   - slow-list-endpoint-kysely

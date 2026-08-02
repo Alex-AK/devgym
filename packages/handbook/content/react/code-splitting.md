@@ -4,6 +4,7 @@ question: Which parts of the bundle are worth splitting out, and when does split
 order: 7
 practise:
   - react-lazy-bundle-growth
+  - react-lazy-in-render
 sources:
   - author: React
     title: lazy

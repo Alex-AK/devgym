@@ -3,6 +3,7 @@ title: Load balancers
 question: What changes about my application once there is a load balancer in front of it?
 order: 4
 practise:
+  - sys-xfp-redirect-loop
   - sys-load-balancer-basics
   - security-xff-trust
 sources:

@@ -8,6 +8,7 @@ practise:
   - react-stale-closure
   - react-fetch-race
   - react-abort-on-unmount
+  - react-effect-vs-handler
   - autocomplete-react
 sources:
   - author: React

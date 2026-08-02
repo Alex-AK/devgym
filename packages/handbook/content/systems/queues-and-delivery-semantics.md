@@ -3,6 +3,7 @@ title: Queues and delivery semantics
 question: The queue says at-least-once. What does that make my problem?
 order: 12
 practise:
+  - sys-ack-after-work
   - sys-message-delivery-semantics
   - sys-idempotency
   - http-idempotency-key

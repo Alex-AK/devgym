@@ -49,6 +49,54 @@ export const domProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'dom-target-vs-currenttarget',
+    title: 'The click that reported the icon',
+    category: 'dom',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'One listener on the table handles every row. Clicking the chevron inside a row logs the `<svg>`',
+      'rather than the table:',
+      '',
+      code(
+        'js',
+        "table.addEventListener('click', (event) => {",
+        '  console.log(event.target);',
+        '});'
+      ),
+      '',
+      'Name the property that is the element the listener is attached to, whatever was clicked.'
+    ),
+    graderConfig: {
+      accept: ['currenttarget', 'event.currenttarget', 'e.currenttarget'],
+      acceptPatterns: ['currentTarget'],
+      nearMisses: {
+        target: 'That is the one already in the code: the deepest element under the pointer.',
+        this: 'In a regular function `this` is that element, but an arrow function has no binding of its own. The event carries the answer either way.',
+      },
+      hints: [
+        'The event carries two element properties, and they answer different questions.',
+        'One is where the event started, the other is where this listener lives. `target` is the first one.',
+        '`event.currentTarget`',
+      ],
+    },
+    canonicalAnswer: 'currentTarget',
+    solution: code(
+      'js',
+      "table.addEventListener('click', (event) => {",
+      '  event.currentTarget; // the table, always',
+      '  event.target; // the svg, the span, the cell: whatever was under the pointer',
+      '',
+      "  const row = event.target.closest('tr[data-order-id]');",
+      '  if (row) select(row.dataset.orderId);',
+      '});'
+    ),
+    explanation:
+      '`target` is where the event started and it does not change as the event travels, so every handler on the way up sees the same one. `currentTarget` is the element whose listener is running, so it differs in each of those handlers. Delegation needs both: `currentTarget` is the container you attached to, `target` is what was actually clicked, and `event.target.closest(selector)` is the step from one to the other. One catch that produces a confusing `null`: `currentTarget` is only set while the event is being dispatched, so reading it after an `await` or inside a `setTimeout` gives you nothing. Copy what you need out of the event before you yield.',
+  },
+
+  {
     slug: 'dom-queryselectorall-type',
     title: 'querySelectorAll does not return an array',
     category: 'dom',

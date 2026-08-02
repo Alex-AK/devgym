@@ -3,6 +3,7 @@ title: Failure and retries
 question: The call failed. Do I send it again, and how long do I wait first?
 order: 4
 practise:
+  - http-retry-amplification
   - http-timeout-fetch
   - http-retry-safe-methods
   - http-429-backoff

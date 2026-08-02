@@ -3,6 +3,7 @@ title: Queues and background jobs
 question: This work does not have to happen inside the request. What changes the moment I put it on a queue?
 order: 13
 practise:
+  - sys-queued-work-invisible
   - sys-message-delivery-semantics
   - sys-idempotency
   - http-idempotency-key

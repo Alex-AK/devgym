@@ -3,6 +3,7 @@ title: The redirect you did not validate
 question: The `next` parameter starts with a slash, so why is that not enough?
 order: 5
 practise:
+  - security-open-redirect-relative-check
   - security-open-redirect
 sources:
   - author: OWASP

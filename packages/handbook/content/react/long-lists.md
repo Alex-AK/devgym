@@ -7,6 +7,7 @@ practise:
   - react-index-key
   - react-list-state-index
   - react-list-fragment-key
+  - react-content-visibility
 sources:
   - author: React
     title: Rendering Lists

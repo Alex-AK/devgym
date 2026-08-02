@@ -3,6 +3,7 @@ title: no-store, no-cache and max-age=0
 question: The page with personal data on it says no-cache and it is still on disk. Which one did I want?
 order: 2
 practise:
+  - http-cache-immutable-asset
   - http-cache-control
   - http-etag-conditional
   - security-token-storage

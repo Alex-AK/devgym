@@ -1852,4 +1852,236 @@ export const reactProblems: ProblemDraft[] = [
     explanation:
       'Automatic batching in React 18+ extends the old event-handler-only rule to promises, timeouts and native listeners like this one, so two setState calls that used to trigger two renders outside a handler now trigger one. flushSync is the deliberate escape hatch: it forces React to apply an update and commit to the DOM before returning, occasionally necessary for something like measuring layout right after a change. It re-renders synchronously and can hurt performance, which is why the docs call it a last resort rather than a default.',
   },
+
+  {
+    slug: 'react-effect-vs-handler',
+    title: 'The state that only exists to trigger an effect',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'Switch product after a purchase and `trackPurchase` fires a second time, for a product nobody bought:',
+      '',
+      code(
+        'jsx',
+        'function BuyButton({ productId }) {',
+        '  const [bought, setBought] = useState(false);',
+        '',
+        '  useEffect(() => {',
+        '    if (bought) trackPurchase(productId);',
+        '  }, [bought, productId]);',
+        '',
+        '  return <button onClick={() => setBought(true)}>Buy</button>;',
+        '}'
+      ),
+      '',
+      '`productId` changed and `bought` is still true, so the effect runs again. Name where the `trackPurchase` call belongs instead.'
+    ),
+    graderConfig: {
+      accept: [
+        'the event handler',
+        'event handler',
+        'the click handler',
+        'click handler',
+        'the onclick handler',
+        'onclick handler',
+        'onclick',
+        'in the event handler',
+        'in the click handler',
+      ],
+      acceptPatterns: ['(event|click|onclick|button)\\s*handler', '\\bonClick\\b'],
+      nearMisses: {
+        'during render':
+          'Rendering has to stay free of side effects. Put the call where the user acted.',
+        useeffect:
+          'Fixing the dependency array keeps both the effect and the state that only exists to feed it.',
+      },
+      hints: [
+        'Nothing outside React is being synchronised here, so there is nothing for an effect to synchronise with.',
+        'The click already knows a purchase happened. The effect only learns it second-hand, from state.',
+        'Call `trackPurchase(productId)` inside `onClick`, and delete the `bought` state with it.',
+      ],
+    },
+    canonicalAnswer: 'the click handler',
+    solution: code(
+      'jsx',
+      'function BuyButton({ productId }) {',
+      '  function onBuy() {',
+      '    trackPurchase(productId);',
+      '  }',
+      '',
+      '  return <button onClick={onBuy}>Buy</button>;',
+      '}'
+    ),
+    explanation:
+      "A handler knows **what happened**; an effect only sees the state that came out of it, so it fires again for any other reason that state is still true. That is the whole difference, and it is why `bought` can be deleted along with the effect: it existed to carry the click across to code that had no other way to hear about it. The line that survives is React's own: an effect is for synchronising with something outside React, a subscription, a timer, the DOM, a request whose answer belongs on screen. Reacting to something the user did is the handler's job, and the handler is also where you still have the click itself, which the effect never sees.",
+  },
+
+  {
+    slug: 'react-context-memo-consumer',
+    title: 'Wrapped in memo, and still following the context',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'Sidebar is memoized and it rerenders every time the provider publishes a new value:',
+      '',
+      code(
+        'jsx',
+        'const Sidebar = memo(function Sidebar() {',
+        '  const { theme } = useContext(AppContext);',
+        '  return <aside className={theme}>...</aside>;',
+        '});'
+      ),
+      '',
+      'Explain why memo cannot stop it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['props', 'prop'],
+          missingFeedback: 'What is the only thing memo compares?',
+        },
+        {
+          synonyms: ['inside', 'below', 'subscri', 'not a prop', 'not props', 'separate channel'],
+          missingFeedback: 'Where does the context read happen, relative to that comparison?',
+        },
+      ],
+      hints: [
+        'memo has one job: skip a render when every prop is `Object.is`-equal to last time.',
+        'Sidebar takes no props at all, so there is nothing for that comparison to save.',
+        'useContext subscribes the component from the inside, below the props comparison, so memo never sees the subscription at all.',
+      ],
+    },
+    canonicalAnswer:
+      'memo only compares props, and Sidebar receives none. The useContext call subscribes the component from the inside, below the props comparison memo performs, so a new context value rerenders it whatever memo decides.',
+    solution: code(
+      'jsx',
+      '// memo works once the context read happens above it and arrives as a prop',
+      'function SidebarContainer() {',
+      '  const { theme } = useContext(AppContext);',
+      '  return <Sidebar theme={theme} />;',
+      '}',
+      '',
+      'const Sidebar = memo(function Sidebar({ theme }) {',
+      '  return <aside className={theme}>...</aside>;',
+      '});'
+    ),
+    explanation:
+      'memo is a gate on props, and context does not arrive through props. react.dev states the consequence plainly: a memoized component still rerenders when a context it uses changes. memo is not useless here, it is in the wrong place. Read the context in a thin outer component and pass the one field down, and the memoized subtree below stops following the value, which is worth doing when that subtree is expensive. The other lever is scope: when the value changes often and most consumers do not care, split it into two contexts so they are not subscribed to the fast-moving half.',
+  },
+
+  {
+    slug: 'react-content-visibility',
+    title: 'The profiler is quiet and scrolling still stutters',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A table of 20,000 rows renders once and never rerenders. The profiler agrees that React is doing nothing while you scroll, and it still stutters on a mid-range phone: 20,000 elements are in the document and the browser pays style and layout for every one of them.',
+      '',
+      'Find-in-page and printing have to keep working, so the rows have to stay in the DOM. Name the CSS property that lets the browser skip rendering work for the ones offscreen.'
+    ),
+    graderConfig: {
+      accept: [
+        'content-visibility',
+        'content-visibility: auto',
+        'content visibility',
+        'contentvisibility',
+      ],
+      acceptPatterns: ['content-?\\s*visibility'],
+      nearMisses: {
+        windowing:
+          'Windowing unmounts the offscreen rows, which is exactly what takes find-in-page and printing with them.',
+        'display: none':
+          'That removes the content from find-in-page and from the accessibility tree too.',
+        'visibility: hidden':
+          'A hidden element still takes up its box and is still laid out, so the bill stays.',
+      },
+      hints: [
+        'React is not the cost here. The 20,000 elements sitting in the document are.',
+        'You want the engine to skip style, layout and paint for the rows nobody is looking at, while leaving them in the document.',
+        '`content-visibility: auto`, usually alongside `contain-intrinsic-size`.',
+      ],
+    },
+    canonicalAnswer: 'content-visibility',
+    solution: code(
+      'css',
+      '.row {',
+      '  content-visibility: auto;',
+      '  contain-intrinsic-size: auto 32px;',
+      '}'
+    ),
+    explanation:
+      "`content-visibility: auto` answers the browser's bill and not React's. React still builds, reconciles and commits all 20,000 elements, so a slow render is untouched; what it saves is the style, layout and paint the engine would spend on rows nobody is looking at. That is the trade against windowing, which unmounts the offscreen rows and so fixes both costs while taking find-in-page, printing, anchor links and focus order with them. Pair it with `contain-intrinsic-size`, which gives the browser a placeholder size for skipped content so the scrollbar does not jump as rows are measured on the way past.",
+  },
+
+  {
+    slug: 'react-lazy-in-render',
+    title: 'The lazy panel that remounts on every render',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'Typing in the editor is lost every time the parent rerenders, and the spinner flashes again each time:',
+      '',
+      code(
+        'jsx',
+        'function Page({ draft }) {',
+        "  const Editor = lazy(() => import('./Editor'));",
+        '',
+        '  return (',
+        '    <Suspense fallback={<Spinner />}>',
+        '      <Editor draft={draft} />',
+        '    </Suspense>',
+        '  );',
+        '}'
+      ),
+      '',
+      'Name where the `lazy()` call has to go instead.'
+    ),
+    graderConfig: {
+      accept: [
+        'module scope',
+        'top level',
+        'the top level of the module',
+        'module level',
+        'outside the component',
+      ],
+      acceptPatterns: [
+        'top[\\s-]?level',
+        'module\\s+(scope|level)',
+        'outside\\s+(of\\s+)?the\\s+component',
+      ],
+      nearMisses: {
+        usememo:
+          'A memo keeps the type stable while this component is mounted, and mints a new one the moment it remounts. Take the call out of the component entirely.',
+        suspense: 'The boundary is already there. What is wrong is where `lazy()` is called.',
+      },
+      hints: [
+        '`lazy()` returns a component type, and this one is built fresh on every render.',
+        'React decides whether to keep a subtree by comparing element types, so a new type every render means a remount every render.',
+        'Call `lazy()` once, at the top level of the module, and hold the result in a module-scope const.',
+      ],
+    },
+    canonicalAnswer: 'the top level of the module',
+    solution: code(
+      'jsx',
+      "const Editor = lazy(() => import('./Editor')); // module scope, called once",
+      '',
+      'function Page({ draft }) {',
+      '  return (',
+      '    <Suspense fallback={<Spinner />}>',
+      '      <Editor draft={draft} />',
+      '    </Suspense>',
+      '  );',
+      '}'
+    ),
+    explanation:
+      'React reconciles on the element **type**, and `lazy()` returns a new type every time it is called. Calling it in a render body therefore hands React a type it has never seen on each render, and the only thing it can do with a changed type is unmount the old tree and mount a fresh one, taking the state inside with it. The new wrapper then suspends again before its already-cached module resolves, which is the spinner. react.dev puts it directly: do not declare `lazy` components inside other components. None of this is special to `lazy`, either. Any component defined inside another component gets a new identity every render and remounts for exactly the same reason.',
+  },
 ];

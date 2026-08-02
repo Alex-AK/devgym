@@ -3,6 +3,7 @@ title: Choosing a transport
 question: The data has to get from over there to over here. Which of these do I actually need?
 order: 1
 practise:
+  - http-transport-queue
   - http-sse-vs-websocket
   - http-streaming-response
   - http-pagination-cursor

@@ -179,6 +179,135 @@ export const sqlProblems: ProblemDraft[] = [
   }),
 
   sqlProblem({
+    slug: 'sql-join-author-name',
+    title: 'Pull a name from another table',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      '`books` stores an `author_id`, not an author name. List every book with the name of its author.',
+      '',
+      "Columns: `title`, `name`. Row order doesn't matter."
+    ),
+    solutionSql: 'SELECT b.title, a.name FROM books b JOIN authors a ON a.id = b.author_id;',
+    orderMatters: false,
+    solutionSource: [
+      'SELECT b.title, a.name',
+      'FROM books b',
+      'JOIN authors a ON a.id = b.author_id;',
+    ],
+    hints: [
+      'The name lives in `authors`. `books.author_id` says which row to go and get.',
+      'Alias both tables so `b.title` and `a.name` are unambiguous.',
+      '`JOIN authors a ON a.id = b.author_id`',
+    ],
+    explanation:
+      'A join emits one row for every pair that satisfies the `ON` condition. Each of the 15 books matches exactly one author, so 15 rows come back and nothing looks unusual. Join to a table with many rows per book instead, like `reviews`, and the same rule gives you one row per review with the title repeated: 32 rows for 15 books. That fan-out is the whole of the duplicated name, the inflated `SUM` and the `COUNT` that is too big. Leave the `ON` off entirely and SQLite pairs every book with every author, all 120 combinations.',
+  }),
+
+  sqlProblem({
+    slug: 'sql-having-count-genres',
+    title: 'Filter the groups, not the rows',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      'Which genres have **more than 3** books? Show the genre and its book count.',
+      '',
+      "Columns: `genre`, `books`. Row order doesn't matter."
+    ),
+    solutionSql: 'SELECT genre, COUNT(*) AS books FROM books GROUP BY genre HAVING COUNT(*) > 3;',
+    orderMatters: false,
+    solutionSource: [
+      'SELECT genre, COUNT(*) AS books',
+      'FROM books',
+      'GROUP BY genre',
+      'HAVING COUNT(*) > 3;',
+    ],
+    hints: [
+      'The condition is about a count, and a count is a property of a group.',
+      '`WHERE` runs before the groups exist. Something else runs after them.',
+      '`GROUP BY genre HAVING COUNT(*) > 3`',
+    ],
+    explanation:
+      '`WHERE` runs before `GROUP BY`, so there is no group to count yet and SQLite stops you with `misuse of aggregate: COUNT()`. `HAVING` runs after grouping, where each group is one thing with its count already computed. The test for which one you want takes a second: if a single row can decide the condition, it belongs in `WHERE`; if it mentions an aggregate, it belongs in `HAVING`. A `HAVING` with no `GROUP BY` is legal and means something else entirely, since the whole result becomes one group and a false condition returns zero rows rather than a count of 0.',
+  }),
+
+  sqlProblem({
+    slug: 'sql-in-subquery',
+    title: 'Filter by another table without joining',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      'List the title of every book that has at least one review.',
+      '',
+      "One column: `title`. Row order doesn't matter."
+    ),
+    solutionSql: 'SELECT title FROM books WHERE id IN (SELECT book_id FROM reviews);',
+    orderMatters: false,
+    solutionSource: ['SELECT title', 'FROM books', 'WHERE id IN (SELECT book_id FROM reviews);'],
+    hints: [
+      'The reviews decide which books qualify, but you need no column from them.',
+      'A subquery returning a single column can feed `IN`.',
+      '`WHERE id IN (SELECT book_id FROM reviews)`',
+    ],
+    explanation:
+      '`IN` with a subquery is a test on the outer row: keep it or drop it, never duplicate it. `JOIN reviews` answers the same question and emits one row per review instead, so 12 books come back as 32 rows and need a `DISTINCT` to get to 12 again. Reach for `IN` or `EXISTS` whenever the other table contributes nothing to the output. The negative form is where this gets dangerous: `NOT IN` over a subquery holding a single NULL returns no rows at all, with no error, so `NOT EXISTS` is the safe way to spell "has no reviews".',
+  }),
+
+  sqlProblem({
+    slug: 'sql-window-row-number',
+    title: 'Number the rows without collapsing them',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      'Number the books by price, 1 for the most expensive down to 15 for the cheapest, and show that number next to the title and price.',
+      '',
+      'Columns: `title`, `price`, `position`. **Row order matters here.**'
+    ),
+    solutionSql:
+      'SELECT title, price, ROW_NUMBER() OVER (ORDER BY price DESC) AS position FROM books ORDER BY price DESC;',
+    orderMatters: true,
+    solutionSource: [
+      'SELECT title, price,',
+      '       ROW_NUMBER() OVER (ORDER BY price DESC) AS position',
+      'FROM books',
+      'ORDER BY price DESC;',
+    ],
+    hints: [
+      'Every book still has to appear, so this is not a `GROUP BY`.',
+      'A window function computes over other rows and leaves the current one standing.',
+      '`ROW_NUMBER() OVER (ORDER BY price DESC)`',
+    ],
+    explanation:
+      "`OVER` is what makes a function a window function: it adds a column computed across a set of other rows and removes none of them. The `ORDER BY` inside the parentheses decides the numbering; the one at the end decides how the rows come out. They agree here, and often they do not. Every price in this table is distinct, so the numbering is deterministic. Once there are ties, `ROW_NUMBER()` still hands out 1, 2, 3 and picks a winner the query never asked for, which is when you want `RANK()`, where peers share a number and the next value skips over them, or a tiebreaker column inside the window's `ORDER BY`.",
+  }),
+
+  sqlProblem({
+    slug: 'sql-batch-related-rows',
+    title: 'Fetch related rows in one query',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      "An orders page loops over its orders and runs a separate query for each one's line items. Fetch the line items for orders 1, 3 and 9 in a **single** query instead.",
+      '',
+      "Columns: `order_id`, `book_id`, `quantity`. Row order doesn't matter."
+    ),
+    solutionSql: 'SELECT order_id, book_id, quantity FROM order_items WHERE order_id IN (1, 3, 9);',
+    orderMatters: false,
+    solutionSource: [
+      'SELECT order_id, book_id, quantity',
+      'FROM order_items',
+      'WHERE order_id IN (1, 3, 9);',
+    ],
+    hints: [
+      'The three queries differ only in the id they filter on.',
+      'One filter can accept a list of values instead of a single one.',
+      'Use `WHERE order_id IN (1, 3, 9)`, and keep `order_id` in the select list.',
+    ],
+    explanation:
+      'Batching turns N+1 round trips into two: one query for the list, one for everything it referenced. `order_id` has to stay in the select list because the rows come back as one flat set and the application groups them back onto their orders. The other fix is a join, which is one statement instead of two but fans each order out to one row per line item; batching is the one that still works when the second table lives behind another service or has its own pagination. Watch the list length, though, because databases cap how many bound parameters a statement can take, so a batch over tens of thousands of ids has to be chunked.',
+  }),
+
+  sqlProblem({
     slug: 'sql-orders-per-customer',
     title: 'Completed orders per customer',
     difficulty: 'medium',

@@ -7,6 +7,7 @@ practise:
   - ts-union-vs-enum
   - ts-readonly-array
   - ts-noimplicit-index-access
+  - ts-readonly-shallow
 sources:
   - author: TypeScript
     title: Type Compatibility

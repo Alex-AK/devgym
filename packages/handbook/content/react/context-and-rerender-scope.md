@@ -6,6 +6,7 @@ practise:
   - react-context-value-identity
   - react-context-read-scope
   - react-context-dispatch-split
+  - react-context-memo-consumer
 sources:
   - author: React
     title: useContext

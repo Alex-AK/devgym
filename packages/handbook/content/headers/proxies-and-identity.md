@@ -3,6 +3,7 @@ title: Proxies and identity
 question: Which IP is actually the client once there is a proxy in front of me?
 order: 5
 practise:
+  - security-trust-proxy-hops
   - rate-limit-express
   - security-rate-limit-auth
 sources:

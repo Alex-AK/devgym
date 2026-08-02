@@ -3,6 +3,7 @@ title: WHERE, HAVING, and when each one runs
 question: When do I filter with WHERE and when do I have to use HAVING?
 order: 5
 practise:
+  - sql-having-count-genres
   - sql-having-avg
   - sql-repeat-customers
   - sql-subquery-above-avg

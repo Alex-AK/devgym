@@ -3,6 +3,7 @@ title: Window functions
 question: How do I rank rows, or add a running total, without collapsing them into groups?
 order: 7
 practise:
+  - sql-window-row-number
   - sql-window-rank
   - sql-running-total
   - sql-percent-of-total

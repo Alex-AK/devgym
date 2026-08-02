@@ -3,6 +3,7 @@ title: Events, and where they actually go
 question: Why did my click handler fire for something I never attached it to?
 order: 12
 practise:
+  - dom-target-vs-currenttarget
   - dom-event-delegation
   - dom-prevent-vs-stop
   - dom-debounce-throttle

@@ -3,6 +3,7 @@ title: Subqueries and CTEs
 question: Should this be a subquery, a CTE or a join, and does the database care?
 order: 6
 practise:
+  - sql-in-subquery
   - sql-subquery-above-avg
   - sql-cte-first-order
   - sql-not-exists

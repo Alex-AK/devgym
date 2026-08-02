@@ -3,6 +3,7 @@ title: Batch and ETL
 question: They asked for realtime. Is a job that runs on a schedule the honest answer?
 order: 14
 practise:
+  - sys-half-open-window
   - sql-dedupe-keep-latest
   - sys-idempotency
   - sys-back-of-envelope

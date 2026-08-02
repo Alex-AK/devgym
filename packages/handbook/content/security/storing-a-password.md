@@ -3,6 +3,7 @@ title: Storing a password
 question: It is hashed, so why is that not the end of it?
 order: 3
 practise:
+  - security-password-compare
   - security-password-hashing
   - security-rate-limit-auth
 sources:

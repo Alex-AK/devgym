@@ -122,6 +122,50 @@ export const a11yProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'a11y-tabindex-programmatic-focus',
+    title: 'Focusable, but not a tab stop',
+    category: 'a11y',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'short-text',
+    prompt: md(
+      'A client-side route change swaps the page content out. Focus stays on the link that was clicked,',
+      'or falls to `<body>`, so you try to move it to the new heading:',
+      '',
+      code('js', "document.querySelector('h1').focus(); // nothing happens"),
+      '',
+      'Write the attribute the heading needs so `.focus()` works without making it a Tab stop.'
+    ),
+    graderConfig: {
+      accept: ['tabindex="-1"', '-1'],
+      acceptPatterns: ['tabindex\\W*-1'],
+      nearMisses: {
+        'tabindex="0"':
+          'That works, and now every keyboard user stops on the heading on the way down the page.',
+        autofocus:
+          'autofocus applies when the page or a dialog first renders, not when a route changes in an app that never reloaded.',
+      },
+      hints: [
+        'A heading is not interactive, so it is not focusable, and `.focus()` on something unfocusable does nothing at all.',
+        'One attribute makes an element focusable from script. A different value of that same attribute would also put it in the tab sequence, which you do not want.',
+        '`tabindex="-1"`',
+      ],
+    },
+    canonicalAnswer: 'tabindex="-1"',
+    solution: code(
+      'html',
+      '<h1 id="page-title" tabindex="-1">Invoices</h1>',
+      '',
+      '<script>',
+      '  // once the new content has rendered',
+      "  document.querySelector('#page-title').focus();",
+      '</script>'
+    ),
+    explanation:
+      '`tabindex="-1"` takes an element out of the tab sequence and leaves it focusable from script, which is the pair you want for anywhere focus should land but nobody should stop while tabbing: a heading after a route change, the list whose last row you deleted, a panel you just opened. `tabindex="0"` is the other value worth using and it does the opposite, putting an element into the sequence at its position in the document, which is what a `div` you gave a role to needs. Positive values are the ones to avoid, because they are not scoped to the component that declares them: they order against every positive value in the document and come before everything with `tabindex="0"`. Move focus after the new content has rendered, or you are focusing an element that is about to be replaced.',
+  },
+
+  {
     slug: 'a11y-focus-trap-modal',
     title: 'What a modal owes the keyboard',
     category: 'a11y',

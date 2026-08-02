@@ -3,6 +3,7 @@ title: Rate limiting
 question: Which limiter do I reach for, and what do I count the requests against?
 order: 4
 practise:
+  - http-rate-limit-window-expiry
   - rate-limit-express
   - http-429-backoff
   - security-rate-limit-auth

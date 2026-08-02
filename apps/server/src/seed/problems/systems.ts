@@ -207,6 +207,64 @@ export const systemsProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'sys-xfp-redirect-loop',
+    title: 'Every link comes out as http',
+    category: 'systems',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'You move an app behind a load balancer that terminates TLS: the client speaks HTTPS to the balancer, and the balancer speaks plain HTTP to your instances.',
+      '',
+      'Every generated link now comes out as `http://`, and the middleware that redirects HTTP to HTTPS sends the browser round in a loop until it gives up. Your handler reads `req.protocol` and gets `http`.',
+      '',
+      'Explain why that answer is correct, and name what to read instead.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'terminated',
+            'terminates',
+            'termination',
+            'plain http',
+            'unencrypted',
+            'its own leg',
+            'that leg',
+            'ends at the',
+          ],
+          missingFeedback:
+            'Why is the request that reached your instance genuinely not HTTPS? Say where the TLS went.',
+        },
+        {
+          synonyms: [
+            'x-forwarded-proto',
+            'x forwarded proto',
+            'forwarded-proto',
+            'forwarded proto',
+            'forwarded header',
+            'trust proxy',
+          ],
+          missingFeedback: 'Name the header that carries the scheme your handler cannot see.',
+        },
+      ],
+      hints: [
+        'The handler is not wrong about anything. Ask what it can actually see.',
+        'HTTPS ended at the balancer, so the request that arrived at your instance really did arrive over plain HTTP.',
+        "The client's scheme survives only in a header the balancer added: `X-Forwarded-Proto`.",
+      ],
+    },
+    canonicalAnswer:
+      "TLS terminated at the balancer, so the connection from the balancer to my instance really is plain HTTP, and `req.protocol` is describing its own leg accurately. The client's scheme survives only in a header the balancer added, so read `X-Forwarded-Proto`, or set the framework's trust proxy option so `req.protocol` reflects it, instead of asking the socket.",
+    solution: md(
+      '- **Why `http` is correct**: TLS ended at the balancer. The leg from the balancer to your instance is plain HTTP, and `req.protocol` reports that leg.',
+      '- **What to read instead**: `X-Forwarded-Proto`, added by the balancer. Express folds it into `req.protocol` itself once `trust proxy` is set.'
+    ),
+    explanation:
+      "A socket only knows about its own hop, which is why every proxy surprise has the same shape: the address, the scheme and the port your handler sees all describe the balancer rather than the client. `X-Forwarded-Proto` is the balancer reporting the hop it can see and you cannot. Treat it as a claim, not a fact: a client can send that header itself, so it is only worth reading when a proxy you operate overwrites it, which is exactly what a framework's trusted-proxy setting configures. Redirect-to-HTTPS middleware is where this surfaces first, because the handler concludes the request needs upgrading, the browser comes back over HTTPS, and the balancer hands you plain HTTP again.",
+  },
+
+  {
     slug: 'sys-cache-aside-vs-write-through',
     title: "Reads fill the cache, writes don't",
     category: 'systems',
@@ -656,6 +714,143 @@ export const systemsProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'sys-ack-after-work',
+    title: 'The queue emptied and nothing happened',
+    category: 'systems',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A queue consumer is written like this:',
+      '',
+      code(
+        'js',
+        'try {',
+        '  await handle(message);',
+        '} catch (error) {',
+        '  logger.error(error);',
+        '} finally {',
+        '  await queue.ack(message);',
+        '}'
+      ),
+      '',
+      'A deploy makes `handle` throw on every message. Within minutes the queue is empty, nothing was processed, and the dead-letter queue is empty too.',
+      '',
+      'Name what the acknowledgement is telling the broker, and where in this code it belongs.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'handled',
+            'done',
+            'processed',
+            'succeeded',
+            'completed',
+            'finished',
+            'safe to delete',
+            'delete the message',
+            'delete it',
+          ],
+          missingFeedback: 'What is an acknowledgement claiming about the message?',
+        },
+        {
+          synonyms: [
+            'success path',
+            'only on success',
+            'when it succeeds',
+            'after the work succeeds',
+            'inside the try',
+            'in the try',
+            'out of the finally',
+            'not in the finally',
+            'after handle',
+          ],
+          missingFeedback: 'Where should the acknowledgement move to?',
+        },
+      ],
+      hints: [
+        'Every message got deleted. Look at which paths run the delete.',
+        '`finally` runs after the `catch` too, so a thrown error is acknowledged exactly as reliably as a success.',
+        'Acknowledge on the success path only. A message left unacknowledged is redelivered, and that is what eventually feeds the dead-letter queue.',
+      ],
+    },
+    canonicalAnswer:
+      'The acknowledgement tells the broker this message is handled and can be deleted, and a `finally` block says that about the failures exactly as reliably as the successes, so every message is thrown away whether or not the work happened. It belongs on the success path, inside the `try` after `handle` returns without throwing. Leaving a failed message unacknowledged is what makes redelivery and the dead-letter queue work at all.',
+    solution: md(
+      '- **What an acknowledgement claims**: this message is handled, delete it. Nothing makes that true except having done the work.',
+      '- **Where it belongs**: the success path, after `handle` returns. In `finally` it acknowledges failures as reliably as successes, so a bug that throws on every message empties the queue with nothing done and nothing dead-lettered.'
+    ),
+    explanation:
+      'Redelivery is the only safety net a queue has, and the acknowledgement is the single thing that switches it off, so acknowledging in a `finally` discards the retry, the dead-letter queue and the alarm on its depth all at once. The failure is quiet by construction: the consumer keeps running, the queue depth goes down, and every dashboard reads healthy while the work disappears. The `catch` deserves the same look, because swallowing the error and carrying on is the same decision written differently. Leave the message alone on the failure path and let the redelivery window expire, which is what puts it back in front of a consumer and, after enough attempts, in front of you.',
+  },
+
+  {
+    slug: 'sys-queued-work-invisible',
+    title: 'Eight milliseconds and nobody noticed',
+    category: 'systems',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'You move PDF export off the request: the endpoint enqueues a job and returns in 8ms, and the UI says "Export started."',
+      '',
+      'The consumer has been throwing on every job for two days. The endpoint still returns in 8ms and the UI still says "Export started."',
+      '',
+      'Say what moving the work off the request actually changed about the failure, and name one thing this needs before it ships.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'moved',
+            'move',
+            'did not remove',
+            "didn't remove",
+            'does not remove',
+            'still fails',
+            'still failing',
+            'out of the request',
+            'nobody is looking',
+            'nobody is watching',
+            'invisible',
+            'silent',
+            'hidden',
+          ],
+          missingFeedback: 'Did the failure go away, or go somewhere?',
+        },
+        {
+          synonyms: [
+            'status',
+            'state the user',
+            'alarm',
+            'alert',
+            'monitor',
+            'dead-letter',
+            'dead letter',
+            'dlq',
+            'tell the user',
+          ],
+          missingFeedback: 'Name one thing that would have surfaced this within two days.',
+        },
+      ],
+      hints: [
+        'The request got faster. Ask whether anything got more reliable.',
+        'The failure is still happening. It moved somewhere nobody is looking.',
+        'Give the job a state the user can see, and put an alarm on the dead-letter queue.',
+      ],
+    },
+    canonicalAnswer:
+      'Nothing about the failure went away. It moved out of the request, where a user saw it immediately, into a consumer nobody is watching. So the job needs a status the user can actually see, set by the consumer on the failure path as well as the success path, and the dead-letter queue needs an alarm on its depth so work that keeps failing reaches a person instead of circling.',
+    solution: md(
+      '- **What changed**: only where the failure lives. It left the request, where a user saw it at once, for a consumer nobody watches.',
+      '- **What it needs**: a job status the client can see, written on the failure path too, and an alarm on the dead-letter queue so repeated failures reach a person.'
+    ),
+    explanation:
+      'A queue converts a loud failure into a quiet one, and that is the trade whether or not anyone says so out loud: the endpoint that used to fail in front of a user now returns immediately, and the problem surfaces two days later as a support ticket. The UI is the half that gets forgotten, because "Export started" was written on the day everything worked and it goes on saying that forever. Two things make the trade safe. The job carries a state the client can poll, set to failed by the consumer\'s error path, and the dead-letter queue gets an alarm on its depth the day it is created, because nothing watches it by default.',
+  },
+
+  {
     slug: 'sys-idempotency',
     title: 'Twenty credits instead of ten',
     category: 'systems',
@@ -742,6 +937,63 @@ export const systemsProblems: ProblemDraft[] = [
     ),
     explanation:
       "A registry turns 'where is this service' from a deploy-time fact into a runtime query, which is what autoscaling and rolling deploys require: the true set of healthy instances is different from one minute to the next, and any static list is stale the moment it's written. There are two common shapes: client-side discovery, where the caller queries the registry directly and picks an instance (Consul, etcd), and server-side discovery, where the caller just hits a stable address and something else, a load balancer or a service mesh sidecar, does the lookup and routing. Kubernetes' internal DNS is the version most people meet without naming it: a Service's DNS name always resolves to currently healthy pods.",
+  },
+
+  {
+    slug: 'sys-timeout-before-breaker',
+    title: 'The breaker that never trips',
+    category: 'systems',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'Your checkout handler calls a pricing service. The pricing service accepts the connection and then sends nothing back, ever. Requests to checkout stop returning at all, and the circuit breaker you wrapped around the call sits closed the whole time.',
+      '',
+      'Name the piece that is missing, and say why the breaker cannot do its job without it.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'timeout',
+            'time out',
+            'deadline',
+            'time limit',
+            'abortsignal',
+            'abort signal',
+          ],
+          missingFeedback: 'Name the piece that is missing from the call itself.',
+        },
+        {
+          synonyms: [
+            'counts failures',
+            'count failures',
+            'never fails',
+            "hasn't failed",
+            'has not failed',
+            'not a failure',
+            'no failures to count',
+            'still waiting',
+            'never returns',
+          ],
+          missingFeedback:
+            'A breaker trips on failures. What is a call that has not come back yet, as far as the counter is concerned?',
+        },
+      ],
+      hints: [
+        'A breaker trips on failures. Ask what this dependency is actually producing.',
+        'A call that has not come back is not a failure yet, so there is nothing to count.',
+        'The missing piece is a per-call timeout. Without a deadline the request hangs and the failure counter never moves.',
+      ],
+    },
+    canonicalAnswer:
+      "There is no timeout on the call. A breaker counts failures, and a request that hasn't returned hasn't failed, so the counter never reaches its threshold while the pending calls stack up and exhaust the pool. Put a per-call deadline on the dependency first: the timeout is what turns a hang into a failure the breaker can count.",
+    solution: md(
+      '- **Missing**: a per-call timeout on the outbound request.',
+      '- **Why the breaker cannot help**: it counts failures, and a call that has not returned has not failed. With no deadline the counter never reaches its threshold, so the breaker stays closed while the waiting calls exhaust the pool.'
+    ),
+    explanation:
+      'The order is the part people get backwards: the deadline comes first, and the breaker measures what the deadline produces. Until there is one, a hung dependency is not producing failures at all, it is producing waits, and each wait holds a connection and everything the pending call is keeping alive. Set the deadline from what the call normally costs rather than from what feels generous, because a 30-second timeout on a call that usually takes 40ms still lets a sick dependency hold your capacity for 30 seconds at a time. Once the deadline exists, the breaker has something to count, and it belongs outside the retry loop rather than inside it, or three attempts triple the load on something already struggling.',
   },
 
   {
@@ -903,5 +1155,55 @@ export const systemsProblems: ProblemDraft[] = [
     ),
     explanation:
       "Back-of-envelope estimation is a communication exercise disguised as a math one: the interviewer already knows there's no single right answer, so what's being scored is whether you can decompose an ambiguous quantity into pieces you can actually multiply, state your assumptions out loud, and round in a way that keeps the arithmetic tractable without losing the order of magnitude. Getting the final digit wrong by 20% is fine; forgetting a factor entirely, retention days, or that a day has 1,440 minutes, not 1,000, is what actually loses points, because it means the reasoning itself was wrong, not just imprecise.",
+  },
+
+  {
+    slug: 'sys-half-open-window',
+    title: 'The row that belongs to two days',
+    category: 'systems',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      "A nightly job totals the previous day's orders with:",
+      '',
+      code('sql', 'WHERE created_at BETWEEN :day_start AND :day_end'),
+      '',
+      '`:day_end` is midnight at the end of the day, and the next run uses that same midnight as its `:day_start`. The daily totals add up to more than the source table, and the rows responsible are the ones stamped exactly at midnight.',
+      '',
+      'Name what `BETWEEN` is doing at its upper bound, and name the operator that belongs there instead.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'inclusive',
+            'includes both',
+            'includes the upper',
+            'includes the end',
+            'both ends',
+            'both endpoints',
+          ],
+          missingFeedback: 'What does `BETWEEN` do with the two values you give it?',
+        },
+        {
+          synonyms: ['half-open', 'half open', 'exclusive', 'strictly less', 'less than', '<'],
+          missingFeedback: 'Name the operator that belongs on the upper bound instead.',
+        },
+      ],
+      hints: [
+        'Two consecutive runs both matched the same row. Look at the boundary they share.',
+        '`BETWEEN a AND b` means `>= a AND <= b`, so the endpoint belongs to this window and the next one.',
+        'Make the upper bound exclusive: `>= :day_start AND < :next_day_start`.',
+      ],
+    },
+    canonicalAnswer:
+      '`BETWEEN` is inclusive at both ends, so a row stamped exactly at `:day_end` matches this window and the next one as well, and gets counted in both days. The upper bound wants `<` rather than `<=`: `created_at >= :day_start AND created_at < :next_day_start`, a half-open range where consecutive windows meet without overlapping and every row lands in exactly one.',
+    solution: md(
+      '- **What `BETWEEN` does**: includes both endpoints. `BETWEEN a AND b` is `>= a AND <= b`, so a row at exactly `:day_end` matches this window and the next one.',
+      '- **What belongs there**: `<`. A half-open range, `>= :day_start AND < :next_day_start`, makes consecutive windows meet without overlapping.'
+    ),
+    explanation:
+      "Half-open intervals are the answer anywhere a range is one of a sequence, which is every scheduled job that has a window. The tempting repair is to nudge the upper bound down by a second, and it trades double-counted rows for missing ones: anything landing inside that second now belongs to no window at all, and nothing will look at it again. The same inclusivity bites an ordinary date filter written as `BETWEEN '2024-01-01' AND '2024-01-31'`, which silently drops everything that happened during the 31st after midnight. The other property a windowed job needs is that rerunning it changes nothing, which means an upsert rather than an append, because the day it dies halfway through is not the day to find out.",
   },
 ];

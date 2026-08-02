@@ -3,6 +3,7 @@ title: WebSockets
 question: When is a real two-way connection worth what it costs to run?
 order: 10
 practise:
+  - http-websocket-auth-header
   - http-websocket-upgrade
   - http-sse-vs-websocket
   - security-token-storage

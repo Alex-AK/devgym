@@ -8,6 +8,7 @@ practise:
   - ts-exhaustive-never
   - ts-assertion-function
   - ts-optional-vs-undefined
+  - ts-falsy-vs-nullish
 sources:
   - author: TypeScript
     title: Narrowing

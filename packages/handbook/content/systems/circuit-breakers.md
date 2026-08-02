@@ -3,6 +3,7 @@ title: Circuit breakers
 question: One slow dependency is taking the whole service down. What stops that?
 order: 6
 practise:
+  - sys-timeout-before-breaker
   - sys-circuit-breaker
 sources:
   - author: Martin Fowler

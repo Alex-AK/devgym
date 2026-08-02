@@ -3,6 +3,7 @@ title: Pagination
 question: How do I page through a list that keeps changing while someone reads it?
 order: 1
 practise:
+  - http-cursor-tiebreaker
   - http-pagination-cursor
   - slow-list-endpoint-kysely
   - records-sorting-drizzle
