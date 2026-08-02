@@ -74,6 +74,16 @@ export function AboutPage(): React.ReactElement {
         </section>
 
         <section>
+          <h2>How it tries to teach</h2>
+          <p>
+            Four techniques with evidence behind them, and one ladder of review intervals that is a
+            guess. <Link to="/how-it-teaches">How devgym tries to teach</Link> names the file or the
+            screen where each technique happens, cites the research it leans on, and says plainly
+            which part of the schedule was made up.
+          </p>
+        </section>
+
+        <section>
           <h2>Colophon</h2>
           <p>
             Built on pnpm workspaces, Vite, React, TypeScript, Tailwind, shadcn/ui, NestJS, Drizzle,

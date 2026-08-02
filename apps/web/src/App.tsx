@@ -6,6 +6,7 @@ import { AboutPage } from '@/pages/AboutPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { HandbookPage } from '@/pages/HandbookPage';
 import { HandbookPageView } from '@/pages/HandbookPageView';
+import { HowItTeachesPage } from '@/pages/HowItTeachesPage';
 import { PracticePage } from '@/pages/PracticePage';
 import { ProblemPage } from '@/pages/ProblemPage';
 import { ProblemsPage } from '@/pages/ProblemsPage';
@@ -26,6 +27,7 @@ export function App(): React.ReactElement {
         <Route path="handbook" element={<HandbookPage />} />
         <Route path="handbook/:section/:slug" element={<HandbookPageView />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="how-it-teaches" element={<HowItTeachesPage />} />
         <Route path="problems/:slug" element={<ProblemPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -241,6 +241,11 @@ carries its sources and the date its claims were last checked against them, so y
 that review has actually got. Corrections are welcome and easy to make; every piece of content is a
 small file in this repo.
 
+**The teaching methods are named, sourced, and honest about their limits.** `/how-it-teaches` in the
+app covers the four techniques the app leans on, the file or screen where each one happens, and the
+research behind them. It also says which part is a guess: the `[1, 3, 7, 21, 60]` review ladder was
+never tuned against anything.
+
 **It owes nearly everything to other people.** Open source software, freely shared writing, and the
 people who teach: course authors, documentation writers, bloggers, and the maintainers of every
 library in the lockfile. Handbook pages cite their sources in a footnote, and `pnpm verify` refuses
