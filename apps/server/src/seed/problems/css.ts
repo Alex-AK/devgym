@@ -176,8 +176,9 @@ export const cssProblems: ProblemDraft[] = [
       '',
       code(
         'css',
-        '.row { display: flex; }',
-        '.item { flex: 1; overflow: hidden; text-overflow: ellipsis; }'
+        '.row   { display: flex; }',
+        '.item  { flex: 1; }',
+        '.label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }'
       ),
       '',
       'Write the declaration on `.item` that lets it shrink below its content size.'
@@ -192,7 +193,7 @@ export const cssProblems: ProblemDraft[] = [
       },
       hints: [
         'A flex item has an automatic minimum size, which is its content size.',
-        '`overflow: hidden` cannot help while the minimum keeps the box wide.',
+        'The truncation is on `.label`, so `.item` still refuses to shrink and never gives it a narrow box to truncate into.',
         'Override the automatic minimum: `min-width: 0`.',
       ],
     },
@@ -202,12 +203,10 @@ export const cssProblems: ProblemDraft[] = [
       '.item {',
       '  flex: 1;',
       '  min-width: 0; /* override the automatic minimum */',
-      '  overflow: hidden;',
-      '  text-overflow: ellipsis;',
       '}'
     ),
     explanation:
-      'A flex item gets `min-width: auto`, which resolves to its **content** size, so it refuses to shrink below the widest unbreakable thing inside it. That is the automatic minimum size, and it silently defeats `overflow: hidden` and every truncation trick built on it. Setting `min-width: 0` opts out. In a column flex container the equivalent is `min-height: 0`, which is the same bug wearing a different hat and the usual reason a scrollable panel refuses to scroll.',
+      'A flex item gets `min-width: auto`, which resolves to its **content** size, so `.item` refuses to shrink below the widest unbreakable thing inside it and `.label` never receives a narrow box to truncate into. Setting `min-width: 0` opts out. Note where the rule stops: an item that is itself a scroll container in the main axis already has an automatic minimum of zero, so had `overflow: hidden` been on `.item` rather than on `.label` there would be nothing to fix. That is why the bug survives review so often, since the same declaration one level down changes the answer. In a column flex container the equivalent is `min-height: 0`, which is the usual reason a scrollable panel refuses to scroll.',
   },
 
   {
@@ -586,11 +585,12 @@ export const cssProblems: ProblemDraft[] = [
       '',
       code(
         'css',
-        '.page { display: flex; flex-direction: column; height: 100vh; }',
-        '.list { flex: 1; overflow-y: auto; }'
+        '.page  { display: flex; flex-direction: column; height: 100vh; }',
+        '.panel { flex: 1; display: flex; flex-direction: column; }',
+        '.list  { flex: 1; overflow-y: auto; }'
       ),
       '',
-      'Write the declaration `.list` is missing.'
+      'Write the declaration `.panel` is missing.'
     ),
     graderConfig: {
       accept: ['min-height: 0', 'min-height:0'],
@@ -602,20 +602,21 @@ export const cssProblems: ProblemDraft[] = [
       },
       hints: [
         'This is the same automatic minimum size as the flex truncation problem, on the other axis.',
-        'A flex item will not shrink below its content height by default.',
+        '`.list` already scrolls, so its own automatic minimum is zero. Look at what is between it and the height.',
         '`min-height: 0`',
       ],
     },
     canonicalAnswer: 'min-height: 0',
     solution: code(
       'css',
-      '.list {',
+      '.panel {',
       '  flex: 1;',
-      '  min-height: 0; /* let it shrink so overflow can take effect */',
-      '  overflow-y: auto;',
+      '  min-height: 0; /* let it shrink so .list has a height to scroll within */',
+      '  display: flex;',
+      '  flex-direction: column;',
       '}'
     ),
     explanation:
-      'In a column flex container an item’s automatic minimum size is its content height, so a long list refuses to shrink to the space available and `overflow-y: auto` never has a reason to engage. `min-height: 0` opts out of the automatic minimum and lets the item take the size flex gives it, at which point overflow scrolls. It is the same rule as `min-width: 0` for horizontal truncation, and between them they explain a large share of "why is my layout scrolling the whole page" bugs. In grid the equivalent is `minmax(0, 1fr)` instead of a bare `1fr`.',
+      'A flex item’s automatic minimum size is its content height, so `.panel` refuses to shrink below the full height of the list inside it and there is never a constrained height for `.list` to scroll within. `min-height: 0` opts `.panel` out of that minimum. Note that `.list` itself needs nothing: the spec zeroes the automatic minimum for an item that is already a scroll container in the main axis, which is why adding `min-height: 0` to the scroller is such a common non-fix. The blocker is always the nearest ancestor between the scroller and the constrained height. It is the same rule as `min-width: 0` for horizontal truncation, and in grid the equivalent is `minmax(0, 1fr)` instead of a bare `1fr`.',
   },
 ];

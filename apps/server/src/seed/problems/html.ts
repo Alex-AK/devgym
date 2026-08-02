@@ -50,7 +50,7 @@ export const htmlProblems: ProblemDraft[] = [
     explanation: md(
       'Landmarks come from elements, and class names contribute nothing. `<main>` is the primary content landmark and there is one per page, which is why skip links target it. `<nav>` is the navigation landmark, and you can have several as long as each has its own name.',
       '',
-      '`<header>` and `<footer>` are the pair with a condition attached: they only map to the page-level banner and contentinfo landmarks when they are not nested inside `<article>`, `<aside>`, `<nav>`, `<section>` or `<main>`. A `<header>` inside a card is a section header, not the site banner. `<aside>` maps to complementary, and inside sectioning content only when it has an accessible name.'
+      '`<header>` and `<footer>` are the pair with a condition attached: they only map to the page-level banner and contentinfo landmarks when they are not nested inside `<article>`, `<aside>`, `<nav>`, `<section>` or `<main>`. A `<header>` inside a card is a section header, not the site banner. `<aside>` maps to complementary with no condition attached. `<section>` is the one that needs a name: without an accessible name it maps to generic and is not a landmark at all.'
     ),
   },
 
