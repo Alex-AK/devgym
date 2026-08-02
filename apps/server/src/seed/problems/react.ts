@@ -1558,17 +1558,17 @@ export const reactProblems: ProblemDraft[] = [
       hints: [
         'The DOM cost scales with rows actually rendered, not with how much data exists.',
         'Only the rows near the current scroll position need to exist in the DOM at all; the rest mount and unmount as the user scrolls.',
-        "The library already used in this repo's workouts is react-window; the general technique it implements is called ___.",
+        'Libraries like react-window and TanStack Virtual exist to do this for you; the general technique they implement is called ___.',
       ],
     },
     canonicalAnswer: 'windowing',
     solution: code(
       'jsx',
-      'import { FixedSizeList } from "react-window";',
+      'import { List } from "react-window";',
       '',
-      '<FixedSizeList height={600} itemCount={rows.length} itemSize={32} width="100%">',
-      '  {({ index, style }) => <div style={style}>{rows[index].name}</div>}',
-      '</FixedSizeList>'
+      'const Row = ({ index, style, rows }) => <div style={style}>{rows[index].name}</div>;',
+      '',
+      '<List rowCount={rows.length} rowHeight={32} rowComponent={Row} rowProps={{ rows }} />'
     ),
     explanation:
       'Windowing keeps exactly one continuous, scrollable list while only mounting the rows near the viewport, which is the right call for exploring or searching a large, fairly uniform dataset. Pagination is the better choice when items vary a lot in height (windowing wants row sizes it can measure or fix), when a specific page needs its own shareable URL, or when the data source already paginates server-side and you would rather not hand the client the whole set. Either way, windowing only shrinks the render; the data still has to be fetched from somewhere, which is why the two techniques often pair rather than compete.',
