@@ -29,22 +29,7 @@ prices where the two can be separated, because behaviour ages better.
 This section is not machine learning. Training, model architectures and the statistics under them
 are out of scope and stay out.
 
-## 2. The JavaScript pages its reps already need
-
-Three pages, each with problems in the queue today and nothing explaining them. The cheapest work in
-this file and the most immediately felt. Section credits stand: Dan Abramov's _Just JavaScript_.
-
-| Page               | The model it carries                                                                                          | Reps waiting on it                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `javascript/prototypes.md` | Reads walk the chain and writes do not, `this` is decided at the call site, and `{}` is not empty | `debug-prototype-shadow`, `debug-this-callback`, `code-count-by`, `code-group-by-key` |
-| `javascript/numbers.md` | Doubles are binary, integers are exact to 2^53, money goes in minor units, `parseInt` and `Number` disagree about junk | `debug-float-precision`, `debug-number-money`, `debug-parseint-radix` |
-| `javascript/closures.md` | What a closure captures, and why the captured value goes stale | `js-closure-var` |
-
-Prototypes has the strongest case in the repo: four problems, one model, and four different wrong
-answers that all come from the same misreading. Numbers is not on the curriculum map at all; it was
-earned by an audit that read the problems instead of the section titles.
-
-## 3. Data structures and the cost of a choice
+## 2. Data structures and the cost of a choice
 
 Around fifteen problems across `coding`, `js-apis` and `debugging` are about choosing a structure or
 getting a comparator right, and no page names any of it. Not an algorithms course: every page
@@ -60,7 +45,7 @@ structure. Credits: MDN, the V8 blog, open algorithms references.
 The patterns themselves stay in `dsa-patterns` below. Choosing a structure is not a pattern; it is a
 decision ordinary feature work makes hourly and usually by reflex.
 
-## 4. Modules
+## 3. Modules
 
 A fourth content type, specified in full and not started. It is the first since workouts that needs
 application code rather than a directory, and it settles twenty problems that the handbook was never
@@ -98,7 +83,7 @@ Then content, in this order.
 `tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so
 it stays on `node:crypto` and `jose` and invents no primitives of its own.
 
-## 5. Pages missing from sections that already ship
+## 4. Pages missing from sections that already ship
 
 Each of these is named on the curriculum map and absent from `packages/handbook/content/`. Ordered
 by how often the gap is met in ordinary work, not by section.
@@ -118,7 +103,7 @@ by how often the gap is met in ordinary work, not by section.
 Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
 so it blocks nothing.
 
-## 6. The rest of the problem queue
+## 5. The rest of the problem queue
 
 | Category         | Roughly | What it is                                                                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -135,7 +120,7 @@ or its own session preset. That needs the one application change in this file: t
 treats every category equally today, so categories need an opt-out flag it respects. Small, but it
 is code rather than content.
 
-## 7. The workout queue
+## 6. The workout queue
 
 Ordered by what the library cannot practise today. Everything here runs on infrastructure that
 already exists (PGlite, the fake Redis and its clock, the fixture API, testing-library) except where
@@ -168,7 +153,7 @@ The build-your-own genre grows further (a wire-protocol Redis clone, a tiny mess
 `json-parser`, `circuit-breaker-node` and `one-recompute-not-fifty` land well, and only then is it
 worth deciding whether multi-part series need real support.
 
-## 8. Sections with no practice behind them yet
+## 7. Sections with no practice behind them yet
 
 Both of these are last because nothing in the problem set is waiting on them.
 

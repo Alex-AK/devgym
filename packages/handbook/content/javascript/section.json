@@ -2,5 +2,5 @@
   "slug": "javascript",
   "title": "JavaScript, under the hood",
   "order": 1,
-  "summary": "The model underneath the syntax: what a variable actually holds, what a copy actually copies, which of the four equalities you are asking for, and what one thread can do at a time."
+  "summary": "The model underneath the syntax: what a variable actually holds, what a copy actually copies, which of the four equalities you are asking for, where a read goes that a write does not, why the total is a penny out, and what one thread can do at a time."
 }
