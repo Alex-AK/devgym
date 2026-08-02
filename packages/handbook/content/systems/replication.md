@@ -105,3 +105,6 @@ than on the rare failover.
 followers at different positions, so the second was served by the one further behind and time
 appears to run backwards. The guarantee is monotonic reads, and the cheap way to get it is to pin a
 session to one replica instead of picking a fresh one per request.
+
+[CAP, and what consistency actually means](./cap-and-consistency.md) puts both of these session
+guarantees beside strong and eventual consistency.
