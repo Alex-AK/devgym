@@ -5,8 +5,10 @@
 > exactly how it should be.
 >
 > Shipped so far: the `systems` and `html` categories, the TypeScript, React, JavaScript
-> mental-models and headers/security waves, and two workouts (the SSE dashboard and the
-> `json-parser` pilot). Still queued: the `sql-performance`, `api-design`, `node`, `dsa-patterns`
+> mental-models and headers/security waves, an easy-rep sweep of thirty-seven problems across nine
+> categories, and five workouts (the SSE dashboard, the `json-parser` pilot, and the three below).
+> **Easy is now a workout shape rather than a gap**, which is the largest change here since the
+> document was written. Still queued: the `sql-performance`, `api-design`, `node`, `dsa-patterns`
 > and `ai-engineering` categories, and the workout list below, which has grown twice since.
 > `dsa-patterns` remains the one item here that needs an application change, for the queue opt-out
 > flag. `ai-engineering` is the one with a deadline attached, because guide section 13 cannot ship a
@@ -33,6 +35,14 @@ changes, except where explicitly flagged (there is exactly one: the queue opt-ou
 
 Five new categories and four waves inside existing ones; the seed directory is the live count. Every problem still declares `relevance` honestly; the DSA category in particular
 leans `foundational` and `occasional`, and that is the point of the axis.
+
+**A fifth wave has since run across all of them**, driven by the guide rather than by this document:
+forty-five handbook pages had reps but no _easy_ rep, so a reader finished the page and was offered
+the hard version first. Thirty-seven problems closed all but nine. The rule it produced belongs here
+because it governs every wave above: an easy problem is a real thing met in ordinary feature work and
+answered in under two minutes, never a definition to recall. Nine pages kept the gap rather than take
+a filler card, and the reasoning is recorded in
+[the learning guide](./PRD-v3-learning-guide.md#pairing-reps-for-every-page-pages-for-every-rep).
 
 ### New categories
 
@@ -107,25 +117,52 @@ offline. A problem that needs an inference call to grade is a problem this proje
 The v2 coverage table names transport as the widest gap, and the vault material agrees loudly (the
 web sockets note is the deepest production experience in it). Queue, roughly in order:
 
-**Shipped since this document was written:** the SSE dashboard and the `json-parser` pilot.
+**Shipped since this document was written:** the SSE dashboard, the `json-parser` pilot, and three
+more covered under the next heading.
+
+### Easy is a shape, not a smaller version of medium
+
+The library reached ten workouts with **no easy one at all**: six medium, four hard, every one of
+them twenty minutes or longer. Nothing fitted the fifteen-minute morning session the rest of the
+app is built around, so a beginner's route into workouts did not exist and the whole content type sat
+behind a wall.
+
+The shape, now built twice and worth keeping: **twelve minutes, three checkpoints, one editable file,
+one concept.** A medium workout asks you to build a thing; an easy one asks you to get one thing
+right. The starter compiles and runs, so the twelve minutes go on the lesson rather than on wiring.
+
+| Workout                     | Stack            | Shape    | Pairs with              | The lesson                                                                                |
+| --------------------------- | ---------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| Conditional requests        | Express          | feature  | caching/revalidation    | ETag, `If-None-Match`, 304. The checkpoint counts bytes on the wire, not milliseconds     |
+| The invoice panel           | React            | bug-hunt | react/where-state-lives | Derived state, reported as three unrelated complaints that share one cause                |
+| Idempotent payment endpoint | Express + SQLite | feature  | apis/idempotency        | Check-store-replay; the concurrent double-submit is the checkpoint the workout exists for |
+
+Two things learned building them. **An easy workout still needs one checkpoint that cannot be
+patched**, or it teaches nothing: the invoice panel's first two complaints can each be fixed
+locally, and only the render count forces the actual fix. And **the scaffold has to be checked for
+accidental help**: Express's built-in ETag would have handed over two of the three conditional-
+requests checkpoints for free, so it is turned off with a comment saying why.
+
+The invoice panel is not from either table below. Derived state was chosen over the queued "form that
+loses your work" because that one teaches three things (error association, focus, double submit),
+which is a medium shape; and over an effect-cleanup workout because that ground is the most covered
+in the library already.
 
 ### Queued
 
-| Workout                     | Stack                     | Shape    | The lesson                                                                                         |
-| --------------------------- | ------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| Two clients in sync         | WebSocket (`ws`) + React  | feature  | The delivery-guarantees page made real: reconnect, buffering, offset-and-replay for missed events  |
-| Idempotent payment endpoint | Express + SQLite          | feature  | `Idempotency-Key` check-store-replay; the double-submit that gets through anyway is the checkpoint |
-| Cursor pagination bug-hunt  | Kysely + PGlite           | bug-hunt | Offset pagination drifting under concurrent writes; keyset as the fix, plan asserted via EXPLAIN   |
-| Conditional requests        | Express + React           | feature  | ETag, If-None-Match, 304; the checkpoint counts bytes on the wire, not milliseconds                |
-| Retry with backoff          | React + fixture API       | feature  | Timeouts, jittered backoff, giving up honestly; fault injection already exists in the fixture      |
-| Context re-render bug-hunt  | React                     | bug-hunt | A typing lag caused by one fat context; checkpoints count renders, the split is the fix            |
-| Windowed list               | React + react-window      | feature  | 10,000 rows without jank; new dependency in `packages/workouts/package.json`, nothing else         |
-| Job queue consumer          | Node + in-repo fake queue | feature  | At-least-once delivery means the consumer must be idempotent; the duplicate delivery is the test   |
-| TypeORM relations bug-hunt  | TypeORM + SQLite          | bug-hunt | `save` vs `update`, relations loading, the nested-where trap from the learning journal, verbatim   |
-| Validated request boundary  | Hono + Zod                | feature  | Two birds: first Hono workout, and schema validation as the API's front door                       |
-| Search on Sequelize         | Sequelize + SQLite        | feature  | The product-search brief on a fourth ORM; stack breadth per the standing rule                      |
-| Infinite scroll with retry  | React + fixture API       | feature  | Carried from the v2 backlog                                                                        |
-| Drag-and-drop ordering      | React + Zustand + API     | feature  | Carried from the v2 backlog                                                                        |
+| Workout                    | Stack                     | Shape    | The lesson                                                                                        |
+| -------------------------- | ------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| Two clients in sync        | WebSocket (`ws`) + React  | feature  | The delivery-guarantees page made real: reconnect, buffering, offset-and-replay for missed events |
+| Cursor pagination bug-hunt | Kysely + PGlite           | bug-hunt | Offset pagination drifting under concurrent writes; keyset as the fix, plan asserted via EXPLAIN  |
+| Retry with backoff         | React + fixture API       | feature  | Timeouts, jittered backoff, giving up honestly; fault injection already exists in the fixture     |
+| Context re-render bug-hunt | React                     | bug-hunt | A typing lag caused by one fat context; checkpoints count renders, the split is the fix           |
+| Windowed list              | React + react-window      | feature  | 10,000 rows without jank; new dependency in `packages/workouts/package.json`, nothing else        |
+| Job queue consumer         | Node + in-repo fake queue | feature  | At-least-once delivery means the consumer must be idempotent; the duplicate delivery is the test  |
+| TypeORM relations bug-hunt | TypeORM + SQLite          | bug-hunt | `save` vs `update`, relations loading, the nested-where trap from the learning journal, verbatim  |
+| Validated request boundary | Hono + Zod                | feature  | Two birds: first Hono workout, and schema validation as the API's front door                      |
+| Search on Sequelize        | Sequelize + SQLite        | feature  | The product-search brief on a fourth ORM; stack breadth per the standing rule                     |
+| Infinite scroll with retry | React + fixture API       | feature  | Carried from the v2 backlog                                                                       |
+| Drag-and-drop ordering     | React + Zustand + API     | feature  | Carried from the v2 backlog                                                                       |
 
 ### Ten more, noodled
 

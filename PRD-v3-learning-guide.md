@@ -5,7 +5,9 @@
 > (moving data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases), 8 (the server runtime) and 9
 > (systems) are underway; every concept section 9's card list names now has a card, though its
 > case-study shelf does not exist yet, and it has no workout. Sections 11 (TypeScript), 12 (the
-> browser) and 16 (writing SQL) have shipped whole. Section 10 (trade-offs) is not started.
+> browser), 16 (writing SQL) and 17 (security) have shipped whole, and section 17 took the
+> security-headers page section 4 was owed with it, so headers is complete too. Section 10
+> (trade-offs) is not started.
 > Seven further sections have been added since the first draft: TypeScript and the browser you are
 > writing for, both by the pairing rule; AI engineering, running it in production, and data
 > structures, from a topic pass that moved the scope once, deliberately and by decision; then writing
@@ -114,6 +116,24 @@ half runs far ahead of the other:
 can back several pages. The target is that no page is unpractised and no substantial category is
 unexplained, not a matching count on each side.
 
+### A third direction, found once both others were closed
+
+Pairing counts whether a page has reps. It says nothing about whether a reader can _reach_ them, and
+those turned out to be different questions. **Forty-five of ninety-five pages had no easy problem at
+all**: fully paired by the rule above, and yet you finish reading and the first thing offered is the
+hard version. That is the on-ramp missing, and it is invisible to the check that only asks whether
+the `practise` list is empty.
+
+Thirty-seven easy problems closed all but nine of them. The nine that remain are refusals rather than
+debt, and the reason is the rule the sweep produced: **an easy rep is a real thing met in ordinary
+feature work, answered in under two minutes by someone who has just read the page.** A definition to
+recall is not one. Back-of-envelope estimation is performed out loud in an interview, consistent
+hashing is consumed rather than configured, and a card written to fill the row would teach that the
+definition was the point. A page is allowed to have no on-ramp when it honestly has none.
+
+This is not mechanically enforced, deliberately. "Has an easy problem" is checkable and would be the
+wrong thing to check, because passing it by writing trivia is easier than passing it honestly.
+
 ### Check the shelf before writing
 
 Topic requests arrive as lists, and a list does not know what has already shipped. Four came in on
@@ -145,7 +165,7 @@ areas nothing was tracking.
 | JavaScript under the hood                                      | yes                       | yes   | no workout yet               |
 | Systems                                                        | ~19 cards                 | yes   | **no workout, and 13 pages** |
 | Writing SQL                                                    | 29 problems               | yes   | paired                       |
-| **Security past the headers**                                  | 14 uncited of 18          | none  | **section owed, below**      |
+| Security past the headers                                      | 18 problems               | yes   | paired                       |
 | The DOM you still write                                        | 9 problems                | yes   | paired, in section 12        |
 | **`URL` and `URLSearchParams`**                                | 10 uncited of 10          | none  | **a module, not a section**  |
 | TypeScript                                                     | 34 problems               | yes   | paired                       |
@@ -454,8 +474,9 @@ where a query gets written.
 
 ### 17. Security, past the headers
 
-Also found by the audit. The headers section owns the header-shaped half and section 4 already has a
-security-headers page owed to it; everything else in the `security` category has no home at all.
+**Shipped**, and it took section 4's owed security-headers page with it, since they are one afternoon
+together and two afternoons apart. Found by the audit: the headers section owns the header-shaped
+half, and everything else in the `security` category had no home at all.
 
 Pages: where untrusted input becomes code (XSS in its three sites, and why `innerHTML` with user text
 is the same bug as string-concatenated SQL); parameterised queries, and what an ORM does and does not
@@ -495,26 +516,25 @@ reader.
 ## Build order
 
 Moving data, databases, JavaScript, APIs, headers, caching, the server runtime, React, systems,
-writing SQL, TypeScript and the browser have all landed. Every category with substantial practice
-volume now has pages behind it, which is the first time that has been true in either direction. What
-remains, ordered by how much unexplained practice is sitting behind each:
+writing SQL, TypeScript, the browser and security have all landed. **No problem category is
+unexplained now**, in either direction, which is the first time that has been true. What remains is
+therefore no longer ordered by unexplained practice, because there is none: it is ordered by what the
+reader is missing.
 
-1. **Security, past the headers** — the last section with uncited problems waiting, and it takes the
-   security-headers page owed to section 4 with it, since they are one afternoon together and two
-   afternoons apart
-2. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
+1. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
    its problems rather than ahead of them (see the pairing rule; a page with an empty `practise` list
    cannot ship at all)
-3. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
-4. **Running it in production**
-5. **Trade-offs and architecture** — last, as before, because it resists the page shape
+2. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
+3. **Running it in production**
+4. **Trade-offs and architecture** — last, as before, because it resists the page shape
 
 **On the numbers**: these are the map's, and they are identifiers rather than reading order.
 `section.json` owns what a reader sees, and the two have now diverged on purpose. Writing SQL took
 display order 7 and pushed databases, the server runtime and systems each down one, because writing a
 query comes before making it fast and a reader meeting the sections in order should get them that
-way. Section 17 will do the same next to headers when it lands. The map numbers below do not move
-when that happens, because renumbering them would invalidate every cross-reference in this document
+way. Section 17 has now done the same: security took display order 7, directly after headers, pushing
+caching, APIs, writing SQL, databases, the server runtime and systems each down one. The map numbers
+in this document did not move, because renumbering them would invalidate every cross-reference here
 for no reader benefit.
 
 The single-page additions do not wait their turn, because each one slots into a section that already

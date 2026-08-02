@@ -124,42 +124,64 @@ visible to people who never run the app.
 
 ## The learning-techniques page
 
-A second static page at `/how-it-teaches`, linked from the about page and the README.
+**Shipped**, at `/how-it-teaches`, linked from the about page and the README. Hand-written React
+alongside `AboutPage.tsx`, not a content pipeline.
 
-The app already leans on four techniques that have real evidence behind them, and it has never said
-so anywhere. That is a gap in the same direction as the LLM-authorship disclaimer: the honest move is
-to name the mechanism, say where in the app it happens, cite the evidence, and be equally clear about
-the parts that are guesses.
+The app leans on four techniques that have evidence behind them, and it had never said so anywhere.
+That is a gap in the same direction as the LLM-authorship disclaimer: the honest move is to name the
+mechanism, say where in the app it happens, cite the evidence, and be equally clear about the parts
+that are guesses.
 
-What the page covers, one short section each, and every one of them names the file or the screen so
-the claim is checkable:
+One short section each, and every one names the file or the constant so the claim is checkable:
 
-- **Retrieval practice.** You answer before you see the answer, everywhere: problems, and the predict
-  step in every module ([PRD-v4](./PRD-v4-modules.md)). Recalling something is a stronger memory
-  operation than re-reading it.
-- **Spaced repetition.** `REVIEW_INTERVALS_DAYS` in `packages/shared`, a 1, 3, 7, 21, 60 ladder that
-  widens on a correct answer and resets on a wrong one. The page states the ladder outright, because
-  a reader deserves to know the schedule they are on.
-- **Interleaving.** The daily queue deals across categories rather than drilling one, which is slower
-  in the session and better afterwards.
+- **Retrieval practice.** You answer before you see the answer. `REVEAL_AFTER_ATTEMPTS` holds the
+  solution back until the problem is solved or three attempts have gone in, and workouts hold theirs
+  until the checkpoints pass.
+- **Spaced repetition.** `REVIEW_INTERVALS_DAYS` in `packages/shared`, the 1, 3, 7, 21, 60 ladder,
+  stated outright because a reader deserves to know the schedule they are on.
+- **Interleaving.** Consecutive problems come from different categories, and the page names where
+  that happens.
 - **Desirable difficulty.** Why the grader gives a verdict and a reason rather than the answer, why
   briefs state the symptom and never the cause, and why the checkpoint hint appears only after the
   checkpoint has failed. The friction is the mechanism.
 
-**And the part that has to be on the page for it to be worth having:** the specific ladder is not
-evidence-based. Expanding intervals are; 1, 3, 7, 21, 60 is a guess that has never been tuned against
-anything, because a single-user app has no data to tune it with. Saying so is the difference between
-citing research and borrowing its authority.
+### What writing it corrected
 
-Sources are the load-bearing part, so they follow the citation policy above with no exceptions: open
-references only, cited for the claim actually made rather than for the general vibe of the field.
-Dunlosky et al.'s 2013 review is the obvious spine, since it rates practice testing and distributed
-practice as the two highest-utility techniques it examined and is freely available. Roediger and
-Karpicke on the testing effect, Cepeda et al. on distributed practice, and Bjork on desirable
-difficulties cover the rest. Every URL gets fetched before it ships, which is the rule that a rotted
-AWS link has already proved is not optional.
+Every claim was checked against the file it names, and three of this document's own descriptions did
+not survive that. All three failed the same way: the app does something narrower than the sentence
+here said it did, which is worth recording because the sentences read as harmless summaries.
 
-Same build as the about page: hand-written React alongside `AboutPage.tsx`, not a content pipeline.
+- **The ladder does not "widen on a correct answer and reset on a wrong one".** `nextSchedule` widens
+  only on a review of a problem already solved, resets only when a **review** is failed, does nothing
+  at all to a problem never solved, and caps at 60 days rather than falling off the end.
+- **Interleaving is not in the queue builder.** The queue orders by `position`, and the round-robin
+  across categories is baked into that position by `assignPositions` at seed time, inside each
+  difficulty band. Scoping a session to one category turns it off, which the page says.
+- **The predict step is not a thing yet.** Modules do not exist, so the retrieval-practice section
+  rests on problems and workouts. Restore the reference when [PRD-v4](./PRD-v4-modules.md) lands.
+
+### And the correction that matters most
+
+This document conceded that 1, 3, 7, 21, 60 is a guess while asserting that **expanding intervals**
+are evidence-based. That second half does not hold up. Karpicke and Roediger tested expanding
+intervals against equally spaced ones and found expanding better 10 minutes after learning and worse
+two days later, which is the direction that matters for a review schedule. Cepeda et al. add that the
+best gap depends on how long you want to retain the material, which a fixed ladder ignores.
+
+So the honest claim is narrower than the one planned here: **spacing has the evidence, the expanding
+shape is a choice, and the five numbers are a guess.** The page says exactly that. Conceding the
+numbers while borrowing authority for the shape would have been the subtler version of the thing this
+page exists to avoid.
+
+Sources follow the citation policy above with no exceptions: open references only, cited for the
+claim actually made rather than for the general vibe of the field. Dunlosky et al. 2013 is the spine,
+with Roediger and Karpicke on the testing effect, Cepeda et al. on distributed practice, Karpicke and
+Roediger on expanding retrieval, and Bjork and Bjork on desirable difficulties.
+
+**Two of the planned links had already rotted**, which is the rule proving itself again: Dunlosky is
+no longer freely available at the publisher, and the Washington University copy of Roediger and
+Karpicke serves an expired certificate. Both were replaced with verified institutional copies of the
+same papers, and every citation carries its DOI in plain text so the paper survives its link.
 
 ## Repo touches
 
