@@ -4,8 +4,8 @@
 > `pnpm verify`, and the section list and page view in the app. Sections 1 (JavaScript), 2 (React), 3
 > (moving data), 4 (headers), 5 (caching), 6 (APIs), 7 (databases), 8 (the server runtime) and 9
 > (systems) are underway; every concept section 9's card list names now has a card, though its
-> case-study shelf does not exist yet, and it has no workout. Section 16 (writing SQL) has shipped
-> whole. Section 10 (trade-offs) is not started.
+> case-study shelf does not exist yet, and it has no workout. Sections 11 (TypeScript), 12 (the
+> browser) and 16 (writing SQL) have shipped whole. Section 10 (trade-offs) is not started.
 > Seven further sections have been added since the first draft: TypeScript and the browser you are
 > writing for, both by the pairing rule; AI engineering, running it in production, and data
 > structures, from a topic pass that moved the scope once, deliberately and by decision; then writing
@@ -138,21 +138,21 @@ The audit that produced the bottom half of this table counted, for every problem
 `practise` list names it. That is a sharper instrument than reading section titles, and it found four
 areas nothing was tracking.
 
-| Area                                                           | Practice                  | Pages | Gap                            |
-| -------------------------------------------------------------- | ------------------------- | ----- | ------------------------------ |
-| Moving data, headers, caching, APIs, databases, server runtime | yes                       | yes   | paired                         |
-| React                                                          | 30+ problems, one workout | yes   | paired                         |
-| JavaScript under the hood                                      | yes                       | yes   | no workout yet                 |
-| Systems                                                        | ~19 cards                 | yes   | **no workout, and 13 pages**   |
-| Writing SQL                                                    | 29 problems               | yes   | paired                         |
-| **Security past the headers**                                  | 14 uncited of 18          | none  | **section owed, below**        |
-| **The DOM you still write**                                    | 8 uncited of 9            | none  | **pages owed in section 12**   |
-| **`URL` and `URLSearchParams`**                                | 10 uncited of 10          | none  | **a module, not a section**    |
-| **TypeScript**                                                 | 30+ problems              | none  | **decision to revisit, below** |
-| **HTML, accessibility, CSS, forms**                            | ~48 problems              | none  | **section owed**               |
-| **Dates and time**                                             | 10 problems               | none  | **a module, not a section**    |
-| Testing                                                        | 8 problems                | none  | deferred, threshold below      |
-| Trade-offs and architecture                                    | none                      | none  | neither half exists            |
+| Area                                                           | Practice                  | Pages | Gap                          |
+| -------------------------------------------------------------- | ------------------------- | ----- | ---------------------------- |
+| Moving data, headers, caching, APIs, databases, server runtime | yes                       | yes   | paired                       |
+| React                                                          | 30+ problems, one workout | yes   | paired                       |
+| JavaScript under the hood                                      | yes                       | yes   | no workout yet               |
+| Systems                                                        | ~19 cards                 | yes   | **no workout, and 13 pages** |
+| Writing SQL                                                    | 29 problems               | yes   | paired                       |
+| **Security past the headers**                                  | 14 uncited of 18          | none  | **section owed, below**      |
+| The DOM you still write                                        | 9 problems                | yes   | paired, in section 12        |
+| **`URL` and `URLSearchParams`**                                | 10 uncited of 10          | none  | **a module, not a section**  |
+| TypeScript                                                     | 34 problems               | yes   | paired                       |
+| HTML, accessibility, CSS, forms, DOM                           | ~56 problems              | yes   | paired                       |
+| **Dates and time**                                             | 10 problems               | none  | **a module, not a section**  |
+| Testing                                                        | 8 problems                | none  | deferred, threshold below    |
+| Trade-offs and architecture                                    | none                      | none  | neither half exists          |
 
 Three of those four resolve into new pages, and one does not, which is the interesting result.
 **`URL` and `URLSearchParams` is an API, not a concept**: repeated keys, `set` against `append`, the
@@ -494,20 +494,20 @@ reader.
 
 ## Build order
 
-Moving data, databases, JavaScript, APIs, headers, caching, the server runtime, React and systems
-have all landed. What remains, ordered by how much unexplained practice is sitting behind each:
+Moving data, databases, JavaScript, APIs, headers, caching, the server runtime, React, systems,
+writing SQL, TypeScript and the browser have all landed. Every category with substantial practice
+volume now has pages behind it, which is the first time that has been true in either direction. What
+remains, ordered by how much unexplained practice is sitting behind each:
 
-1. **The browser you are writing for** — now the largest unpaired block by some distance, and the
-   audit added two DOM pages to it without changing that
-2. **TypeScript, at the type level**
-3. **Security, past the headers** — takes the security-headers page owed to section 4 with it, since
-   they are one afternoon together and two afternoons apart
-4. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
+1. **Security, past the headers** — the last section with uncited problems waiting, and it takes the
+   security-headers page owed to section 4 with it, since they are one afternoon together and two
+   afternoons apart
+2. **AI engineering** — the only section here with no practice behind it yet, so it ships alongside
    its problems rather than ahead of them (see the pairing rule; a page with an empty `practise` list
    cannot ship at all)
-5. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
-6. **Running it in production**
-7. **Trade-offs and architecture** — last, as before, because it resists the page shape
+3. **Data structures and the cost of a choice** — pairs with `dsa-patterns`, which is itself queued
+4. **Running it in production**
+5. **Trade-offs and architecture** — last, as before, because it resists the page shape
 
 **On the numbers**: these are the map's, and they are identifiers rather than reading order.
 `section.json` owns what a reader sees, and the two have now diverged on purpose. Writing SQL took
