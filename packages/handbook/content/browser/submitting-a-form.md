@@ -7,6 +7,7 @@ practise:
   - forms-formdata-serialize
   - forms-file-upload-type
   - forms-optimistic-double-submit
+  - react-controlled-input
   - forms-controlled-value-null
   - forms-debounce-validation
 sources:

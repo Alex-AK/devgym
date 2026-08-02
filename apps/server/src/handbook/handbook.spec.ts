@@ -14,7 +14,7 @@ import {
 
 /**
  * The content safety net, and the reason a page can be written quickly. It
- * enforces the citation policy from PRD-v3-open-source mechanically: something
+ * enforces the citation policy from docs/content.md mechanically: something
  * to check the claims against, a link that still resolves to whoever is being
  * credited, and reps that actually exist.
  */

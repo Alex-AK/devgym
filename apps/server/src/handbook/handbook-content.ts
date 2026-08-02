@@ -41,7 +41,7 @@ export const HANDBOOK_PACKAGE = findHandbookPackage();
 export const CONTENT_DIR = join(HANDBOOK_PACKAGE, 'content');
 
 /**
- * The five-part shape from PRD-v2 phase 4. Two parts live in frontmatter (the
+ * The five-part shape from docs/content.md. Two parts live in frontmatter (the
  * question, and where to practise) because the app resolves them into links;
  * the other three are headings in the body, checked by exact text so pages stay
  * recognisably the same thing.

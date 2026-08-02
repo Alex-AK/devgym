@@ -14,7 +14,7 @@ step, no import graph, no restart.
 ## What a page is
 
 Not an article. It is what you would want open beside you while doing the workout, and it has a
-fixed shape, defined in [PRD-v2.md](../../PRD-v2.md) phase 4:
+fixed shape, defined in [docs/content.md](../../docs/content.md):
 
 1. **The question it answers**, phrased the way you would ask it at the moment you needed it. This
    is the `question` field.
@@ -60,8 +60,7 @@ value that contains a colon followed by a space. Anything else is an error namin
 
 `pnpm verify` refuses a page that cites nothing, cites through a link shortener, points `practise`
 at a slug that does not exist, or is missing part of the shape. That is the citation policy from
-[PRD-v3-open-source.md](../../PRD-v3-open-source.md) enforced mechanically rather than by good
-intentions.
+[docs/content.md](../../docs/content.md) enforced mechanically rather than by good intentions.
 
 Two rules it cannot check, and content review has to:
 

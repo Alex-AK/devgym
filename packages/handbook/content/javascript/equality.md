@@ -5,6 +5,8 @@ order: 3
 practise:
   - debug-nan-comparison
   - debug-equality-coercion
+  - js-samevaluezero-includes
+  - js-negative-zero
   - code-deep-equal
   - react-state-object-mutation
 sources:

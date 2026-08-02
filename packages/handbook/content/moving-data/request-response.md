@@ -8,6 +8,7 @@ practise:
   - http-retry-safe-methods
   - http-idempotency-key
   - js-abort
+  - js-promise-timeout
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'

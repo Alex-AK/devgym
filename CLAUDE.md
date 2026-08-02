@@ -3,13 +3,42 @@
 A local-first practice app for keeping web-dev fundamentals sharp. Read `README.md` first for what it
 does and how to run it. This file covers what an agent needs to change it safely.
 
-`PRD.md` is the original v1 spec and is now **historical**. Where it disagrees with the code, the
-code wins: sessions, spaced repetition and executable code problems were all v1 non-goals that were
-added later. `PRD-v2.md` is the **live** spec: it covers workouts, the planned workout library, and
-the handbook. Read it before starting anything in that area. The three `PRD-v3-*.md` documents
-extend it rather than replace it: the learning guide's curriculum map, the problem and workout
-roadmap, and the open-sourcing work (about page, citation policy). Read the relevant one before
-starting content, handbook or about-page work.
+**The code is the source of truth for what exists.** No document in this repo lists what has shipped,
+by design: the seed files, `packages/handbook/content/` and `packages/workouts/content/` are the live
+inventory, and a status line would only go stale. Three documents hold what the code cannot say, and
+this file is the entry point to them:
+
+- **`docs/content.md`** — the bar every problem, handbook page, workout and module clears, and how to
+  write each one. Read the relevant section before adding content.
+- **`docs/decisions.md`** — why things are the way they are, and what this project deliberately
+  refuses to do. Read it before reopening a settled question or filling a gap that looks obvious;
+  several of those gaps are recorded refusals.
+- **`docs/roadmap.md`** — only what is not built. A row leaves it when the thing ships.
+
+Six version-numbered PRDs preceded these and were folded into them. Git history has the originals if
+a piece of reasoning seems to be missing.
+
+## What it is for, and what that rules out
+
+Practical knowledge for **web engineering and AI engineering**: what you actually hit shipping
+features, and increasingly what you hit shipping features against a model. Content earns its place by
+being useful in that work, judged against a 15-minute morning session. Nothing earns its place by
+completing a set.
+
+**Completionism is the failure mode to watch for**, because it looks like diligence and is easy to
+measure. The library has three halves, problems, workouts and handbook pages, and they do not map
+1:1:1. A problem does not owe a page. A page does not owe a workout. A category does not owe an even
+spread of difficulties. The `explanation` field is read in the thirty seconds after solving and is
+meant to carry the lesson on its own, so most reps need nothing behind them at all.
+
+What a page is for is the model that several reps share, where getting that model wrong is what makes
+all of them fail. A fact you would look up is a rep and nothing more. Only one mapping is enforced,
+and it is the only one worth enforcing: a page names somewhere to practise it, or it does not ship.
+
+So **an uncited problem is not debt**, and a gap nobody would notice while working is not a gap.
+Where a topic is genuinely not worth a page, the right move is to say so and leave it, in the
+document that raised it. Several such refusals are already recorded in `docs/decisions.md`; add to
+them rather than quietly closing them.
 
 ## Hard constraints
 

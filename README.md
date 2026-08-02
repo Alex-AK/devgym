@@ -13,10 +13,11 @@ You write every answer yourself and a deterministic grader marks it, so the reps
 in the loop at runtime, fully offline, single user, no accounts.
 
 **Status:** built and in daily use. Content grows continuously and is never finished, so this README
-describes the shape rather than counting it; the app and the seed files are the live inventory.
-[PRD-v2.md](./PRD-v2.md) is the live spec, extended by the three `PRD-v3-*.md` documents.
-[PRD.md](./PRD.md) is the original v1 one, kept for provenance: code execution and spaced repetition
-were non-goals there and were pulled forward deliberately.
+describes the shape rather than counting it; the app and the seed files are the live inventory. The
+same principle governs the docs: [docs/content.md](./docs/content.md) is the bar every problem, page
+and workout clears, [docs/decisions.md](./docs/decisions.md) records why things are the way they are
+and what the project deliberately refuses to do, and [docs/roadmap.md](./docs/roadmap.md) holds only
+what is not built yet.
 
 ## Quickstart
 
@@ -203,8 +204,8 @@ See `packages/handbook/README.md` for the authoring contract.
 - `apps/server/src/grading`: the four graders plus the sandboxed code runner
 - `apps/server/src/seed/problems`: one file per category, positions generated at seed time
 - `apps/server/src/workouts`: workspace materialisation and the vitest checkpoint runner
-- `PRD-v2.md`: the live spec · `PRD.md`: the v1 one, kept for provenance · `CLAUDE.md`: context for
-  coding agents · `WRITING.md`: how everything a user reads is written
+- `CLAUDE.md`: context for coding agents, and the entry point to the rest · `WRITING.md`: how
+  everything a user reads is written · `docs/`: the content bar, the decision log, and the roadmap
 
 ### Data
 

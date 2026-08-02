@@ -5,8 +5,10 @@ order: 4
 practise:
   - js-sort-mutates
   - react-state-object-mutation
+  - debug-module-shared-instance
   - debug-mutable-shared-default
   - debug-object-default-param
+  - debug-freeze-shallow
 sources:
   - author: MDN
     title: Array.prototype.sort()

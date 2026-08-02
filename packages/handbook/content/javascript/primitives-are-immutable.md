@@ -3,6 +3,8 @@ title: Primitives are immutable
 question: Why does assigning to str[0] change nothing?
 order: 2
 practise:
+  - js-autobox-assign
+  - js-string-index-assign
   - js-dedupe
   - js-map-vs-object
 sources:

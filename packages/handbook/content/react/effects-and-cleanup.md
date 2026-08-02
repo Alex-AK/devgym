@@ -4,6 +4,7 @@ question: Do I need an effect here, and what does its cleanup have to undo?
 order: 3
 practise:
   - react-effect-cleanup
+  - debug-event-listener-leak
   - react-effect-object-dep
   - react-stale-closure
   - react-fetch-race

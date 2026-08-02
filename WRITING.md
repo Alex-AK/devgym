@@ -32,8 +32,8 @@ That makes accuracy a writing rule, not just a research rule:
   code. If you can't check it, cut it.
 - Numbers are exact or absent. "About 40,000 rows" only when the seed really makes 40,000.
 - Lead with the symptom, then name the concept. "The second page repeats a row" teaches; a
-  paragraph that opens with "keyset pagination" gets skimmed. This is the same rule PRD-v2 sets
-  for handbook traps, and it applies to hints and feedback too.
+  paragraph that opens with "keyset pagination" gets skimmed. This is the same rule
+  `docs/content.md` sets for handbook traps, and it applies to hints and feedback too.
 
 ## Brevity, without terseness
 

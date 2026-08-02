@@ -119,7 +119,7 @@ function ActiveState({ progress }: { progress: ProgressResponse }): React.ReactE
 /**
  * The three numbers worth seeing daily. Problems and workouts both measure
  * progress; the handbook deliberately does not, so it is counted rather than
- * scored (PRD-v3: pages are reference, the problems are the progress tracking).
+ * scored: pages are reference, the problems are the progress tracking.
  */
 function Headline({ progress }: { progress: ProgressResponse }): React.ReactElement {
   const { data: workouts } = useQuery({ queryKey: queryKeys.workouts, queryFn: api.workouts });

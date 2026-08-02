@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 /**
  * Hand-written, deliberately. It is one page, and a content pipeline for it
  * would be machinery for its own sake. The copy is the draft from
- * PRD-v3-open-source, which was written to be shipped rather than rewritten.
+ * docs/decisions.md, which records why it was written to be shipped rather than rewritten.
  */
 export function AboutPage(): React.ReactElement {
   return (

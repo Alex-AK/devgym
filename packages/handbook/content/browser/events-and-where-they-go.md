@@ -7,6 +7,7 @@ practise:
   - dom-event-delegation
   - dom-prevent-vs-stop
   - dom-debounce-throttle
+  - code-debounce
 sources:
   - author: MDN
     title: Event bubbling

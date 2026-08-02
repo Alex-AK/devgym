@@ -4,8 +4,10 @@ question: Why did editing my copy of an object edit the original as well?
 order: 1
 practise:
   - js-shallow-copy
+  - debug-spreadsheet-copy
   - debug-array-fill-objects
   - js-deep-clone
+  - debug-clone-methods-compare
   - code-deep-equal
 sources:
   - author: MDN
