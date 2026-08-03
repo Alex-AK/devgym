@@ -1,6 +1,6 @@
-# devgym
+# Hone
 
-A local-first practice gym for staying sharp on web-dev fundamentals. Six ways in:
+A local-first practice tool for staying sharp on web-dev fundamentals. Six ways in:
 
 - **Problems** are short reps: type an answer, get tiered feedback (correct / close / not close),
   come back to it on a spaced-repetition schedule.
@@ -134,7 +134,7 @@ weeks later opens with none showing. Get that review wrong and you unlock them a
 
 Coding problems execute in a `node:vm` context with a 1 second timeout and no `require`, `process`
 or filesystem access. **That is an isolation convenience, not a security boundary.** Determined code
-can reach the host realm through constructor chains. It is fine here because devgym runs locally and
+can reach the host realm through constructor chains. It is fine here because Hone runs locally and
 executes only code you typed yourself, which is the same trust level as `pnpm dev`. Do not reuse
 `grading/code-runner.ts` to run code from anyone else.
 
@@ -267,7 +267,7 @@ contract.
 
 ## The essentials path
 
-`/essentials` is the deliberate-study entrance, and the only part of devgym not written against a
+`/essentials` is the deliberate-study entrance, and the only part of Hone not written against a
 15-minute morning. Each session is an hour on one slice: two or three pages in order, the reps those
 pages explain, then a workout where one fits. The daily session stays interleaved because that is
 what remembering wants; a path is blocked and ordered because that is what understanding something

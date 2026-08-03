@@ -116,6 +116,6 @@ share a name and are found in different places.
 **Finding it depends on the engine.** In Postgres, `log_min_duration_statement = 0` prints the
 duration of every completed statement, and `log_statement = 'all'` logs the statements themselves.
 SQLite has no server process to configure at all: the process reads and writes the database file
-directly, so the only place to count is the driver or the ORM. Both devgym workouts wrap the query
+directly, so the only place to count is the driver or the ORM. Both Hone workouts wrap the query
 runner and push every statement into an array, which is also the cheapest thing you can add to a real
 codebase.

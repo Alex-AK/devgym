@@ -1,4 +1,4 @@
-# devgym — agent context
+# Hone — agent context
 
 A local-first practice app for keeping web-dev fundamentals sharp. Read `README.md` first for what it
 does and how to run it. This file covers what an agent needs to change it safely.
@@ -104,7 +104,7 @@ apps/web/src/
   grades `correct`, every near-miss grades `close`, every regex compiles, no keyword synonym
   normalises to an empty string, and every coding problem's reference passes its own tests while its
   starter does not.
-- **Seeding without touching the real database:** set `DEVGYM_DATA_DIR` to a scratch path. Useful
+- **Seeding without touching the real database:** set `HONE_DATA_DIR` to a scratch path. Useful
   for checking the seeder end to end when the user is mid-streak.
 - **Adding a module** is a directory under `packages/modules/content/`. `modules.spec.ts` runs every
   step's assertions against its own snippet, so a module that teaches something untrue fails the

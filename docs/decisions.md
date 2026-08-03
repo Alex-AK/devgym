@@ -1,6 +1,6 @@
 # Decisions
 
-Why devgym is the way it is, and what it refuses to do. Every entry here was settled once, with
+Why Hone is the way it is, and what it refuses to do. Every entry here was settled once, with
 real alternatives on the table, and the reasoning is not recoverable from the code. Without this
 file the same questions get reopened and the same deliberate gaps get "fixed".
 
@@ -292,7 +292,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   dependency and gives up diffability and easy authoring; ASCII needs nothing at all and caps what
   can be drawn.
 
-- **Pages say which engine they mean.** The source material teaches Postgres and devgym runs SQLite
+- **Pages say which engine they mean.** The source material teaches Postgres and Hone runs SQLite
   and PGlite, so a page names its engine and notes where SQLite differs. This is not pedantry:
   writing the SQL section against `practice.db` rather than from memory contradicted three claims
   that would otherwise have shipped as fact, including that SQLite accepts a select-list alias in
@@ -611,7 +611,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   conventional, and it stays that way.
 
 - **`node:vm` in the code runner is an isolation convenience, not a security boundary.** Determined
-  code reaches the host realm through constructor chains. That is acceptable because devgym runs
+  code reaches the host realm through constructor chains. That is acceptable because Hone runs
   locally and executes only code the user typed, which is the same trust level as `pnpm dev`. Do not
   reuse `grading/code-runner.ts` to run code from anyone else.
 
@@ -683,7 +683,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 - **Self-hosting was raised and declined.** The workout runner executes submitted code and `node:vm`
   is not a security boundary, which is fine on a laptop and a different proposition on a box with a
   public interface. Making it safe means real sandboxing, which is a project rather than a
-  deployment, so devgym is not exposed on a network interface. If self-hosting returns it returns
+  deployment, so Hone is not exposed on a network interface. If self-hosting returns it returns
   split: the read-only half has no code execution, no accounts and no user data, so publishing it is
   a static build and nothing more, while the full app stays local or behind a private network. What
   does not happen is the whole thing on a public interface because the handbook wanted a URL.

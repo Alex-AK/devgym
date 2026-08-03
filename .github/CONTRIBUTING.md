@@ -1,6 +1,6 @@
-# Contributing to devgym
+# Contributing to Hone
 
-devgym is [MIT licensed](../LICENSE) and contributions are welcome. It's a small project, so this is
+Hone is [MIT licensed](../LICENSE) and contributions are welcome. It's a small project, so this is
 short.
 
 ## Before you open a PR

@@ -1,6 +1,6 @@
 # Writing guide
 
-How devgym is written. This applies to everything a user reads: problem prompts, hints,
+How Hone is written. This applies to everything a user reads: problem prompts, hints,
 explanations, grader feedback, workout briefs, checkpoint hints, handbook pages, UI strings, and
 the repo docs. It's written for two audiences at once: human contributors, and the LLM sessions
 that produce most of the content. Both drift toward the same failure, which is prose that sounds

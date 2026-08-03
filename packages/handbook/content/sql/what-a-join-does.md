@@ -26,7 +26,7 @@ sources:
 verified: 2026-08-01
 ---
 
-Every query and every number on this page was run against devgym's practice database, which is
+Every query and every number on this page was run against Hone's practice database, which is
 SQLite. Join semantics are the same in Postgres, and the one difference that matters here is called
 out below.
 
@@ -85,7 +85,7 @@ select list is `1`. Reach for `NOT EXISTS` when the right-hand table contributes
 output, which is most of the time.
 
 One engine difference. SQLite gained `RIGHT JOIN` and `FULL OUTER JOIN` in release 3.39.0 on
-2022-06-25, and both run in the version devgym ships. Postgres has all three. If older SQLite code
+2022-06-25, and both run in the version Hone ships. Postgres has all three. If older SQLite code
 writes every outer join as a `LEFT JOIN` with the tables the other way round, that gap is why.
 
 ## Worked example

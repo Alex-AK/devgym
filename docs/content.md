@@ -1,6 +1,6 @@
 # Writing content
 
-devgym has five content types: problems, handbook pages, workouts, modules and decks. This is the
+Hone has five content types: problems, handbook pages, workouts, modules and decks. This is the
 bar each one clears and how to write one. Read the section for the type you are adding, then the
 cross-cutting rules at the end, which apply to all five.
 
@@ -308,7 +308,7 @@ A session on the path is an hour on one slice of the work, and it authors nothin
 reps and workouts that already exist, which makes it the one kind of file here judged on selection
 rather than on writing.
 
-It is also the only thing in devgym not judged against a 15-minute morning session. That is the
+It is also the only thing in Hone not judged against a 15-minute morning session. That is the
 point of it: the morning queue stays interleaved and spaced because that is what retention wants,
 and a session here is blocked and ordered because that is what building a model the first time
 wants. Both are correct, at different stages, and the app offers them as separate entrances rather
@@ -378,7 +378,7 @@ Every step is predict, run, correct:
 
 1. **Predict.** The step states a question with a definite answer and takes yours before running
    anything. Committing to a wrong answer is what makes the correction stick.
-2. **Run.** Your code, or the step's code, through the grader devgym already has.
+2. **Run.** Your code, or the step's code, through the grader Hone already has.
 3. **Correct.** What actually happened, and the one sentence explaining why.
 
 **A step that cannot pose a question with a definite answer is a handbook page, and belongs there.**
