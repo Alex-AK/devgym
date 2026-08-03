@@ -1,38 +1,36 @@
-import type { DeckDetail, DeckSummary, HandbookPageRef } from '@devgym/shared';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { CardDeck, CardLibrary, HandbookPageRef } from '@devgym/shared';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { resolvePractiseLinks } from '../common/practise';
 import type { AppDb } from '../db/client';
 import { APP_DB } from '../db/db.module';
 import { allPages } from '../handbook/handbook-content';
-import { type DeckContent, listDecks, readDeck } from './decks-content';
+import { listDecks } from './decks-content';
 
 @Injectable()
 export class DecksService {
   constructor(@Inject(APP_DB) private readonly db: AppDb) {}
 
-  list(): DeckSummary[] {
-    return listDecks().map(toSummary);
-  }
-
-  detail(slug: string): DeckDetail {
-    const content = this.require(slug);
+  /**
+   * Every card there is, plus the decks behind them, in one response. Cards
+   * come back in deck order: the shuffle is the client's, because a run is a
+   * client-side thing and shuffling here would leave a cached response serving
+   * the same order back on the next visit.
+   */
+  cards(): CardLibrary {
+    const decks = listDecks();
     return {
-      ...toSummary(content),
-      cards: content.cards,
-      page: resolvePage(content.page),
-      practiseLinks: resolvePractiseLinks(this.db, content.practise),
-      sources: content.sources,
-      verified: content.verified,
+      cards: decks.flatMap((deck) => deck.cards.map((card) => ({ ...card, deck: deck.slug }))),
+      decks: decks.map((deck): CardDeck => {
+        return {
+          slug: deck.slug,
+          page: resolvePage(deck.page),
+          practiseLinks: resolvePractiseLinks(this.db, deck.practise),
+          sources: deck.sources,
+          verified: deck.verified,
+        };
+      }),
     };
-  }
-
-  private require(slug: string): DeckContent {
-    try {
-      return readDeck(slug);
-    } catch {
-      throw new NotFoundException(`No deck ${slug}`);
-    }
   }
 }
 
@@ -45,15 +43,4 @@ function resolvePage(ref: string): HandbookPageRef | null {
   const page = allPages().find((one) => `${one.section}/${one.slug}` === ref);
   if (!page) return null;
   return { section: page.section, slug: page.slug, title: page.title };
-}
-
-function toSummary(content: DeckContent): DeckSummary {
-  return {
-    slug: content.slug,
-    title: content.title,
-    summary: content.summary,
-    order: content.order,
-    minutes: content.minutes,
-    cardCount: content.cards.length,
-  };
 }

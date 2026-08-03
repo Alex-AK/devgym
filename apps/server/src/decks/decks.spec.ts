@@ -101,7 +101,7 @@ describe('decks', () => {
     }
   });
 
-  it('keeps every deck to one sitting', () => {
+  it('keeps every deck to one contrast', () => {
     for (const entry of decks) {
       expect(entry.cards.length, entry.slug).toBeGreaterThanOrEqual(MIN_CARDS);
       expect(entry.cards.length, entry.slug).toBeLessThanOrEqual(MAX_CARDS);
@@ -134,7 +134,8 @@ describe('decks', () => {
 
   it('asks each question once, across every deck', () => {
     // Two cards drilling one distinction is the failure a deck drifts into,
-    // and it costs the sitting twice: once writing it, once answering it.
+    // and every deck is shuffled into one run, so a repeat is not a risk of
+    // turning up twice in a sitting. It is a certainty.
     const seen = new Map<string, string>();
     for (const entry of decks) {
       for (const card of entry.cards) {

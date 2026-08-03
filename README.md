@@ -219,9 +219,13 @@ tracking, and a module's `practise` list is how it reaches your queue afterwards
 
 ## Cards
 
-`/cards` lists the decks. A deck is one contrast set drilled on purpose: `INNER` against `LEFT`
-against `FULL`, `null` against `undefined`. Two-sided cards, a few seconds each, 4 to 12 to a deck.
-You flip a card, say whether you had it, and move on.
+`/cards` is the run itself: every card there is, shuffled, with nothing to pick first. A card drills a
+distinction the handbook already explains: `INNER` against `LEFT` against `FULL`, `null` against
+`undefined`. Two-sided, a few seconds each. You flip, say whether you had it, and move on, and at the
+end you get a tally, the ones you missed, and the pages and reps behind them.
+
+Decks are how cards are written and checked, not somewhere to go. The app never asks you to choose
+one, because the entrance to a fifteen-minute session should not be a menu.
 
 The daily queue refuses this material, and that refusal is right: a definitional rep there displaces
 a rep about doing the work. It stops holding the moment you have opted in to drill the distinction,

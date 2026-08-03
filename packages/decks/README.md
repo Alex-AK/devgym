@@ -12,8 +12,13 @@ sees "Cards"; the code, the package and the API say "deck".
 ## What a deck is for
 
 Drilling a contrast set on purpose: `INNER` against `LEFT` against `FULL`, 301 against 302 against
-307, `null` against `undefined`. Two-sided cards, a few seconds each, a deck at a sitting rather than
-a rep in a queue.
+307, `null` against `undefined`. Two-sided cards, a few seconds each, a run rather than a rep in a
+queue.
+
+**A deck is where cards are written and checked, not somewhere the reader goes.** The app shuffles
+every card in the library into one run and never offers a deck to choose. So the deck's job here is
+the `page` it cites: every card in this file has to be checkable against that one page, which is why
+the set has to hang together even though nobody will ever meet it as a set.
 
 The daily queue refuses this material, and that refusal is right: a definitional rep there displaces
 a rep about doing the work. It stops holding the moment you have opted in to drill the distinction,

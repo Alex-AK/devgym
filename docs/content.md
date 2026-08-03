@@ -407,14 +407,20 @@ question when you already know roughly where you are.
 
 ## Decks
 
-A deck is a contrast set drilled on purpose: `INNER` against `LEFT` against `FULL`, 301 against 302
-against 307, `null` against `undefined`. Two-sided cards, a few seconds each, one deck at a sitting.
-You flip a card, say whether you had it, and nothing is written down.
+A deck is a contrast set: `INNER` against `LEFT` against `FULL`, 301 against 302 against 307, `null`
+against `undefined`. Two-sided cards, a few seconds each. You flip a card, say whether you had it, and
+nothing is written down.
+
+**A deck is an authoring unit, not a session.** The reader never picks one: `/cards` shuffles the
+whole library into one run. What the deck exists for is the `page` it cites, which is the only thing
+standing in for the assertions a module gets free, and grouping cards by the page that proves them is
+what makes that check possible. Write a deck as a coherent set anyway, because a set that does not
+hang together is usually one whose cards are not all checkable against the same page.
 
 The daily queue refuses this material, and that refusal is right: a definitional rep there displaces
-a rep about doing the work. It stops holding the moment you have opted in to drill the distinction,
-because then the definition is exactly the point. So a deck is entered on purpose, sits outside the
-round robin, and is never dealt to a morning session.
+a rep about doing the work. It stops holding the moment you have opted in to drill distinctions,
+because then the definition is exactly the point. So cards sit outside the round robin and are never
+dealt to a morning session.
 
 ### Where it lives
 

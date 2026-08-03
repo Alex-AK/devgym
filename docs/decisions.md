@@ -416,6 +416,18 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 
 ## Decks
 
+- **Decks are never surfaced in the UI, and the reason is the count of entrances rather than
+  anything about decks.** The app already offers problems, essentials, the handbook, workouts and
+  modules. Landing on a list of decks would put a second decision in front of someone with fifteen
+  minutes, before they have answered anything. So `/cards` is the run itself, over every card there
+  is, and the deck survives as the authoring unit and the thing that anchors a card to the page it is
+  checked against. This finishes the translation the next entry starts: the reader does not see the
+  word "deck" at all. Two consequences worth knowing. Shuffling stopped being optional, because one
+  pile in file order opens on the same card every morning, and the summary has to credit pages and
+  reps across whichever decks a run happened to deal from. The run is the whole library today, which
+  is a few minutes; somewhere past a few hundred cards it stops being a sitting, and bounding it is a
+  real change to make then rather than now.
+
 - **Cards are self-graded.** You flip, you say whether you had it, and the app takes your word.
   Reusing the `short-text` matcher was considered and declined: free recall of a phrase is exactly
   where a matcher is wrong often enough to matter, and being marked wrong on an answer you knew is

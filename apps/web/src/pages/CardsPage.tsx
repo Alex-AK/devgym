@@ -1,8 +1,15 @@
-import type { DeckCard, DeckDetail } from '@devgym/shared';
+import type {
+  CardDeck,
+  CardLibrary,
+  HandbookPageRef,
+  HandbookPractiseLink,
+  HandbookSource,
+  LibraryCard,
+} from '@devgym/shared';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Check, Dumbbell, Eye, RotateCcw, Target, X } from 'lucide-react';
 import * as React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { Markdown } from '@/components/Markdown';
 import { ErrorState, LoadingState } from '@/components/states';
@@ -12,31 +19,67 @@ import { Kbd } from '@/components/ui/kbd';
 import { Progress } from '@/components/ui/progress';
 import { api, queryKeys } from '@/lib/api';
 
-export function DeckPage(): React.ReactElement {
-  const { slug = '' } = useParams();
+export function CardsPage(): React.ReactElement {
   const { data, isPending, error } = useQuery({
-    queryKey: queryKeys.deck(slug),
-    queryFn: () => api.deck(slug),
-    enabled: slug.length > 0,
+    queryKey: queryKeys.cards,
+    queryFn: api.cards,
   });
 
-  if (isPending) return <LoadingState label="Loading the deck…" />;
+  if (isPending) return <LoadingState label="Loading the cards…" />;
   if (error) return <ErrorState error={error} />;
 
-  return <Drill deck={data} />;
+  if (data.cards.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-muted-foreground">
+          No cards yet. Add a deck under <code>packages/decks/content/</code>.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return <Run library={data} />;
 }
 
 /**
- * One pass over a set of cards. Nothing is persisted, so a pass is React state
- * and closing the tab loses it: the reps a deck cites are what carries progress.
- * A re-run is the same component with a shorter `cards`, which is why missing
- * one costs nothing more than seeing it again.
+ * Fisher-Yates, a fresh copy each time. In file order the run would open on the
+ * same card every morning, which is the one thing a pile of near-identical
+ * questions cannot afford.
  */
-function Drill({ deck }: { deck: DeckDetail }): React.ReactElement {
-  const [cards, setCards] = React.useState<DeckCard[]>(deck.cards);
+function shuffle(cards: LibraryCard[]): LibraryCard[] {
+  const order = [...cards];
+  for (let i = order.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const a = order[i];
+    const b = order[j];
+    if (a && b) {
+      order[i] = b;
+      order[j] = a;
+    }
+  }
+  return order;
+}
+
+/**
+ * One pass over every card there is. Nothing is persisted, so a pass is React
+ * state and closing the tab loses it: the reps a card cites are what carries
+ * progress. A re-run is the same component with a shorter `cards`, which is why
+ * missing one costs nothing more than seeing it again.
+ */
+function Run({ library }: { library: CardLibrary }): React.ReactElement {
+  // Shuffled once, when the run starts. Re-shuffling on a refetch would move
+  // the pile under someone mid-card.
+  //
+  // The whole library goes in, and there is no cap here on purpose. At 32 cards
+  // that is a few minutes. Somewhere past a few hundred a run stops being
+  // sittable before work, and the answer then is not a slice off the top of a
+  // shuffle: it is deciding which cards a morning owes you, which needs
+  // something written down about what you have already seen. A real change to
+  // make at that point, not a number to pick now.
+  const [cards, setCards] = React.useState<LibraryCard[]>(() => shuffle(library.cards));
   const [index, setIndex] = React.useState(0);
   const [flipped, setFlipped] = React.useState(false);
-  const [missed, setMissed] = React.useState<DeckCard[]>([]);
+  const [missed, setMissed] = React.useState<LibraryCard[]>([]);
   const [pass, setPass] = React.useState(1);
 
   // Focus moves here on every card, and to the summary at the end. It is a
@@ -61,6 +104,8 @@ function Drill({ deck }: { deck: DeckDetail }): React.ReactElement {
   };
 
   const rerun = (): void => {
+    // Not re-shuffled: what you missed is already a subsequence of a shuffled
+    // pile, so a second shuffle would only cost you the order you met them in.
     setCards(missed);
     setMissed([]);
     setIndex(0);
@@ -70,7 +115,7 @@ function Drill({ deck }: { deck: DeckDetail }): React.ReactElement {
 
   // Land on the card, not on a control. A screen reader hears the position and
   // the question from the group's name; the back is a live region, announced
-  // when it fills. preventScroll keeps the deck title in view.
+  // when it fills. preventScroll keeps the heading in view.
   React.useEffect(() => {
     stageRef.current?.focus({ preventScroll: true });
   }, [index, pass, done]);
@@ -120,19 +165,22 @@ function Drill({ deck }: { deck: DeckDetail }): React.ReactElement {
   return (
     <article className="space-y-6">
       <header>
-        <Link to="/cards" className="text-sm text-muted-foreground hover:underline">
-          Cards
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{deck.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {pass === 1
-            ? `${deck.cardCount} cards · ${deck.minutes} min`
-            : `Pass ${pass}: the ${cards.length} you missed`}
+            ? `All ${cards.length} cards, shuffled. You mark yourself, and nothing is written down.`
+            : `Pass ${pass}: the ${cards.length} you missed.`}
         </p>
       </header>
 
       {done || !card ? (
-        <Summary ref={stageRef} deck={deck} missed={missed} onRerun={rerun} total={cards.length} />
+        <Summary
+          ref={stageRef}
+          cards={cards}
+          decks={library.decks}
+          missed={missed}
+          onRerun={rerun}
+        />
       ) : (
         <Stage
           ref={stageRef}
@@ -149,7 +197,7 @@ function Drill({ deck }: { deck: DeckDetail }): React.ReactElement {
 }
 
 interface StageProps {
-  card: DeckCard;
+  card: LibraryCard;
   flipped: boolean;
   index: number;
   onFlip: () => void;
@@ -249,19 +297,49 @@ const Stage = React.forwardRef<HTMLDivElement, StageProps>(function Stage(
 });
 
 interface SummaryProps {
-  deck: DeckDetail;
-  missed: DeckCard[];
+  /** What this pass ran, which is the whole library only on the first one. */
+  cards: LibraryCard[];
+  decks: CardDeck[];
+  missed: LibraryCard[];
   onRerun: () => void;
-  total: number;
 }
 
 const Summary = React.forwardRef<HTMLDivElement, SummaryProps>(function Summary(
-  { deck, missed, onRerun, total },
+  { cards, decks, missed, onRerun },
   ref
 ) {
   const id = React.useId();
   const headingId = `${id}-heading`;
+  const total = cards.length;
   const got = total - missed.length;
+
+  // A run crosses whichever decks the shuffle dealt from, so the reading and
+  // the practice at the end are gathered rather than one deck's.
+  const ran = decksBehind(cards, decks);
+
+  // Miss something and the useful answer is the page behind that, not behind
+  // all of it: four pages after a run you aced is a list nobody reads. So the
+  // reading narrows to the decks you actually dropped cards from, and widens
+  // back out to the whole run when there is nothing to diagnose.
+  const behind = missed.length > 0 ? decksBehind(missed, decks) : ran;
+  const pages = uniqueBy(
+    behind.flatMap((deck) => (deck.page ? [deck.page] : [])),
+    (page: HandbookPageRef) => `${page.section}/${page.slug}`
+  );
+  const practise = uniqueBy(
+    behind.flatMap((deck) => deck.practiseLinks),
+    (link: HandbookPractiseLink) => `${link.kind}/${link.slug}`
+  );
+
+  // Credit is for everything you were shown, missed or not, so the sources come
+  // from the whole run rather than from the narrowed set.
+  const sources = uniqueBy(
+    ran.flatMap((deck) => deck.sources),
+    (source: HandbookSource) => source.url
+  );
+  const checked = ran.map((deck) => deck.verified).sort();
+  const oldest = checked[0];
+  const newest = checked[checked.length - 1];
 
   return (
     <div className="space-y-6">
@@ -290,7 +368,10 @@ const Summary = React.forwardRef<HTMLDivElement, SummaryProps>(function Summary(
                   </p>
                   <ul className="mt-2 space-y-2">
                     {missed.map((card) => (
-                      <li className="border-l-2 border-muted pl-3 text-sm [&_p]:m-0" key={card.id}>
+                      <li
+                        className="border-l-2 border-muted pl-3 text-sm [&_p]:m-0"
+                        key={`${card.deck}/${card.id}`}
+                      >
                         <Markdown>{card.front}</Markdown>
                       </li>
                     ))}
@@ -306,27 +387,39 @@ const Summary = React.forwardRef<HTMLDivElement, SummaryProps>(function Summary(
         </Card>
       </div>
 
-      {(deck.page || deck.practiseLinks.length > 0) && (
+      {(pages.length > 0 || practise.length > 0) && (
         <Card>
           <CardContent className="space-y-4 p-5">
-            {deck.page && (
+            {pages.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold">The page these came from</h2>
-                <Link
-                  className="mt-3 flex items-center gap-2 text-sm hover:underline"
-                  to={`/handbook/${deck.page.section}/${deck.page.slug}`}
-                >
-                  <BookOpen className="size-4 shrink-0 text-muted-foreground" />
-                  {deck.page.title}
-                </Link>
+                <h2 className="text-sm font-semibold">
+                  {missed.length > 0
+                    ? 'The pages behind what you missed'
+                    : 'The pages these came from'}
+                </h2>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {pages.map((page) => (
+                    <li key={`${page.section}/${page.slug}`}>
+                      <Link
+                        className="flex items-center gap-2 hover:underline"
+                        to={`/handbook/${page.section}/${page.slug}`}
+                      >
+                        <BookOpen className="size-4 shrink-0 text-muted-foreground" />
+                        {page.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
-            {deck.practiseLinks.length > 0 && (
+            {practise.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold">Where to practise this</h2>
+                <h2 className="text-sm font-semibold">
+                  {missed.length > 0 ? 'Where to practise those' : 'Where to practise these'}
+                </h2>
                 <ul className="mt-3 space-y-2 text-sm">
-                  {deck.practiseLinks.map((link) => (
+                  {practise.map((link) => (
                     <li key={`${link.kind}-${link.slug}`}>
                       <Link
                         className="flex items-center gap-2 hover:underline"
@@ -352,27 +445,50 @@ const Summary = React.forwardRef<HTMLDivElement, SummaryProps>(function Summary(
         </Card>
       )}
 
-      <footer className="border-t pt-4 text-sm text-muted-foreground">
-        <h2 className="font-medium text-foreground">Sources</h2>
-        <ol className="mt-2 space-y-1">
-          {deck.sources.map((source) => (
-            <li key={source.url}>
-              {source.author},{' '}
-              <a
-                className="underline underline-offset-2 hover:text-foreground"
-                href={source.url}
-                rel="noreferrer"
-                target="_blank"
-              >
-                {source.title}
-              </a>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-3 text-xs">
-          Claims last checked against these sources on {deck.verified}.
-        </p>
-      </footer>
+      {sources.length > 0 && (
+        <footer className="border-t pt-4 text-sm text-muted-foreground">
+          <h2 className="font-medium text-foreground">Sources</h2>
+          <ol className="mt-2 space-y-1">
+            {sources.map((source) => (
+              <li key={source.url}>
+                {source.author},{' '}
+                <a
+                  className="underline underline-offset-2 hover:text-foreground"
+                  href={source.url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {source.title}
+                </a>
+              </li>
+            ))}
+          </ol>
+          {oldest && newest && (
+            <p className="mt-3 text-xs">
+              {oldest === newest
+                ? `Claims last checked against these sources on ${oldest}.`
+                : `Claims last checked against these sources between ${oldest} and ${newest}.`}
+            </p>
+          )}
+        </footer>
+      )}
     </div>
   );
 });
+
+/** The decks a set of cards came from, in library order, each one once. */
+function decksBehind(cards: LibraryCard[], decks: CardDeck[]): CardDeck[] {
+  const slugs = new Set(cards.map((card) => card.deck));
+  return decks.filter((deck) => slugs.has(deck.slug));
+}
+
+/** First one wins, so a page or a rep cited by two decks is listed once. */
+function uniqueBy<T>(items: T[], key: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const id = key(item);
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}

@@ -35,8 +35,10 @@ export const DECKS_PACKAGE = findDecksPackage();
 export const CONTENT_DIR = join(DECKS_PACKAGE, 'content');
 
 /**
- * Few enough to be one sitting, many enough to be worth entering. A deck
- * outside these bounds is half a deck or two decks.
+ * Nobody sits a deck any more, so these bounds are about authoring: a deck is
+ * one contrast, checked against one page. Under four and the contrast wasn't
+ * worth naming; over twelve and it has stopped being one, which is the point at
+ * which the page it cites stops being able to check every card on it.
  */
 export const MIN_CARDS = 4;
 export const MAX_CARDS = 12;
@@ -63,7 +65,11 @@ export interface DeckContent {
   cards: DeckCard[];
 }
 
-/** Read fresh every call, so a new deck needs no restart. */
+/**
+ * Read fresh every call, so a new deck needs no restart. Deck order is the
+ * order the cards are served in, and it stops mattering the moment the client
+ * shuffles them: what it still buys is a stable response to diff.
+ */
 export function listDecks(): DeckContent[] {
   if (!isDir(CONTENT_DIR)) return [];
   return readdirSync(CONTENT_DIR)
@@ -72,7 +78,7 @@ export function listDecks(): DeckContent[] {
     .sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug));
 }
 
-export function readDeck(slug: string): DeckContent {
+function readDeck(slug: string): DeckContent {
   const raw = readFileSync(join(CONTENT_DIR, slug, 'deck.json'), 'utf8');
   return parseDeck(raw, slug);
 }

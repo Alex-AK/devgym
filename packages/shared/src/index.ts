@@ -507,18 +507,22 @@ export interface ModuleRunResponse {
   passed: boolean;
 }
 
-/* --------------------------------------------------------------------- decks */
+/* --------------------------------------------------------------------- cards */
 
 /**
- * A deck is a contrast set drilled on purpose: two-sided cards, a few seconds
- * each, a sitting rather than a rep in a queue. Cards are self-graded and
- * nothing is persisted, so a deck has no attempt endpoint and no schedule of
- * its own: the reps it cites are the progress tracking, exactly as a module's
- * are. Content lives in `packages/decks/content/<slug>/deck.json`, so adding
- * one touches no code. The reader sees "Cards"; the code says deck.
+ * Two-sided cards, a few seconds each, self-graded and never written down: the
+ * reps a card cites are the progress tracking, exactly as a module's are.
+ *
+ * A deck is the authoring unit and the correctness anchor. It groups one
+ * contrast and cites the handbook page its cards are checked against, which is
+ * what makes a claim checkable at all. It is not a thing a reader picks: the
+ * app already asks which mode you want, and asking which deck on top of that is
+ * a second decision inside fifteen minutes. So there is one endpoint, it serves
+ * every card there is, and the deck survives only as the tag that says where a
+ * card came from. Content lives in `packages/decks/content/<slug>/deck.json`.
  */
 export interface DeckCard {
-  /** Kebab-case, unique within the deck, and the URL fragment. */
+  /** Kebab-case, unique within its deck. Pair it with `deck` to key a list. */
   id: string;
   /** The question. Markdown, one line. */
   front: string;
@@ -526,25 +530,36 @@ export interface DeckCard {
   back: string;
 }
 
-/** Row in the deck list (`GET /api/decks`). */
-export interface DeckSummary {
-  slug: string;
-  title: string;
-  summary: string;
-  order: number;
-  minutes: number;
-  cardCount: number;
+/** A card in the library, tagged with the deck it was checked against. */
+export interface LibraryCard extends DeckCard {
+  /** Deck slug, and the key into `CardLibrary.decks`. */
+  deck: string;
 }
 
-export interface DeckDetail extends DeckSummary {
-  cards: DeckCard[];
-  /** The page the deck drills, resolved so the cards can point back at it. */
+/**
+ * A deck as the run needs it: somewhere a card came from, not somewhere to go.
+ * The summary reads these to credit the pages and reps behind a run, which is
+ * why nothing here describes the deck itself.
+ */
+export interface CardDeck {
+  slug: string;
+  /** The page the deck's cards are checked against. */
   page: HandbookPageRef | null;
-  /** Where to practise it afterwards, resolved the way a page's list is. */
+  /** Where to practise the material, resolved the way a page's list is. */
   practiseLinks: HandbookPractiseLink[];
   sources: HandbookSource[];
   /** ISO date the deck's claims were last checked against its sources. */
   verified: string;
+}
+
+/**
+ * `GET /api/decks/cards`: the whole library in one call, so the client never
+ * fans out over decks. Cards arrive in deck order and the client shuffles, so a
+ * cached response can't hand you the same first card two mornings running.
+ */
+export interface CardLibrary {
+  cards: LibraryCard[];
+  decks: CardDeck[];
 }
 
 /* --------------------------------------------------------------------- paths */
