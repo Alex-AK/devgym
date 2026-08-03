@@ -160,14 +160,17 @@ export function ProblemPage(): React.ReactElement {
   const skip = useMutation({
     mutationFn: () => api.skip(slug, scope),
     onSuccess: async (result) => {
-      await refreshEverything();
+      // Same rule as starting a session: refresh after the navigation, never
+      // before it. Awaiting it here repaints this problem as skipped, queue
+      // count and all, a beat before the page you are already leaving.
       if (session) {
         const fresh = (await api.activeSession()).session;
         const target = fresh ? nextInSession(fresh, slug, 'next') : null;
         navigate(target ? `/problems/${target}` : '/session');
-        return;
+      } else {
+        goTo(result.next?.slug);
       }
-      goTo(result.next?.slug);
+      void refreshEverything();
     },
   });
 

@@ -15,9 +15,13 @@ export function useStartSession(): UseMutationResult<SessionResponse, Error, Cre
 
   return useMutation({
     mutationFn: (body: CreateSessionRequest) => api.createSession(body),
-    onSuccess: async (session) => {
-      await queryClient.invalidateQueries();
+    onSuccess: (session) => {
+      // Navigate first, and never await the invalidation. Awaiting it refetches
+      // every active query on the page you are leaving, so today's page repaints
+      // with the session you just started and only then redirects, which is the
+      // flash. The destination fetches what it needs when it mounts.
       navigate(session.nextSlug ? `/problems/${session.nextSlug}` : '/session');
+      void queryClient.invalidateQueries();
     },
   });
 }
