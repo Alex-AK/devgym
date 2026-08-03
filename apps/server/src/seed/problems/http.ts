@@ -1870,4 +1870,223 @@ export const httpProblems: ProblemDraft[] = [
     explanation:
       'Registering a listener is not doing the work: this middleware subscribes to `finish` and calls `next()` in the same tick, so the request goes straight on to the handler and the callback runs much later, once the response has been written to the socket. That is what makes the line worth having, because `res.statusCode` and the elapsed time are both only true at the end, whichever handler or error path produced them. It also covers responses the router never reached: a request that matched no route still finishes, so its 404 is logged by the same line. `finish` means the response was handed off, not that the client received it; for the case where the connection died first, listen for `close` as well and compare `res.writableFinished`.',
   },
+
+  {
+    slug: 'http-breaking-change-tightening',
+    title: 'The validation that broke the contract',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A `country` field used to accept any string. This release adds validation so it only accepts',
+      'ISO codes, and it ships as a patch with no version bump. Nothing was removed and no endpoint',
+      'changed.',
+      '',
+      'Explain why integrators start failing, and state the rule this violates.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: ['tighten', 'narrow', 'stricter', 'restrict', 'required', 'validation'],
+          missingFeedback:
+            'What did the change do to the range of inputs the endpoint used to accept?',
+        },
+        {
+          synonyms: ['breaking', 'break', 'new version', 'major'],
+          missingFeedback: 'Name what kind of change this is, in versioning terms.',
+        },
+        {
+          synonyms: ['used to work', 'previously valid', 'existing client', 'already sending'],
+          missingFeedback: 'Who fails, and what were they doing before the release that now fails?',
+        },
+      ],
+      hints: [
+        'Nothing was removed, so ask what was narrowed instead.',
+        'A request that succeeded yesterday and fails today is a broken promise, whatever the diff looks like.',
+        'The rule is that you may add, but you may not remove or tighten.',
+      ],
+    },
+    canonicalAnswer:
+      'Tightening validation is a breaking change: requests that were previously valid now fail, so a client already sending a free-text country breaks without changing anything. The rule is that you can add, but you cannot remove or tighten, and narrowing accepted values is tightening even though nothing was removed.',
+    solution: md(
+      'Breaking. The safe version of this change is to accept both, warn on the old shape, and',
+      'measure who is still sending it before the range narrows.'
+    ),
+    explanation:
+      'The published rules from the APIs that carry the most third-party integrations agree on the shape: adding a resource, an optional parameter or a response field is safe, and removing or renaming one is not. **Tightening is the half that gets missed**, because it does not look like an API change in the diff: narrowing an enum, promoting an optional field to required, changing a default, and adding validation to a field that used to wave junk through are all breaking. So is removing a response field a client reads, which is why "clients must tolerate fields they do not recognise" belongs in your documentation on day one rather than in the incident review.',
+  },
+
+  {
+    slug: 'http-version-header-vary',
+    title: 'The v2 client that got a v1 response',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'The API version moved out of the path and into a request header, so one URL now has two',
+      'response shapes. A shared cache in front of it starts serving the old shape to new clients,',
+      'intermittently.',
+      '',
+      'Name the response header that fixes it.'
+    ),
+    graderConfig: {
+      accept: ['vary', 'vary header', 'the vary header'],
+      acceptPatterns: ['\\bvary\\b'],
+      nearMisses: {
+        'cache-control':
+          'That controls whether and how long it caches, not what counts as a different request.',
+        etag: 'A validator tells the cache whether its copy is stale, not that two requests are different.',
+        'content-type': 'That describes the body. The cache still has one key for both versions.',
+      },
+      hints: [
+        'The cache key is the URL, and the URL no longer identifies the response on its own.',
+        'One header exists to tell a cache which request headers change the representation.',
+      ],
+    },
+    canonicalAnswer: 'Vary',
+    solution: code(
+      'http',
+      'HTTP/1.1 200 OK',
+      'X-Api-Version: 2024-11-01',
+      'Vary: X-Api-Version',
+      '',
+      '# Without it, one cache entry per URL serves whichever shape arrived first.'
+    ),
+    explanation:
+      'Any request header that changes the representation has to appear in `Vary`, or a shared cache stores one entry per URL and hands it to everybody. This failure is intermittent by nature: it only appears once both versions are warm in the same cache, which is usually after the rollout looked fine. It is the standing cost of header-based versioning, and the thing you buy for it is that the URL keeps one identity, so a client can migrate one call at a time instead of reprinting every link it stored.',
+  },
+
+  {
+    slug: 'http-retired-version-410',
+    title: 'Answering a version you turned off',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A client calls an API version that was retired last month. Which status code says the',
+      'resource existed and is intentionally finished, rather than that it was never here?'
+    ),
+    graderConfig: {
+      accept: ['410', '410 gone', 'gone'],
+      acceptPatterns: ['\\b410\\b'],
+      nearMisses: {
+        404: 'That says "no such thing", which sends the integrator looking for a typo rather than a migration guide.',
+        400: 'The request is well formed. Nothing about it is malformed.',
+        426: 'Upgrade Required is about switching protocol, not about a retired API version.',
+        301: 'A redirect implies the old call still works somewhere else, and a breaking version does not.',
+      },
+      hints: [
+        'The distinction is between "never existed" and "existed, and is gone on purpose".',
+        'It is in the 4xx range, and it is the permanent sibling of 404.',
+      ],
+    },
+    canonicalAnswer: '410',
+    solution: code(
+      'http',
+      'HTTP/1.1 410 Gone',
+      'Content-Type: application/json',
+      '',
+      '{ "error": "api_version_retired", "docs": "https://docs.example.com/migration" }'
+    ),
+    explanation:
+      '`410 Gone` says the resource existed and is intentionally finished, which is a better ending than `404` because it tells an integrator the problem is a migration rather than a typo. GitHub answers a request for a retired version this way, and supports each version for at least 24 months after its successor ships. Put the migration URL in the body: the person reading the log is not the person who wrote the integration, and a status code alone gives them nowhere to go.',
+  },
+
+  {
+    slug: 'http-deprecation-vs-sunset',
+    title: 'Two dates on a dying endpoint',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A response carries both `Deprecation` and `Sunset`. One says the endpoint is discouraged, the',
+      'other says when it is expected to stop responding.',
+      '',
+      'Which header carries the date it stops responding?'
+    ),
+    graderConfig: {
+      accept: ['sunset', 'the sunset header', 'sunset header'],
+      acceptPatterns: ['\\bsunset\\b'],
+      nearMisses: {
+        deprecation:
+          'That one carries the date it was or will be deprecated, which is the announcement rather than the ending.',
+        expires: 'That is about cache freshness for this response, not the life of the endpoint.',
+        'retry-after':
+          'That says when to try again, which is the opposite of what is happening here.',
+      },
+      hints: [
+        'One is the announcement, the other is the ending.',
+        'The one you want is named after the end of the day.',
+      ],
+    },
+    canonicalAnswer: 'Sunset',
+    solution: code(
+      'http',
+      'Deprecation: @1751328000',
+      'Sunset: Wed, 01 Jul 2026 23:59:59 GMT',
+      'Link: <https://docs.example.com/migration>; rel="deprecation"',
+      '',
+      '# Sunset must not be earlier than the deprecation date.'
+    ),
+    explanation:
+      '`Deprecation` (RFC 9745) carries the date a resource was or will be deprecated, as a structured field date. `Sunset` (RFC 8594) carries the date it is expected to stop responding, as an HTTP date, and must not be earlier than the deprecation date. RFC 9745 also registers a `deprecation` link relation, so the response can point at the migration guide. Both are **hints**: neither turns anything off, and no client library reads them for you. The step that actually tells you whether you can retire the version is counting requests per version per client, so that "who breaks" is a list of names rather than a guess.',
+  },
+
+  {
+    slug: 'http-version-in-path-or-header',
+    title: 'Where the version goes',
+    category: 'http',
+    difficulty: 'medium',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'You are choosing between `/v2/reports` and a `X-Api-Version` request header for a public API',
+      'with many third-party integrations.',
+      '',
+      'Explain what the header buys you and what it costs.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'one call',
+            'incremental',
+            'gradual',
+            'endpoint at a time',
+            'stable url',
+            'same url',
+          ],
+          missingFeedback:
+            'What can a client do under header versioning that path versioning makes hard?',
+        },
+        {
+          synonyms: ['vary', 'cache'],
+          missingFeedback:
+            'What has to happen in front of the API once the URL stops identifying the response?',
+        },
+        {
+          synonyms: ['invisible', 'not visible', 'browser', 'address bar', 'harder to see', 'curl'],
+          missingFeedback:
+            'What do you give up in day-to-day use by taking the version out of the URL?',
+        },
+      ],
+      hints: [
+        'Ask what each option versions: the surface, or the call.',
+        'A stable URL means the resource keeps one identity, so clients can move gradually.',
+        'The cost is that every cache in the path now has to `Vary` on it, and the version is invisible in a browser.',
+      ],
+    },
+    canonicalAnswer:
+      'The header keeps one stable URL, so a resource has a single identity and a client can migrate one call at a time instead of moving to new URLs all at once. It costs you caching correctness, because every cache in the path must Vary on the header or a v1 response reaches a v2 client, and it makes the version invisible in an address bar or a quick curl.',
+    solution: md(
+      'Header versioning for a broad public surface, path versioning when the API is small or',
+      'internal and the visibility is worth more than the migration story.'
+    ),
+    explanation:
+      'Path versioning versions the **surface**: one breaking change to one resource reprints every URL in your documentation and every link a client stored, and the same resource ends up with two identities, which matters for caching and for anything that stores links. A header versions the **call**, so the URL is stable and a client moves one endpoint at a time. That is why anyone carrying many external integrations ends up at the header, and why the migration story is the real argument rather than aesthetics. The media type (`Accept: application/vnd.example.v2+json`) is content negotiation used as designed, and it is rare because client tooling makes it awkward.',
+  },
 ];

@@ -53,9 +53,8 @@ blocks nothing, which is why it has outlasted every page that used to sit above 
 
 | Category         | Roughly | What it is                                                                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sql-performance` | 15      | Read the plan, name the fix. Captured EXPLAIN output graded as short-text and explain, plus live `sql` rewrites: EXISTS against COUNT, filter before joining, keyset pagination |
-| `api-design`     | 12      | Offset against cursor, idempotency keys and check-store-replay, versioning, rate limit algorithms and what to key on, status codes past the basics            |
-| `node`           | 12      | The runtime itself: event loop ordering past what js-apis covers, streams and backpressure, buffers, process against worker threads, what blocks              |
+| `sql-performance` | 10      | **Reading a plan**, which nothing does today: captured EXPLAIN output graded as short-text and explain, plus live `sql` rewrites (EXISTS against COUNT, filter before joining, keyset pagination). Index *design* is already covered by six `sql-index-*` reps, so this is narrower than it was |
+| `node`           | 12      | The runtime itself: event loop ordering past what `js-microtask-order` covers, streams and backpressure, buffers, process against worker threads, what blocks |
 | `dsa-patterns`   | 30      | Two pointers, sliding window, fast and slow pointers, prefix sum, monotonic stack, top-K with a heap, binary search variants, intervals, BFS and DFS, backtracking, basic DP. Two or three js-code problems per pattern, added in pattern-sized waves |
 
 `sql-performance` stores each captured plan with the query and dataset that produced it, so a plan

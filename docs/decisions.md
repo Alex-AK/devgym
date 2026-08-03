@@ -92,6 +92,17 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   the one piece of planned content that needs application code, because the queue currently treats
   every category equally.
 
+- **`api-design` was cut as a category because four fifths of it had already shipped inside
+  `http`.** The row asked for twelve reps on offset against cursor, idempotency keys, versioning,
+  rate limit algorithms and status codes. An audit before writing any of them found three pagination
+  reps, four idempotency reps and four rate-limit reps already live, spread across `http`, `systems`
+  and `security`, plus two on status codes. Only versioning had nothing, which showed as
+  `apis/versioning.md` citing three reps that are not about versioning. So five versioning reps went
+  into `http` alongside the rest of the material, and the category was never created. The general
+  point is the one the deck table made: **a queued row names a container, and the material can arrive
+  in a different one.** A category is only worth creating when the reps have nowhere they already
+  belong, which is what made `logic` worth creating the same afternoon.
+
 - **A posture is a tag, not a category, and the twelve reading reps are why.** A rep about what a
   `LEFT JOIN` condition does belongs in the SQL queue whatever shape the question takes, so a
   `reading` category would have moved twelve reps out of the queues that should deal them. The axis a

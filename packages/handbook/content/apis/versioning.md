@@ -3,9 +3,12 @@ title: API versioning and lifecycle
 question: What counts as a breaking change, where does the version go, and how do I retire one?
 order: 3
 practise:
+  - http-breaking-change-tightening
+  - http-version-in-path-or-header
+  - http-version-header-vary
+  - http-deprecation-vs-sunset
+  - http-retired-version-410
   - http-put-vs-patch
-  - http-status-created
-  - http-status-choice-validation
 sources:
   - author: GitHub
     title: API Versions
