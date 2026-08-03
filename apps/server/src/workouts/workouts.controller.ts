@@ -1,7 +1,7 @@
 import type { WorkoutDetail, WorkoutFile, WorkoutRun, WorkoutSummary } from '@devgym/shared';
 import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 
-import { SaveWorkoutFileDto, WorkoutFilePathDto } from './dto';
+import { RunWorkoutDto, SaveWorkoutFileDto, WorkoutFilePathDto } from './dto';
 import { WorkoutsService } from './workouts.service';
 
 @Controller('workouts')
@@ -38,8 +38,8 @@ export class WorkoutsController {
 
   @Post(':slug/run')
   @HttpCode(200)
-  run(@Param('slug') slug: string): Promise<WorkoutRun> {
-    return this.workouts.run(slug);
+  run(@Param('slug') slug: string, @Body() body: RunWorkoutDto): Promise<WorkoutRun> {
+    return this.workouts.run(slug, body.checkpoint);
   }
 
   @Post(':slug/finish')

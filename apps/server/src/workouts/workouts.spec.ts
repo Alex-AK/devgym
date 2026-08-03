@@ -50,6 +50,58 @@ describe('workout content', () => {
     }
   });
 
+  /**
+   * Running one checkpoint has to stay cheaper than running them all and honest
+   * about what it did not check. One workout is enough to prove the mechanism:
+   * the per-workout suites below already prove every checkpoint runs.
+   */
+  describe('a single checkpoint', () => {
+    // The most checkpoints available, so the timing assertion below has the
+    // widest margin it can get and does not turn into a coin flip in CI.
+    const manifest = [...manifests].sort((a, b) => b.checkpoints.length - a.checkpoints.length)[0];
+
+    it('runs alone, and carries the rest forward marked stale', async () => {
+      if (!manifest) return;
+      const workspace = build(manifest.slug, 'solution');
+      const target = manifest.checkpoints[1] ?? manifest.checkpoints[0];
+      if (!target) return;
+
+      const full = await runCheckpoints(workspace, manifest.checkpoints);
+      expect(full.only).toBeNull();
+      expect(full.passedCount).toBe(manifest.checkpoints.length);
+
+      const one = await runCheckpoints(workspace, manifest.checkpoints, {
+        only: target.id,
+        previous: full,
+      });
+
+      expect(one.only).toBe(target.id);
+      expect(one.checkpoints.find((c) => c.id === target.id)?.stale).toBeUndefined();
+      expect(one.checkpoints.filter((c) => c.stale).length).toBe(manifest.checkpoints.length - 1);
+      // The whole point of the field: a carried-over pass is not a fresh one, so
+      // one checkpoint can never total up to a cleared workout.
+      expect(one.passedCount).toBe(1);
+      // And it is actually cheaper, which is the reason the feature exists.
+      expect(one.durationMs).toBeLessThan(full.durationMs);
+    }, 240_000);
+
+    it('reports not-run for the others when there is nothing to carry', async () => {
+      if (!manifest) return;
+      const target = manifest.checkpoints[0];
+      if (!target) return;
+
+      const one = await runCheckpoints(build(manifest.slug, 'solution'), manifest.checkpoints, {
+        only: target.id,
+      });
+
+      expect(one.passedCount).toBe(1);
+      for (const result of one.checkpoints.filter((c) => c.id !== target.id)) {
+        expect(result.status).toBe('not-run');
+        expect(result.stale).toBeUndefined();
+      }
+    }, 120_000);
+  });
+
   describe.each(manifests.map((m) => [m.slug, m] as const))('%s', (_slug, manifest) => {
     it('passes every checkpoint from its solution', async () => {
       const result = await runCheckpoints(build(manifest.slug, 'solution'), manifest.checkpoints);

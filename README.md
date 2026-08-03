@@ -149,7 +149,7 @@ pnpm grade --list react                  # slugs in a category
 
 ## Workouts
 
-A workout is 20-25 minutes against a real toolchain. `/workouts` lists them; opening one gives you
+A workout is 20-25 minutes against a real toolchain. The library lists them; opening one gives you
 a brief written like a ticket, the project's files in an editor, and a timer. **Run** materialises
 your files into a workspace on disk and runs the checkpoint suites against them.
 
@@ -157,6 +157,10 @@ A checkpoint is one test file, and it passes only when every assertion in it doe
 makes an unfinished attempt worth something: at ten minutes you can see two of four green, and the
 failure output tells you which behaviour is missing. Each checkpoint carries a hint that appears
 after it fails. The reference solution is there when you want it.
+
+While you are iterating on one failure, **Run** on that checkpoint runs its suite alone. The others
+are not re-checked, so they dim and say so rather than showing a tick nobody earned: a single
+checkpoint never raises your best score, and the reference unlocks only on a full green run.
 
 Two shapes: **build a feature** and **find the bugs**. A brief states the symptom and the
 constraints, never the cause, because working out what is wrong is the exercise.

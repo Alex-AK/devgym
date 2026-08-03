@@ -407,13 +407,25 @@ export interface WorkoutCheckpointResult {
   testsTotal: number;
   /** First failing assertion, trimmed for display. */
   failure: string | null;
+  /**
+   * Carried over from an earlier run, not re-checked by the run that returned
+   * it. Only a single-checkpoint run produces these, and the UI has to say so:
+   * a green tick nobody just verified is the one lie the panel could tell.
+   */
+  stale?: boolean;
 }
 
 export interface WorkoutRun {
   ranAt: string;
   durationMs: number;
   checkpoints: WorkoutCheckpointResult[];
+  /**
+   * Checkpoints this run verified as passing. Carried-over results never count,
+   * which is what keeps a one-checkpoint run from inflating your best score.
+   */
   passedCount: number;
+  /** The checkpoint id when one was run on its own, null for the whole suite. */
+  only: string | null;
   /** Set when the suite could not run at all: a syntax error, a bad import. */
   crashed: string | null;
 }

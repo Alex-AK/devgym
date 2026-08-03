@@ -176,7 +176,6 @@ page, Will Larson's migrations essay, the listed books.
 
 Content is the product, so this stays short. All of it is workout depth.
 
-- **Run a single checkpoint** while iterating, instead of the whole suite.
 - **Diff against the reference** rather than a side-by-side reveal, so the review after the timer is
   a comparison rather than a read.
 - **Attempt history per workout**: second and third runs are the point, so the UI should show the

@@ -135,13 +135,13 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
   }
 
   const runMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (checkpoint?: string) => {
       // Flush anything still in the debounce before grading.
       for (const [path, contents] of pending.current.entries()) {
         await api.saveWorkoutFile(slug, path, contents);
       }
       pending.current.clear();
-      return api.runWorkout(slug);
+      return api.runWorkout(slug, checkpoint);
     },
     onSuccess: async (result) => {
       setRun(result);
@@ -170,7 +170,7 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
         <h1 className="text-lg font-semibold tracking-tight">{detail.title}</h1>
         {attempt && <Timer startedAt={attempt.startedAt} minutes={detail.minutes} />}
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={() => runMutation.mutate()} disabled={runMutation.isPending}>
+          <Button onClick={() => runMutation.mutate(undefined)} disabled={runMutation.isPending}>
             <Play />
             {runMutation.isPending ? 'Running…' : 'Run checkpoints'}
           </Button>
@@ -243,7 +243,7 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
               onChange={edit}
               language={languageForPath(activePath)}
               placeholder=""
-              onSubmit={() => runMutation.mutate()}
+              onSubmit={() => runMutation.mutate(undefined)}
               minHeight="34rem"
             />
           )}
@@ -253,6 +253,8 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
           <CheckpointPanel
             results={run?.checkpoints ?? notRunYet(detail)}
             crashed={run?.crashed ?? null}
+            running={runMutation.isPending}
+            onRun={(checkpoint) => runMutation.mutate(checkpoint)}
           />
           <Card>
             <CardContent className="max-h-[22rem] overflow-y-auto p-5 text-sm">
@@ -280,9 +282,13 @@ function notRunYet(detail: WorkoutDetail): WorkoutCheckpointResult[] {
 function CheckpointPanel({
   results,
   crashed,
+  running,
+  onRun,
 }: {
   results: WorkoutCheckpointResult[];
   crashed: string | null;
+  running: boolean;
+  onRun: (checkpoint: string) => void;
 }): React.ReactElement {
   const passed = results.filter((result) => result.status === 'passed').length;
 
@@ -305,23 +311,50 @@ function CheckpointPanel({
 
         <ol className="space-y-3">
           {results.map((result) => (
-            <li key={result.id} className="space-y-1">
+            <li key={result.id} className="group space-y-1">
               <div className="flex items-start gap-2">
                 {result.status === 'passed' ? (
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2
+                    className={cn(
+                      'mt-0.5 size-4 shrink-0 text-emerald-600',
+                      result.stale && 'opacity-50'
+                    )}
+                  />
                 ) : result.status === 'failed' ? (
-                  <XCircle className="mt-0.5 size-4 shrink-0 text-rose-600" />
+                  <XCircle
+                    className={cn(
+                      'mt-0.5 size-4 shrink-0 text-rose-600',
+                      result.stale && 'opacity-50'
+                    )}
+                  />
                 ) : (
                   <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm">{result.title}</p>
-                  {result.testsTotal > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {result.testsPassed} of {result.testsTotal} assertions
-                    </p>
+                  <p className={cn('text-sm', result.stale && 'text-muted-foreground')}>
+                    {result.title}
+                  </p>
+                  {result.stale ? (
+                    <p className="text-xs text-muted-foreground">Not re-run just now.</p>
+                  ) : (
+                    result.testsTotal > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {result.testsPassed} of {result.testsTotal} assertions
+                      </p>
+                    )
                   )}
                 </div>
+                {/* One suite instead of the whole file set: the difference
+                    between iterating on a failure and waiting for it. */}
+                <button
+                  type="button"
+                  disabled={running}
+                  onClick={() => onRun(result.id)}
+                  className="ml-auto rounded px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground focus-visible:opacity-100 disabled:opacity-0"
+                  title={`Run ${result.title} on its own`}
+                >
+                  Run
+                </button>
               </div>
               {result.status === 'failed' && result.failure && (
                 <pre className="ml-6 overflow-x-auto rounded bg-muted p-2 text-[11px] leading-relaxed whitespace-pre-wrap">

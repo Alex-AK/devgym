@@ -139,6 +139,16 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   naming the diagnosis deletes the part worth doing. It is the easiest mistake to make, because by
   the time you write the brief you know the answer.
 
+- **A single-checkpoint run says what it did not check, rather than quietly keeping the old ticks.**
+  Running one suite while iterating on it is the point of the feature, and the trap is what happens to
+  the other three rows in the panel. Blanking them to not-run throws away the picture you were working
+  from; leaving them green claims a verification nobody performed, which is the one lie a checkpoint
+  panel cannot afford. So they carry their previous result forward with `stale` set, dimmed, captioned
+  "Not re-run just now", and two numbers refuse to count them: `passedCount` only counts what the run
+  itself verified, so a one-checkpoint run can never raise your best score, and the reference unlocks
+  only on a full green run of the whole suite. That last rule is why `WorkoutRun` records which
+  checkpoint it ran rather than inferring it from the counts.
+
 - **The two systems workouts stayed two.** They were queued with permission to merge if writing them
   proved they were one, and they are not: a circuit breaker is a state machine over failures, and
   single-flight is deduplication over concurrency. They share a fake clock and nothing else. The

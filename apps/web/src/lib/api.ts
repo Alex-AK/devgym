@@ -86,8 +86,9 @@ export const api = {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ path }),
     }),
-  runWorkout: (slug: string): Promise<WorkoutRun> =>
-    request(`/workouts/${slug}/run`, { method: 'POST' }),
+  /** `checkpoint` runs one suite alone; omit it to run them all. */
+  runWorkout: (slug: string, checkpoint?: string): Promise<WorkoutRun> =>
+    post(`/workouts/${slug}/run`, checkpoint ? { checkpoint } : {}),
   finishWorkout: (slug: string): Promise<WorkoutDetail> =>
     request(`/workouts/${slug}/finish`, { method: 'POST' }),
   revealWorkoutSolution: (slug: string): Promise<{ files: WorkoutFile[] }> =>

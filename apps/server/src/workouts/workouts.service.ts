@@ -6,7 +6,7 @@ import type {
   WorkoutRun,
   WorkoutSummary,
 } from '@devgym/shared';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 
 import { CurrentUserService } from '../common/current-user.service';
@@ -109,11 +109,23 @@ export class WorkoutsService {
     return readEditable(attempt.id, manifest);
   }
 
-  async run(slug: string): Promise<WorkoutRun> {
+  /**
+   * `only` runs one checkpoint's suite while iterating on it. The rest carry
+   * their previous result forward marked stale, so the panel keeps its shape
+   * without claiming to have re-checked anything.
+   */
+  async run(slug: string, only?: string): Promise<WorkoutRun> {
     const manifest = this.requireManifest(slug);
     const attempt = this.requireActiveAttempt(slug);
 
-    const result = await runCheckpoints(workspacePath(attempt.id), manifest.checkpoints);
+    if (only && !manifest.checkpoints.some((checkpoint) => checkpoint.id === only)) {
+      throw new BadRequestException(`No checkpoint "${only}" in workout "${slug}"`);
+    }
+
+    const result = await runCheckpoints(workspacePath(attempt.id), manifest.checkpoints, {
+      ...(only ? { only } : {}),
+      previous: attempt.lastRun ? (JSON.parse(attempt.lastRun) as WorkoutRun) : null,
+    });
 
     this.db
       .update(workoutAttempts)
@@ -204,7 +216,12 @@ export class WorkoutsService {
   ): WorkoutFile[] | null {
     if (!attempt) return null;
     const row = this.rawActiveAttempt(manifest.slug);
-    const allPassed = attempt.lastRun?.passedCount === manifest.checkpoints.length;
+    // Earned on one green run of the whole suite. A partial run that happens to
+    // total up to everything has not proved the same thing. `!only` rather than
+    // `=== null` because runs persisted before single-checkpoint runs existed
+    // have no such field.
+    const allPassed =
+      !attempt.lastRun?.only && attempt.lastRun?.passedCount === manifest.checkpoints.length;
     return allPassed || row?.solutionViewed === 1 ? readSolution(manifest) : null;
   }
 
