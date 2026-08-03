@@ -1,0 +1,38 @@
+{
+  "slug": "url-and-searchparams",
+  "title": "URL and URLSearchParams, past string concatenation",
+  "summary": "A query string is not a string you build by hand. It is a multimap with its own encoding rules, and every trap in it comes from treating it as text: repeated keys collapsing, a value that quietly splits into two params, a plus sign arriving as a space. Ten steps on the API that already handles all of it.",
+  "order": 2,
+  "minutes": 20,
+  "practise": [
+    "qp-get-first",
+    "qp-get-all",
+    "qp-has-vs-get",
+    "qp-set-vs-append",
+    "qp-build",
+    "qp-encode-component",
+    "qp-plus-space",
+    "qp-relative-url",
+    "qp-delete-param",
+    "qp-from-location",
+    "debug-empty-query-param"
+  ],
+  "sources": [
+    {
+      "author": "MDN",
+      "title": "URL",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/URL"
+    },
+    {
+      "author": "MDN",
+      "title": "URLSearchParams",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams"
+    },
+    {
+      "author": "WHATWG",
+      "title": "URL Standard: application/x-www-form-urlencoded",
+      "url": "https://url.spec.whatwg.org/#application/x-www-form-urlencoded"
+    }
+  ],
+  "verified": "2026-08-02"
+}

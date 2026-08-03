@@ -51,9 +51,10 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   brief a third time and cost a dependency, which the stack-breadth rule did not justify on its own.
   **gRPC and WebRTC pages** are not met in the feature work this project targets, and the transport
   decision page already covers when you would reach for them; tRPC keeps its page.
-- **`node-fs` stays in the module list, marked as the weakest of the eight.** Recording the doubt in
+- **`node-fs` stays in the module list, marked as the weakest one on it.** Recording the doubt in
   the roadmap beats dropping it and beats silence, because the next person to read the list will
-  otherwise have the same reservation and no way to know it was already considered.
+  otherwise have the same reservation and no way to know it was already considered. The count it was
+  originally the weakest of is not the point and has changed twice since.
 
 - **Every content type is a directory or a seed entry, never application code.** Content grows
   indefinitely, so anything that makes adding a problem, workout or page require an application

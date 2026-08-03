@@ -10,19 +10,20 @@ morning session, and content is never picked to complete a set. Why something wa
 
 ## 1. The rest of the modules
 
-The format ships and `js-date` is written, so everything here is content: a directory, no application
-code. Seven left, and the ten `query-params` problems cited by nothing are the reason
-`url-and-searchparams` is next.
+The format ships and two are written, so everything here is content: a directory, no application
+code. Six left, and none of them arrives with the argument `url-and-searchparams` had. Ten
+`query-params` reps cited by nothing was a gap somebody would notice while working; what is below is
+a list of APIs, and the note recorded under `promises` in [decisions.md](./decisions.md) is evidence
+against writing it rather than for. Pick the next one when a rep or a page asks for it.
 
-| Module                 | The wrong model it corrects                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------ |
-| `url-and-searchparams` | That a query string is a string you can build by hand                                |
-| `promises`             | That `await` in a loop and `Promise.all` differ only in style                        |
-| `json`                 | That `JSON.stringify` round-trips your object                                        |
-| `js-errors`            | That `catch` catches what you think, and that a thrown thing is an `Error`           |
-| `regex`                | That a pattern that works is a pattern that terminates                               |
-| `tokens-and-crypto`    | That a signed token is an encrypted one, and that comparing strings is safe          |
-| `node-fs`              | That reading a file is one call and writing one is atomic. Weakest of the seven here |
+| Module              | The wrong model it corrects                                                          |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `promises`          | That `await` in a loop and `Promise.all` differ only in style                        |
+| `json`              | That `JSON.stringify` round-trips your object                                        |
+| `js-errors`         | That `catch` catches what you think, and that a thrown thing is an `Error`           |
+| `regex`             | That a pattern that works is a pattern that terminates                               |
+| `tokens-and-crypto` | That a signed token is an encrypted one, and that comparing strings is safe          |
+| `node-fs`           | That reading a file is one call and writing one is atomic. Weakest of the six here   |
 
 `tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so it
 stays on `node:crypto` and `jose` and invents no primitives of its own.
