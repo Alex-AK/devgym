@@ -138,7 +138,12 @@ export class ProblemsService {
     this.updateProgress(userId, problem.id, {
       status,
       attemptsCount: before.attemptsCount + 1,
-      hintsRevealed,
+      // Hints are earned per attempt cycle, not owned for good. Solving ends the
+      // cycle, so the next encounter starts clean: a review that opens with the
+      // hints you unlocked last month hands you the answer before you have
+      // tried. A failed review keeps what it just earned, because `solved` is
+      // sticky and would otherwise wipe the hint on the next page load.
+      hintsRevealed: solved ? 0 : hintsRevealed,
       lastSeenAt: nowIso(),
       // Refreshed on every correct answer, not just the first, so a completed
       // *review* is visible to anything comparing against an earlier snapshot.
@@ -149,7 +154,10 @@ export class ProblemsService {
     });
 
     const after = this.progressFor(userId, problem.id);
-    const revealed = hints.slice(0, after.hintsRevealed);
+    // The response still shows the hints this cycle earned, even though solving
+    // cleared them for the next one. Blanking the panel at the moment you got it
+    // right would look like a bug.
+    const revealed = hints.slice(0, solved ? before.hintsRevealed : after.hintsRevealed);
     const showSolution = solved || after.solutionViewed;
 
     return {

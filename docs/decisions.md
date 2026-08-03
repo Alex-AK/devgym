@@ -87,6 +87,15 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   rubric or leaving them as reading with prompts. The explain grader already existed and still gives
   a verdict, which is what makes the material a rep rather than an article.
 
+- **Hints are earned per attempt cycle, not owned for good.** Solving clears them, so the review
+  weeks later opens with none showing. Keeping them made the ladder decorative: a problem you had to
+  unlock three hints for came back with those three hints on screen, which is a reading rather than a
+  review. Two details decided where the clearing goes. It is not on open, because `solved` is sticky
+  and a failed review would have its newly earned hint wiped on the next page load. And the response
+  to the answer that solved it still lists the hints that cycle earned, because blanking the panel at
+  the moment you got it right looks like a bug. Re-earning works the same way it did the first time,
+  by getting the attempt wrong.
+
 - **`dsa-patterns` stays out of the daily queue.** DSA is a separate track you enter on purpose,
   through focused practice or its own preset, not something the morning round-robin deals you. It is
   the one piece of planned content that needs application code, because the queue currently treats

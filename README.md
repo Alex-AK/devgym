@@ -127,6 +127,9 @@ All grading is deterministic and local. No LLM, no network.
 Every non-correct attempt reveals the next hint. After three attempts you can reveal the solution,
 which marks the problem skipped rather than solved.
 
+Hints belong to an attempt cycle rather than to the problem, so solving clears them and the review
+weeks later opens with none showing. Get that review wrong and you unlock them again the same way.
+
 ### Running your code
 
 Coding problems execute in a `node:vm` context with a 1 second timeout and no `require`, `process`

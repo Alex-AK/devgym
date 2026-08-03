@@ -221,6 +221,50 @@ describe('sessions and reviews', () => {
     expect(new Set(slugs).size, 'no duplicates between the review and new lanes').toBe(4);
   });
 
+  /**
+   * Hints are earned per attempt, not owned for good. A review that opens with
+   * last month's hints already showing is not a review, it is a reading.
+   */
+  it('hides the hints you earned last time when the review comes round', async () => {
+    await service.submitAttempt(SLUG, 'definitely wrong');
+    expect(service.detail(SLUG).revealedHints.length, 'a wrong answer unlocks one').toBe(1);
+
+    await service.submitAttempt(SLUG, answerFor(SLUG));
+    makeDue(SLUG);
+
+    expect(service.detail(SLUG).revealedHints, 'the review starts clean').toEqual([]);
+  });
+
+  it('re-earns a hint by getting the review wrong, and keeps it across reloads', async () => {
+    await service.submitAttempt(SLUG, 'definitely wrong');
+    await service.submitAttempt(SLUG, answerFor(SLUG));
+    makeDue(SLUG);
+
+    await service.submitAttempt(SLUG, 'wrong again');
+    expect(service.detail(SLUG).revealedHints.length).toBe(1);
+    // `solved` is sticky, so a naive "clear on open if solved" would wipe this
+    // on the next page load.
+    expect(service.detail(SLUG).revealedHints.length, 'still there on reload').toBe(1);
+  });
+
+  it('still shows the hints you had on the answer that solved it', async () => {
+    await service.submitAttempt(SLUG, 'definitely wrong');
+    const solvedAttempt = await service.submitAttempt(SLUG, answerFor(SLUG));
+
+    expect(solvedAttempt.verdict).toBe('correct');
+    expect(solvedAttempt.revealedHints.length, 'the panel does not blank on success').toBe(1);
+  });
+
+  it('leaves the hints alone on a problem you have not solved yet', async () => {
+    const unsolved = 'js-dedupe';
+    await service.submitAttempt(unsolved, 'definitely wrong');
+    expect(service.detail(unsolved).revealedHints.length).toBe(1);
+
+    // Coming back to something you never got is not a review, and the hint was
+    // already paid for.
+    expect(service.detail(unsolved).revealedHints.length).toBe(1);
+  });
+
   it('marks a completed review as done within the session', async () => {
     const review = 'js-dedupe';
     await service.submitAttempt(review, answerFor(review));
