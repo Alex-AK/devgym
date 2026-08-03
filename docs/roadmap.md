@@ -99,7 +99,7 @@ a dependency is named. `graphql`, `react-window` and `zustand` are already in
 | Cache the expensive report  | Express + fake Redis      | feature  | caching        | Cache-aside in a real handler. The dedupe itself is already `one-recompute-not-fifty`; this is where it goes wrong around a route |
 | Context re-render bug-hunt  | React                     | bug-hunt | React          | A typing lag caused by one fat context; checkpoints count renders, the split is the fix           |
 | The form that loses your work | React                   | bug-hunt | the browser    | Errors nobody is told about: association, focus to the first failure, and the double submit       |
-| Cursor pagination bug-hunt  | Kysely + PGlite           | bug-hunt | databases      | Offset pagination drifting under concurrent writes; keyset as the fix, plan asserted via EXPLAIN  |
+| Cursor pagination bug-hunt  | **not Kysely**            | bug-hunt | databases      | Offset pagination drifting under concurrent writes; keyset as the fix. Needs a stack that is not a second orders-list bug-hunt: see the note below |
 | Job queue consumer          | Node + in-repo fake queue | feature  | moving data    | At-least-once delivery means the consumer must be idempotent; the duplicate delivery is the test  |
 | Timezone-correct booking    | Node + fixed clock        | bug-hunt | dates          | Store UTC, render local, and survive the DST boundary the fixture lands on                        |
 | Streaming a big export      | Express + React           | feature  | moving data    | A CSV that must not buffer; the checkpoint measures peak buffered bytes, not wall-clock time      |
@@ -109,10 +109,31 @@ a dependency is named. `graphql`, `react-window` and `zustand` are already in
 | The migration that locks up | PGlite                    | feature  | databases      | Add a NOT NULL column to a large table without holding a long lock; backfill in batches           |
 | GraphQL N+1 bug-hunt        | GraphQL + Drizzle         | bug-hunt | moving data    | The round trip GraphQL saves the client, paid for on the server one resolver at a time            |
 | Accessible data table       | React                     | feature  | the browser    | A sortable table a screen reader can use: `scope`, `aria-sort`, caption, and keyboard ordering    |
-| Search that ignores accents | Drizzle + PGlite          | bug-hunt | databases      | Normalisation and collation: "cafe" has to find "café", and the index has to survive the fix      |
+| Search that ignores accents | **undecided**             | bug-hunt | databases      | Normalisation and collation: "cafe" has to find "café", and the index has to survive the fix. Weakest row here, and the note below says why |
 | Windowed list               | React + react-window      | feature  | React          | 10,000 rows without jank                                                                          |
-| TypeORM relations bug-hunt  | TypeORM + SQLite          | bug-hunt | server runtime | `save` against `update`, relations loading, and the nested-where trap                             |
+| TypeORM relations bug-hunt  | TypeORM + SQLite          | bug-hunt | server runtime | `save` against `update`, and the nested-where trap. The write side, because `orders-report-typeorm` already owns the read side |
 | Validated request boundary  | Hono + Zod                | feature  | APIs           | Two birds: the first Hono workout, and schema validation as the API's front door                  |
+
+**Three of these rows were audited against what is already on disk, and none of them was written on
+its stated terms.** The lesson each claims is real and uncovered; what collided was the stack and the
+brief, which the row could not see because it was written before the workouts it now sits beside.
+
+- **Cursor pagination** would be the second Kysely-and-PGlite bug-hunt over an orders list, and
+  `slow-list-endpoint-kysely` already has pagination in its focus. It parks keyset in its own "if you
+  finish early", so offset drift under concurrent writes is genuinely untaught, and the lesson stands.
+  The stack does not: breadth is a goal in itself, and this is the same tool on the same table. Give
+  it a stack the library does not have twice already.
+- **Search that ignores accents** is the product-search brief a second time, on the same Drizzle and
+  PGlite as `product-search-drizzle`, which owns matching, case, literal wildcards and the total.
+  Accents and collation are absent from that workout and near-absent from
+  `databases/search-past-like.md`, which mentions normalisation once in a trap. But
+  [decisions.md](./decisions.md) already cut a row for being this brief a third time, and the same
+  argument applies at the second. Move it off product search, or make it a rep and a section on the
+  page instead.
+- **TypeORM relations** overlaps `orders-report-typeorm` on relations loading, which is the read form
+  of the same trap and is what that workout's first checkpoint is about. Its `save`-against-`update`
+  half and the nested-where trap are untouched, so the row survives narrowed to the write side, and
+  the lesson column above now says so.
 
 The build-your-own genre grows further (a wire-protocol Redis clone, a tiny message broker) only if
 `json-parser`, `circuit-breaker-node` and `one-recompute-not-fifty` land well, and only then is it

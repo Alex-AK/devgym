@@ -69,6 +69,15 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   worth less than the same two spread across tools, even when the second brief is weaker, because
   the thing being practised is reading an unfamiliar codebase under time pressure.
 
+- **A queued workout's stack is judged against what shipped, not against the rest of the queue.** A
+  row is written before the workouts it will sit beside, so its stack column ages into a collision
+  nobody chose: an audit of three rows found one that would have been the second Kysely-and-PGlite
+  bug-hunt over an orders list, and one that was the product-search brief a second time on the same
+  ORM. Neither was wrong when written. The lesson each claims survived the audit; the stack did not,
+  and the rows now say so rather than being quietly deleted or quietly built. Re-read a row's stack
+  against `packages/workouts/content/` before starting it, which is the same habit the deck table
+  earned the hard way.
+
 - **The gate for shipping a page or a workout is the safety net and the citation policy, never
   completeness of its section.** A section is never finished, and a page at a time is a fine pace.
   Waiting for a section to be whole would mean nothing ships.
