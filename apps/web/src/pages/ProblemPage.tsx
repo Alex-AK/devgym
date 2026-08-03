@@ -69,6 +69,7 @@ export function ProblemPage(): React.ReactElement {
   const [revealed, setRevealed] = React.useState<{ solution: string; explanation: string } | null>(
     null
   );
+  const [confirmingReset, setConfirmingReset] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const editorRef = React.useRef<CodeEditorHandle>(null);
 
@@ -184,6 +185,7 @@ export function ProblemPage(): React.ReactElement {
       setAnswer('');
       setAttempt(null);
       setRevealed(null);
+      setConfirmingReset(false);
       await refreshEverything();
     },
   });
@@ -460,10 +462,33 @@ export function ProblemPage(): React.ReactElement {
                 Next problem
                 <ArrowRight />
               </Button>
-              <Button variant="ghost" onClick={() => reset.mutate()} disabled={busy}>
-                <RotateCcw />
-                Reset progress
-              </Button>
+              {/* One click from "Next problem", and what it discards is a review
+                  interval built over months that only re-solving can rebuild.
+                  So it says what it costs, and asks twice. */}
+              {confirmingReset ? (
+                <>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => reset.mutate()}
+                    disabled={busy}
+                  >
+                    Start over
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setConfirmingReset(false)}>
+                    Cancel
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Clears its attempts and drops it off the review ladder, as if you had never seen
+                    it.
+                  </span>
+                </>
+              ) : (
+                <Button variant="ghost" onClick={() => setConfirmingReset(true)} disabled={busy}>
+                  <RotateCcw />
+                  Start over…
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
