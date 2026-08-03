@@ -244,6 +244,14 @@ checkpoint has an `id`, a `title` phrased as the behaviour being checked, its `t
 
 Checkpoints are ordered but independent: checkpoint four can pass while one fails.
 
+**A suite that drives HTTP hands supertest a listening server, not an app.** `request(app)` binds a
+fresh ephemeral port on every call, so a suite that loops requests (ten revalidations, one per unit
+of rate-limit allowance) opens a socket per assertion. That passes alone and fails under the parallel
+load of `pnpm verify`, as `socket hang up`, on a different checkpoint each run, which is the most
+expensive kind of failure to diagnose because it never reproduces where you are looking. Bind once in
+`beforeEach` (`server = app.listen(0)`), close in `afterEach`, and pass `server` to supertest. Keep
+the `app` binding too if an assertion reads `app.locals`.
+
 ### The brief
 
 **A brief states the symptom and the requirement, never the cause.** Working out what is wrong is

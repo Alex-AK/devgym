@@ -149,6 +149,11 @@ apps/web/src/
 
 ## Gotchas that have already bitten
 
+- **`request(app)` in a checkpoint suite binds a fresh ephemeral port per request.** Hand supertest
+  a listening server instead (`server = app.listen(0)` in `beforeEach`, `server.close()` in
+  `afterEach`, then `request(server)`). A suite that loops requests otherwise leaves hundreds of
+  ports in `TIME_WAIT` and fails as `socket hang up` under the parallel load of `pnpm verify`, on a
+  different checkpoint each time. Keep the `app` binding as well if a test reads `app.locals`.
 - `node:vm` in `grading/code-runner.ts` is an isolation convenience, **not** a security boundary,
   and errors thrown inside it fail `instanceof Error` because they come from another realm.
 - The answer box takes focus on load, so single-key shortcuts (`n`/`p`/`s`) only fire after `Esc`.

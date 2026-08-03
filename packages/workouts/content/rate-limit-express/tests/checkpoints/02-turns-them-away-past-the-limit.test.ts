@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 import { FakeRedis } from '../../src/server/fake-redis';
@@ -8,12 +8,21 @@ const LIMIT = 5;
 const WINDOW = 60;
 
 let app: ReturnType<typeof createApp>;
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
 
 beforeEach(() => {
   app = createApp(new FakeRedis(), { limit: LIMIT, windowSeconds: WINDOW });
+  server = app.listen(0);
 });
 
-const post = () => request(app).post('/messages').set('X-API-Key', 'alpha').send({ text: 'hi' });
+// One listener per test rather than one per request: supertest binds a fresh
+// ephemeral port each time it is handed an app, and these suites issue a request
+// per unit of allowance.
+afterEach(() => {
+  server.close();
+});
+
+const post = () => request(server).post('/messages').set('X-API-Key', 'alpha').send({ text: 'hi' });
 
 async function useUpTheAllowance() {
   for (let i = 0; i < LIMIT; i += 1) await post();

@@ -1,9 +1,22 @@
 import { SignJWT } from 'jose';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 import { SECRET_KEY } from '../../src/server/config';
+
+// One listener for the file. supertest binds a fresh ephemeral port every time
+// it is handed an app, and building one inline made that a port per call.
+// The app holds no per-test state, so one server serves the whole suite.
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
+
+beforeAll(() => {
+  server = createApp().listen(0);
+});
+
+afterAll(() => {
+  server.close();
+});
 
 const SOMEONE_ELSES_SECRET = new TextEncoder().encode('a secret this app has never seen');
 const now = () => Math.floor(Date.now() / 1000);
@@ -18,7 +31,7 @@ function sign(secret: Uint8Array, subject: string, expiresAt: number): Promise<s
 }
 
 function me(header?: string) {
-  const call = request(createApp()).get('/me');
+  const call = request(server).get('/me');
   return header ? call.set('Authorization', header) : call;
 }
 

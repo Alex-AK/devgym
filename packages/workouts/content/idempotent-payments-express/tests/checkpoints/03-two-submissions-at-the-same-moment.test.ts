@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 import { createDb } from '../../src/server/db';
@@ -9,10 +9,18 @@ const PAYMENT = { customerId: 'cus_9', amountCents: 2500, currency: 'gbp' };
 
 let gateway: FakeGateway;
 let app: ReturnType<typeof createApp>;
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
 
 beforeEach(() => {
   gateway = new FakeGateway();
   app = createApp(createDb(), gateway);
+  server = app.listen(0);
+});
+
+// One listener per test, not one per request: supertest binds a fresh ephemeral
+// port each time it is handed an app.
+afterEach(() => {
+  server.close();
 });
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,7 +30,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * needs two of them in the air at once has to kick each one off itself.
  */
 const send = (key: string) =>
-  request(app)
+  request(server)
     .post('/payments')
     .set('Idempotency-Key', key)
     .send(PAYMENT)

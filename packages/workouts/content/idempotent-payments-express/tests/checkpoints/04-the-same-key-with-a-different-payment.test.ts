@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 import { createDb } from '../../src/server/db';
@@ -10,14 +10,22 @@ const DEARER = { customerId: 'cus_9', amountCents: 9900, currency: 'gbp' };
 
 let gateway: FakeGateway;
 let app: ReturnType<typeof createApp>;
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
 
 beforeEach(() => {
   gateway = new FakeGateway();
   app = createApp(createDb(), gateway);
+  server = app.listen(0);
+});
+
+// One listener per test, not one per request: supertest binds a fresh ephemeral
+// port each time it is handed an app.
+afterEach(() => {
+  server.close();
 });
 
 const pay = (key: string, body: object) =>
-  request(app).post('/payments').set('Idempotency-Key', key).send(body);
+  request(server).post('/payments').set('Idempotency-Key', key).send(body);
 
 describe('the same key with a different payment', () => {
   it('refuses it with 422', async () => {

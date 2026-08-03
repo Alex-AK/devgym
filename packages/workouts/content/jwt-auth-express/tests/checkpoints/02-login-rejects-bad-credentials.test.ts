@@ -1,10 +1,23 @@
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 
+// One listener for the file. supertest binds a fresh ephemeral port every time
+// it is handed an app, and building one inline made that a port per call.
+// The app holds no per-test state, so one server serves the whole suite.
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
+
+beforeAll(() => {
+  server = createApp().listen(0);
+});
+
+afterAll(() => {
+  server.close();
+});
+
 function login(payload: unknown) {
-  return request(createApp())
+  return request(server)
     .post('/login')
     .send(payload as object);
 }

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 import { Sales } from '../../src/server/sales';
@@ -9,14 +9,22 @@ const ROWS = 2400;
 const UNKNOWN = '"not-a-tag-this-service-ever-sent"';
 
 let sales: Sales;
-let app: ReturnType<typeof createApp>;
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
 
+// One listener for the whole test, not one per request. supertest binds a fresh
+// ephemeral port every time it is handed an app, and the loop below asks for ten
+// revalidations, so `request(app)` left this suite opening a socket per
+// assertion and failing under load once the ports were still in TIME_WAIT.
 beforeEach(() => {
   sales = new Sales();
-  app = createApp(sales);
+  server = createApp(sales).listen(0);
 });
 
-const get = (headers: Record<string, string> = {}) => request(app).get('/report').set(headers);
+afterEach(() => {
+  server.close();
+});
+
+const get = (headers: Record<string, string> = {}) => request(server).get('/report').set(headers);
 
 /** What actually came down the wire as a body. */
 const bodyBytes = (response: { text?: string }): number =>

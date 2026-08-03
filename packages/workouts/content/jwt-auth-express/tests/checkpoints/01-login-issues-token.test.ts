@@ -1,20 +1,33 @@
 import { jwtVerify } from 'jose';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../../src/server/app';
 import { SECRET_KEY } from '../../src/server/config';
 
+// One listener for the file. supertest binds a fresh ephemeral port every time
+// it is handed an app, and building one inline made that a port per call.
+// The app holds no per-test state, so one server serves the whole suite.
+let server: ReturnType<ReturnType<typeof createApp>['listen']>;
+
+beforeAll(() => {
+  server = createApp().listen(0);
+});
+
+afterAll(() => {
+  server.close();
+});
+
 const ADA = { email: 'ada@example.com', password: 'correct-horse' };
 
 async function tokenFromLogin(): Promise<string> {
-  const response = await request(createApp()).post('/login').send(ADA);
+  const response = await request(server).post('/login').send(ADA);
   return (response.body as { token?: string }).token ?? '';
 }
 
 describe('a correct login gets a signed token back', () => {
   it('answers 200 with a token', async () => {
-    const response = await request(createApp()).post('/login').send(ADA);
+    const response = await request(server).post('/login').send(ADA);
 
     expect(response.status).toBe(200);
     expect(typeof (response.body as { token?: unknown }).token).toBe('string');

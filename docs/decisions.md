@@ -160,6 +160,17 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   naming the diagnosis deletes the part worth doing. It is the easiest mistake to make, because by
   the time you write the brief you know the answer.
 
+- **The flaky checkpoint suite was fixed in the content, not by slowing the runner.** One workout
+  failed `pnpm verify` roughly one run in three, on a different checkpoint each time and never in
+  isolation, which is the signature of load rather than a bad assertion. The cause was `request(app)`:
+  supertest binds a fresh ephemeral port per call, and the suite looped ten revalidations, so the
+  outer suite left hundreds of ports in `TIME_WAIT`. The obvious fix was to serialise the nested
+  vitest, and it was measured and rejected: `--no-file-parallelism` took a workout run from **0.70s to
+  1.08s**, and that is the path somebody sits through every time they press Run. Paying 55% in the
+  loop to stabilise a gate is the wrong trade when the gate's problem is a socket per assertion. The
+  suites now bind one listener per test. The same shape was applied to the rate-limit workout, which
+  loops a request per unit of allowance and had the same exposure without having failed yet.
+
 - **The diff is hand-written, and it is a third view rather than a replacement for the reference.**
   Fifty lines of LCS over lines, because a diff library would sit in the runtime bundle forever to
   compare two files of a few hundred lines, and the shadcn components are already hand-written on the
