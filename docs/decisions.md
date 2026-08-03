@@ -82,6 +82,34 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   the one piece of planned content that needs application code, because the queue currently treats
   every category equally.
 
+- **A posture is a tag, not a category, and the twelve reading reps are why.** A rep about what a
+  `LEFT JOIN` condition does belongs in the SQL queue whatever shape the question takes, so a
+  `reading` category would have moved twelve reps out of the queues that should deal them. The axis a
+  category cannot express is the one that cuts across categories, and that is what a tag is: the
+  suite refuses a tag whose reps all sit in one category, because that tag is a category wearing the
+  wrong hat. The essentials path was the other candidate vehicle and was refused on the format's own
+  rules; that argument is under the path below.
+
+- **Tags do not change the morning, and that is the point.** The unscoped queue keeps dealing tagged
+  reps in their categories, because interleaving is what retention wants. A tag is an entrance, so
+  what shipped is a scope the queue, the session builder and focused practice all respect, plus one
+  tile that enters it. The rule that keeps tags from becoming keywords is whether somebody would
+  deliberately spend fifteen minutes on one; the suite enforces the weaker half of that by refusing a
+  tag with no reps behind it, because an entrance to nothing is worse than no entrance.
+
+- **Tags and the `dsa-patterns` flag stayed two mechanisms after being designed together.** They look
+  alike and are opposites: a tag is opt-in, naming a slice you enter deliberately, and the category
+  flag is opt-out, removing a category from a round robin that would otherwise deal it. Collapsing
+  them would mean either every category becomes a tag, which is a rename, or the opt-out rides on a
+  tag nobody would ever scope a session to. What they do share is the filter chain in `queue()`,
+  which is where the second one goes when `dsa-patterns` arrives.
+
+- **One JSON column, not a join table.** Every query that reads tags already loads the whole problem
+  set into memory and filters there, so a join table would have bought nothing and cost a table, a
+  migration and two more inserts per seed. The column is parsed defensively: a tag this build does
+  not know is dropped rather than crashing the queue that contains it, so an older binary can read a
+  newer seed.
+
 - **No model runs anywhere in the AI engineering material.** Every problem is about the code around
   the dependency, which is the part that fails in production and the only part that can be graded
   deterministically offline. A problem that needs an inference call to grade is a problem this

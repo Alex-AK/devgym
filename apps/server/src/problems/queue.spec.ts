@@ -80,6 +80,39 @@ describe('practice queue', () => {
     expect(problems.next(undefined, 'next', { mode: 'review' })).toBeNull();
   });
 
+  /**
+   * The point of a tag: it selects across categories, which is the one thing
+   * `category` cannot do. If a tag scope ever came back single-category, the
+   * axis would have collapsed into the one it exists to be different from.
+   */
+  it('narrows to a tag, across the categories it cuts through', async () => {
+    const tagged = problemSeeds.filter((seed) => seed.tags?.includes('reading'));
+    const next = problems.next(undefined, 'next', { tag: 'reading' });
+
+    expect(next?.queueSize).toBe(tagged.length);
+    expect(new Set(tagged.map((seed) => seed.category)).size).toBeGreaterThan(1);
+  });
+
+  it('combines a tag with a category, which is an intersection and not a union', async () => {
+    const scope = { tag: 'reading', category: 'sql' } as const;
+    const next = problems.next(undefined, 'next', scope);
+
+    expect(next?.category).toBe('sql');
+    expect(next?.queueSize).toBe(
+      problemSeeds.filter((seed) => seed.category === 'sql' && seed.tags?.includes('reading'))
+        .length
+    );
+  });
+
+  /**
+   * Tags are an entrance, not a filter on the morning. The daily queue keeps
+   * dealing tagged reps in their categories, because interleaving is what
+   * retention wants and a tag is a posture you choose on purpose.
+   */
+  it('leaves the unscoped queue dealing every rep, tagged or not', async () => {
+    expect(problems.next()?.queueSize).toBe(problemSeeds.length);
+  });
+
   it('review mode surfaces problems you attempted and did not solve', async () => {
     const slug = firstSlugOf('react');
     await problems.submitAttempt(slug, 'definitely wrong');

@@ -71,6 +71,17 @@ describe('sessions', () => {
     expect(session.scope.category).toBe('react');
   });
 
+  /** Fifteen minutes of reading is a session, which is what the tag is for. */
+  it('respects a tag scope, and survives a reload of it', async () => {
+    const session = sessions.create({ size: 5, tag: 'reading' });
+
+    expect(session.scope.tag).toBe('reading');
+    expect(session.total).toBe(5);
+    expect(new Set(session.items.map((item) => item.category)).size).toBeGreaterThan(1);
+    // The scope is persisted, not recomputed: a reload must describe the same run.
+    expect(sessions.active()?.scope.tag).toBe('reading');
+  });
+
   it('takes what it can when the scope has fewer problems than asked for', async () => {
     const hardDom = problemSeeds.filter((s) => s.category === 'dom' && s.difficulty === 'hard');
     const session = sessions.create({ size: 10, category: 'dom', difficulty: 'hard' });

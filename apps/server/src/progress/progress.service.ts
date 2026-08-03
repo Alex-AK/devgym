@@ -6,11 +6,14 @@ import {
   type ProgressResponse,
   type RecentAttempt,
   type ResetAllResponse,
+  type TagProgress,
+  TAGS,
 } from '@devgym/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 
 import { CurrentUserService } from '../common/current-user.service';
+import { parseTags } from '../common/tags';
 import type { AppDb } from '../db/client';
 import { APP_DB } from '../db/db.module';
 import { attempts, problemProgress, problems, sessionItems, sessions } from '../db/schema';
@@ -32,6 +35,7 @@ export class ProgressService {
         id: problems.id,
         category: problems.category,
         difficulty: problems.difficulty,
+        tags: problems.tags,
       })
       .from(problems)
       .all();
@@ -101,6 +105,15 @@ export class ProgressService {
       };
     });
 
+    const byTag: TagProgress[] = TAGS.map((tag) => {
+      const tagged = allProblems.filter((problem) => parseTags(problem.tags).includes(tag));
+      return {
+        tag,
+        total: tagged.length,
+        solved: tagged.filter((problem) => solvedIds.has(problem.id)).length,
+      };
+    });
+
     return {
       hasActivity: totalAttempts > 0,
       solved: solvedIds.size,
@@ -111,6 +124,7 @@ export class ProgressService {
       due,
       byCategory,
       byDifficulty,
+      byTag,
       recentAttempts,
     };
   }

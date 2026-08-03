@@ -82,6 +82,10 @@ apps/web/src/
 - **Adding or editing problems** touches only `seed/problems/*.ts`. Problems upsert by slug, so an
   edit updates in place without wiping attempt history. `position` is generated in
   `problems.seed.ts`, never authored.
+- **`tags` is optional and almost always absent.** A tag cuts across categories so a posture can be
+  practised on purpose, and the bar is whether somebody would deliberately spend fifteen minutes on
+  it. The daily queue ignores tags entirely. `problems.seed.spec.ts` refuses a tag with no reps, or
+  one whose reps all sit in a single category.
 - **Every problem declares a `relevance`**, which is a separate axis from difficulty: `daily` for
   what you write in ordinary feature work, `occasional` for a bug or a perf pass or an edge case,
   `foundational` for what you meet through a framework more often than you write. Author it

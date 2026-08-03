@@ -8,38 +8,7 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. Practising reading on purpose
-
-Reps that hand you unfamiliar code and ask what it does exist now, in the categories their snippets
-belong to, and the morning queue deals them like any other rep. **What is missing is the entrance.**
-Focused practice scopes by category, difficulty and queue mode, so there is no way to ask for the
-reading reps wherever they live, and nobody can sit down and read for fifteen minutes.
-
-So this is the one thing the format does need application code for: a selector the queue and the
-session builder respect that is not the category. That is the same shape of change `dsa-patterns`
-needs and not the same flag, one being a category opting out of the round robin and the other a tag
-cutting across categories, and it is worth designing once for both.
-
-The essentials path was the obvious vehicle and was refused; the argument is in
-[decisions.md](./decisions.md). A `reading` category would work mechanically and is the wrong axis,
-because a rep about what a `LEFT JOIN` condition does belongs in the SQL queue whatever shape the
-question takes.
-
-Four question shapes carry the material as it grows: what does this print, where the answer turns on
-evaluation order, closure capture or async scheduling; what does this function do, in one sentence,
-which is really about naming intent; what breaks when the input is empty, `null`, or very large; and
-which line is the one that matters, over a snippet where most of them are noise. The authoring
-discipline is the hard part. The snippet has to be idiomatic code somebody would really ship rather
-than a puzzle written to have a surprising answer, and the question has to be answerable without
-being a definition. A reading rep that rewards spotting a trick teaches trick-spotting. Run every
-snippet before it ships: the empty `IN ()` list that reads like a syntax error on both engines is a
-syntax error on Postgres and zero rows on SQLite, and only running it says so.
-
-Not to be confused with the modules, which already do predict-then-run. A module walks you through an
-API you are being taught and settles the prediction by running it. A reading rep is the opposite
-posture: unfamiliar code, no run, and a grader.
-
-## 2. The rest of the modules
+## 1. The rest of the modules
 
 The format ships and `js-date` is written, so everything here is content: a directory, no application
 code. Seven left, and the ten `query-params` problems cited by nothing are the reason
@@ -64,7 +33,7 @@ is a broken module for everybody except its author: `js-date`'s assertions were 
 before it shipped. And a step's assertions are about the API rather than about the reader's edit, so
 they keep holding when the snippet is changed, which is what makes the editor safe to play in.
 
-## 3. The rest of the decks
+## 2. The rest of the decks
 
 The format ships and `the-join-family` is written, so everything here is content: one `deck.json` in
 a directory, no application code. Each names the page it cites, because a deck drills a distinction
@@ -82,7 +51,7 @@ mandatory and neither has one. No page owns the redirect codes, 301 against 302 
 308. Time formats are a module rather than a page, because there was no model there to write down. A
 deck is not on its own a reason to write a page, so both wait until something else asks for one.
 
-## 4. Pages missing from sections that already ship
+## 3. Pages missing from sections that already ship
 
 Each of these is named on the curriculum map and absent from `packages/handbook/content/`. Ordered
 by how often the gap is met in ordinary work, not by section.
@@ -103,7 +72,7 @@ by how often the gap is met in ordinary work, not by section.
 Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
 so it blocks nothing.
 
-## 5. The rest of the problem queue
+## 4. The rest of the problem queue
 
 | Category         | Roughly | What it is                                                                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -116,12 +85,14 @@ so it blocks nothing.
 `sql-performance` stores each captured plan with the query and dataset that produced it, so a plan
 can be regenerated when engines update instead of rotting as a string.
 
-**`dsa-patterns` stays out of the daily queue** and is entered on purpose, through focused practice
-or its own session preset. That needs the one application change in this file: the session builder
-treats every category equally today, so categories need an opt-out flag it respects. Small, but it
-is code rather than content.
+**`dsa-patterns` stays out of the daily queue** and is entered on purpose, which is the one
+application change left in this file. Tags now cut across categories and the queue, the session
+builder and focused practice all respect them, but a tag is opt-in and this is opt-out: the queue
+still deals every category equally, so a category needs a flag that takes it out of the round robin
+while leaving it reachable on purpose. The seam is the filter chain in `queue()`, next to the tag
+one. Small, but it is code rather than content.
 
-## 6. The workout queue
+## 5. The workout queue
 
 Ordered by what the library cannot practise today. Everything here runs on infrastructure that
 already exists (PGlite, the fake Redis and its clock, the fixture API, testing-library) except where
@@ -154,7 +125,7 @@ The build-your-own genre grows further (a wire-protocol Redis clone, a tiny mess
 `json-parser`, `circuit-breaker-node` and `one-recompute-not-fifty` land well, and only then is it
 worth deciding whether multi-part series need real support.
 
-## 7. Sections with no practice behind them yet
+## 6. Sections with no practice behind them yet
 
 These are last because nothing in the problem set is waiting on them.
 

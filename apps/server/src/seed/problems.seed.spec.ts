@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { CATEGORIES, DIFFICULTIES, PROBLEM_TYPES, RELEVANCES } from '@devgym/shared';
+import { CATEGORIES, DIFFICULTIES, PROBLEM_TYPES, RELEVANCES, TAGS } from '@devgym/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -55,6 +55,22 @@ describe('seeded problems', () => {
       expect(seed.explanation.trim().length, seed.slug).toBeGreaterThan(0);
       expect(seed.canonicalAnswer.trim().length, seed.slug).toBeGreaterThan(0);
       expect(seed.graderConfig.hints.length, seed.slug).toBeGreaterThan(0);
+      for (const tag of seed.tags ?? []) expect(TAGS, seed.slug).toContain(tag);
+      expect(new Set(seed.tags ?? []).size, seed.slug).toBe((seed.tags ?? []).length);
+    }
+  });
+
+  /**
+   * A tag is an entrance, so an empty one is a dead link on the dashboard and a
+   * scope that resolves to nothing. Delete the tag or tag some reps; there is no
+   * third state worth shipping.
+   */
+  it('leaves no tag without reps behind it', () => {
+    for (const tag of TAGS) {
+      const tagged = problemSeeds.filter((seed) => seed.tags?.includes(tag));
+      expect(tagged.length, `${tag} has no reps`).toBeGreaterThan(0);
+      // The whole justification for a tag over a category: it cuts across them.
+      expect(new Set(tagged.map((seed) => seed.category)).size, tag).toBeGreaterThan(1);
     }
   });
 

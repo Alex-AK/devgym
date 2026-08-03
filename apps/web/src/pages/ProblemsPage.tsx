@@ -6,6 +6,9 @@ import {
   type Difficulty,
   PROBLEM_STATUSES,
   type ProblemStatus,
+  type Tag,
+  TAG_LABELS,
+  TAGS,
 } from '@devgym/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Play, Search } from 'lucide-react';
@@ -30,12 +33,14 @@ import { api, queryKeys } from '@/lib/api';
 type CategoryFilter = Category | 'all';
 type StatusFilter = ProblemStatus | 'all';
 type DifficultyFilter = Difficulty | 'all';
+type TagFilter = Tag | 'all';
 
 export function ProblemsPage(): React.ReactElement {
   const navigate = useNavigate();
   const [category, setCategory] = React.useState<CategoryFilter>('all');
   const [status, setStatus] = React.useState<StatusFilter>('all');
   const [difficulty, setDifficulty] = React.useState<DifficultyFilter>('all');
+  const [tag, setTag] = React.useState<TagFilter>('all');
   const [search, setSearch] = React.useState('');
 
   const { data, isPending, error } = useQuery({
@@ -52,6 +57,7 @@ export function ProblemsPage(): React.ReactElement {
       (category === 'all' || problem.category === category) &&
       (status === 'all' || problem.status === status) &&
       (difficulty === 'all' || problem.difficulty === difficulty) &&
+      (tag === 'all' || problem.tags.includes(tag)) &&
       (needle === '' ||
         problem.title.toLowerCase().includes(needle) ||
         problem.slug.includes(needle))
@@ -64,6 +70,7 @@ export function ProblemsPage(): React.ReactElement {
     const params = new URLSearchParams();
     if (category !== 'all') params.set('category', category);
     if (difficulty !== 'all') params.set('difficulty', difficulty);
+    if (tag !== 'all') params.set('tag', tag);
     const query = params.toString();
     navigate(`/practice${query ? `?${query}` : ''}`);
   };
@@ -116,6 +123,19 @@ export function ProblemsPage(): React.ReactElement {
             ))}
           </FilterRow>
 
+          {/* A tag is not a subject, so it gets its own row rather than sitting
+              among the categories it cuts across. */}
+          <FilterRow label="Focus">
+            <FilterChip active={tag === 'all'} onClick={() => setTag('all')}>
+              Any
+            </FilterChip>
+            {TAGS.map((entry) => (
+              <FilterChip key={entry} active={tag === entry} onClick={() => setTag(entry)}>
+                {TAG_LABELS[entry]}
+              </FilterChip>
+            ))}
+          </FilterRow>
+
           <FilterRow label="Status">
             <FilterChip active={status === 'all'} onClick={() => setStatus('all')}>
               Any
@@ -133,7 +153,7 @@ export function ProblemsPage(): React.ReactElement {
               Practice these
             </Button>
             <span className="text-xs text-muted-foreground">
-              {unsolvedInView} unsolved in the current category / difficulty filter.
+              {unsolvedInView} unsolved in the current category, difficulty and focus filter.
             </span>
           </div>
         </CardContent>

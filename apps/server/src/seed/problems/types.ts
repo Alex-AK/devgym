@@ -1,4 +1,4 @@
-import type { Category, Difficulty, ProblemType, Relevance } from '@devgym/shared';
+import type { Category, Difficulty, ProblemType, Relevance, Tag } from '@devgym/shared';
 
 import type {
   CodeGraderConfig,
@@ -18,6 +18,12 @@ export interface ProblemSeed {
    * reps that matter today from the ones that explain why things work.
    */
   relevance: Relevance;
+  /**
+   * Cross-cutting selectors, and almost always absent. A tag is for a posture
+   * somebody would scope fifteen minutes to, not for keywording: if nobody
+   * would practise it deliberately, the rep's category already says enough.
+   */
+  tags?: Tag[];
   type: ProblemType;
   /** Assigned automatically in problems.seed.ts. Authors don't set it. */
   position: number;
@@ -51,6 +57,7 @@ export function sqlProblem(draft: {
   title: string;
   difficulty: Difficulty;
   relevance: Relevance;
+  tags?: Tag[];
   prompt: string;
   solutionSql: string;
   orderMatters: boolean;
@@ -65,6 +72,7 @@ export function sqlProblem(draft: {
     category: 'sql',
     difficulty: draft.difficulty,
     relevance: draft.relevance,
+    ...(draft.tags ? { tags: draft.tags } : {}),
     type: 'sql',
     prompt: draft.prompt,
     graderConfig: {
@@ -88,6 +96,7 @@ export function codeProblem(draft: {
   category?: Category;
   difficulty: Difficulty;
   relevance: Relevance;
+  tags?: Tag[];
   prompt: string;
   /** Prefilled into the editor: the signature, so the name matches the tests. */
   starter: string;
@@ -105,6 +114,7 @@ export function codeProblem(draft: {
     category: draft.category ?? 'coding',
     difficulty: draft.difficulty,
     relevance: draft.relevance,
+    ...(draft.tags ? { tags: draft.tags } : {}),
     type: 'js-code',
     prompt: draft.prompt,
     graderConfig: {

@@ -1794,6 +1794,7 @@ export const httpProblems: ProblemDraft[] = [
     category: 'http',
     difficulty: 'medium',
     relevance: 'occasional',
+    tags: ['reading'],
     type: 'explain',
     prompt: md(
       'The first thing registered on an Express app, and nobody on the team wrote it:',

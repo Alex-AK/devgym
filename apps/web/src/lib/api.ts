@@ -141,6 +141,7 @@ export function scopeToParams(scope: QueueScope): URLSearchParams {
   if (scope.category) params.set('category', scope.category);
   if (scope.difficulty) params.set('difficulty', scope.difficulty);
   if (scope.mode && scope.mode !== 'all') params.set('mode', scope.mode);
+  if (scope.tag) params.set('tag', scope.tag);
   return params;
 }
 

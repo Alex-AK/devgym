@@ -1241,6 +1241,7 @@ export const debuggingProblems: ProblemDraft[] = [
     category: 'debugging',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'Clearing the "rows per page" box empties the table. The box is part of a form that submits as a query string, so a cleared box arrives as `?limit=`:',
@@ -1289,6 +1290,7 @@ export const debuggingProblems: ProblemDraft[] = [
     category: 'debugging',
     difficulty: 'medium',
     relevance: 'occasional',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'One Node process serves this API. While a large export is running, every other request, the health check included, sits unanswered for about half a second and then they all arrive at once:',

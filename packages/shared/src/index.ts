@@ -28,6 +28,27 @@ export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
 /**
+ * A tag cuts across categories, which is the axis a category cannot express.
+ * A rep about what a `LEFT JOIN` condition does belongs in the SQL queue
+ * whatever shape the question takes, so the shape is a tag and not a category.
+ *
+ * Tags are for a posture you can sit down and practise on purpose, not for
+ * arbitrary keywording: a tag nobody would ever scope a session to is a tag
+ * that should not exist. The daily queue ignores them entirely and keeps
+ * dealing every rep, because interleaving is what retention wants.
+ */
+export const TAGS = ['reading'] as const;
+export type Tag = (typeof TAGS)[number];
+
+export const TAG_LABELS: Record<Tag, string> = {
+  reading: 'Code reading',
+};
+
+export const TAG_BLURBS: Record<Tag, string> = {
+  reading: 'Unfamiliar code, and a question about what it does.',
+};
+
+/**
  * How often the knowledge actually comes up, which is a separate axis from how
  * hard the problem is. A hard problem can be daily bread (`sql-window-rank`)
  * and an easy one can be pure under-the-hood trivia (`dom-queryselectorall-type`).
@@ -91,6 +112,8 @@ export interface ProblemSummary {
   position: number;
   status: ProblemStatus;
   attemptsCount: number;
+  /** Cross-cutting selectors. Usually empty: most reps are only their category. */
+  tags: Tag[];
 }
 
 /** Full problem view (`GET /api/problems/:slug`). */
@@ -173,6 +196,8 @@ export interface QueueScope {
   category?: Category;
   difficulty?: Difficulty;
   mode?: QueueMode;
+  /** Cuts across categories: the one axis `category` cannot express. */
+  tag?: Tag;
 }
 
 /**
@@ -244,6 +269,13 @@ export interface DifficultyProgress {
   total: number;
 }
 
+/** Counts behind a tag, so an entrance can say how much is there. */
+export interface TagProgress {
+  tag: Tag;
+  solved: number;
+  total: number;
+}
+
 export interface RecentAttempt {
   id: number;
   slug: string;
@@ -266,6 +298,7 @@ export interface ProgressResponse {
   due: number;
   byCategory: CategoryProgress[];
   byDifficulty: DifficultyProgress[];
+  byTag: TagProgress[];
   recentAttempts: RecentAttempt[];
 }
 

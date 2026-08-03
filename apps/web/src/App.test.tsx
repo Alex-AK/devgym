@@ -49,6 +49,7 @@ const PROGRESS: ProgressResponse = {
     { difficulty: 'medium', solved: 15, total: 40 },
     { difficulty: 'hard', solved: 5, total: 30 },
   ],
+  byTag: [{ tag: 'reading', solved: 2, total: 12 }],
   recentAttempts: [
     {
       id: 1,
@@ -207,6 +208,24 @@ describe('today', () => {
     expect(screen.getByText('20 min')).toBeTruthy();
     expect(screen.getByText('25–45 min')).toBeTruthy();
     expect(screen.getByText('60 min')).toBeTruthy();
+  });
+
+  /** A posture nobody can enter is a posture nobody practises. */
+  it('gives the reading reps an entrance, scoped by tag', async () => {
+    mockApi();
+    renderAt('/');
+
+    const entrance = await screen.findByRole('link', { name: /Code reading/ });
+    expect(entrance.getAttribute('href')).toBe('/practice?tag=reading');
+    expect(screen.getByText('12 reps')).toBeTruthy();
+  });
+
+  it('hides the entrance rather than linking at an empty queue', async () => {
+    mockApi({ progress: { ...PROGRESS, byTag: [{ tag: 'reading', solved: 0, total: 0 }] } });
+    renderAt('/');
+
+    await screen.findByRole('heading', { name: "Start today's session" });
+    expect(screen.queryByRole('link', { name: /Code reading/ })).toBeNull();
   });
 });
 

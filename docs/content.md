@@ -49,6 +49,34 @@ can think of for a topic is "what is this called", the topic has no easy rep, an
 anyway teaches that the definition was the point. Where the definition is genuinely worth knowing
 cold, it is a card in a deck, which is entered on purpose rather than dealt to a morning.
 
+### The third axis, which is usually absent
+
+`tags` is optional and almost always empty. A tag cuts across categories, which is the one thing a
+category cannot do, and it exists so a posture can be practised on purpose: `/practice?tag=reading`,
+or a session scoped to it. The bar is whether somebody would deliberately spend fifteen minutes on
+it. If nobody would, the rep's category already says enough and the tag is keywording.
+
+A tag does not change the morning. The unscoped queue keeps dealing tagged reps in their categories,
+because interleaving is what retention wants, and the tag is only how you enter the material on
+purpose. The suite refuses a tag with no reps behind it, and refuses one whose reps all sit in a
+single category, since that tag is a category wearing the wrong hat.
+
+**Writing a `reading` rep.** It hands you unfamiliar code and asks what it does. Four question shapes
+carry it: what does this print, where the answer turns on evaluation order, closure capture or async
+scheduling; what does this function do, in one sentence, which is really about naming intent; what
+breaks when the input is empty, `null`, or very large; and which line is the one that matters, over a
+snippet where most of them are noise.
+
+The authoring discipline is the hard part. The snippet has to be idiomatic code somebody would really
+ship rather than a puzzle written to have a surprising answer, and the question has to be answerable
+without being a definition. A reading rep that rewards spotting a trick teaches trick-spotting. Run
+every snippet before it ships: the empty `IN ()` list that reads like a syntax error on both engines
+is a syntax error on Postgres and zero rows on SQLite, and only running it says so.
+
+Not to be confused with a module, which also predicts before it runs. A module walks you through an
+API you are being taught and settles the prediction by running it. A reading rep is the opposite
+posture: unfamiliar code, no run, and a grader.
+
 ### Picking a grader
 
 Four types, and the choice is made by what the answer is, not by the topic:
@@ -102,9 +130,10 @@ restatement of the prompt.
 ### What the suite enforces
 
 Every canonical answer grades `correct`, every declared near-miss grades `close`, every
-`acceptPattern` compiles, no keyword synonym normalises to an empty string, and every coding
-problem's reference passes its own tests while its starter does not. That is what makes problem
-content safe to edit in volume, and it runs in `pnpm verify`.
+`acceptPattern` compiles, no keyword synonym normalises to an empty string, every tag is a known one
+with reps behind it in more than one category, and every coding problem's reference passes its own
+tests while its starter does not. That is what makes problem content safe to edit in volume, and it
+runs in `pnpm verify`.
 
 ## Handbook pages
 

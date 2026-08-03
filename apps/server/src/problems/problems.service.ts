@@ -14,6 +14,7 @@ import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { and, eq } from 'drizzle-orm';
 
 import { CurrentUserService } from '../common/current-user.service';
+import { parseTags } from '../common/tags';
 import type { AppDb } from '../db/client';
 import { APP_DB, PRACTICE_DB } from '../db/db.module';
 import { attempts, problemProgress, type ProblemRow, problems } from '../db/schema';
@@ -290,6 +291,7 @@ export class ProblemsService {
       .filter((entry) => entry.progress.status !== 'solved')
       .filter((entry) => !scope.category || entry.problem.category === scope.category)
       .filter((entry) => !scope.difficulty || entry.problem.difficulty === scope.difficulty)
+      .filter((entry) => !scope.tag || parseTags(entry.problem.tags).includes(scope.tag))
       .filter(
         (entry) =>
           scope.mode !== 'review' ||
@@ -317,6 +319,7 @@ export class ProblemsService {
       .filter((entry) => entry.progress.dueAt !== null && entry.progress.dueAt <= now)
       .filter((entry) => !scope.category || entry.problem.category === scope.category)
       .filter((entry) => !scope.difficulty || entry.problem.difficulty === scope.difficulty)
+      .filter((entry) => !scope.tag || parseTags(entry.problem.tags).includes(scope.tag))
       .sort((a, b) => (a.progress.dueAt ?? '').localeCompare(b.progress.dueAt ?? ''));
   }
 
@@ -442,6 +445,7 @@ export class ProblemsService {
       status: entry.progress.status,
       attemptsCount: entry.progress.attemptsCount,
       dueAt: entry.progress.dueAt,
+      tags: parseTags(entry.problem.tags),
     };
   }
 

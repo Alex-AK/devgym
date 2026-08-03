@@ -76,6 +76,10 @@ where today stopped. Only one session runs at a time; starting a new one closes 
   anything, running until the queue empties. The scope lives in the URL, so it survives a refresh
   and follows you through Next / Previous / Skip. Start one from a category on Progress, or from the
   problem list with **Practice these**.
+- **Tags cut across categories.** `/practice?tag=reading` runs the reps that hand you unfamiliar code
+  and ask what it does, wherever they live. A tag is an entrance, not a filter on the morning: the
+  daily queue keeps dealing tagged reps in their own categories. The **Focus** row on the problem
+  list and the session form scopes by one.
 - **Keyboard.** `/` focuses the answer box, `Cmd/Ctrl+Enter` submits, `n` / `p` move, `s` skips,
   `Esc` leaves the box. The answer box takes focus on load, so press `Esc` before using the
   single-key shortcuts.

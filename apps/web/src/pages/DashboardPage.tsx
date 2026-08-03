@@ -1,6 +1,12 @@
-import { DEFAULT_SESSION_SIZE, type ProgressResponse, type SessionResponse } from '@devgym/shared';
+import {
+  DEFAULT_SESSION_SIZE,
+  type ProgressResponse,
+  type SessionResponse,
+  TAG_BLURBS,
+  TAG_LABELS,
+} from '@devgym/shared';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Compass, Dumbbell, Layers, ListOrdered } from 'lucide-react';
+import { ArrowRight, Compass, Dumbbell, Layers, ListOrdered, ScanEye } from 'lucide-react';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -33,7 +39,7 @@ export function DashboardPage(): React.ReactElement {
   return (
     <div className="space-y-8">
       <Hero progress={progress.data} session={latest.data.session} />
-      <OtherWaysIn />
+      <OtherWaysIn progress={progress.data} />
       {progress.data.hasActivity && <ProgressLine progress={progress.data} />}
     </div>
   );
@@ -211,13 +217,14 @@ function QueueLink(): React.ReactElement {
  * are. On a morning the question is never "module or workout", it is how long
  * you have, so the durations are the content's own and not an estimate.
  */
-function OtherWaysIn(): React.ReactElement {
+function OtherWaysIn({ progress }: { progress: ProgressResponse }): React.ReactElement {
   const cards = useQuery({ queryKey: queryKeys.cards, queryFn: api.cards });
   const modules = useQuery({ queryKey: queryKeys.modules, queryFn: api.modules });
   const workouts = useQuery({ queryKey: queryKeys.workouts, queryFn: api.workouts });
   const paths = useQuery({ queryKey: queryKeys.paths, queryFn: api.paths });
 
   const cardCount = cards.data?.cards.length;
+  const reading = progress.byTag.find((row) => row.tag === 'reading');
 
   return (
     <section className="space-y-3">
@@ -253,6 +260,17 @@ function OtherWaysIn(): React.ReactElement {
           to="/library/essentials"
           meta={minutesRange(paths.data?.map((entry) => entry.minutes) ?? [])}
         />
+        {/* Not a format: a slice of the same queue, scoped by tag. It is here
+            because a posture you cannot enter is a posture nobody practises. */}
+        {reading && reading.total > 0 && (
+          <WayIn
+            icon={<ScanEye className="size-4" />}
+            title={TAG_LABELS.reading}
+            blurb={TAG_BLURBS.reading}
+            to="/practice?tag=reading"
+            meta={`${reading.total} reps`}
+          />
+        )}
       </div>
     </section>
   );

@@ -5,6 +5,8 @@ import {
   type Difficulty,
   QUEUE_MODES,
   type QueueMode,
+  type Tag,
+  TAGS,
 } from '@devgym/shared';
 import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
@@ -27,6 +29,10 @@ export class QueueScopeQueryDto {
   @IsOptional()
   @IsIn(QUEUE_MODES)
   mode?: QueueMode;
+
+  @IsOptional()
+  @IsIn(TAGS)
+  tag?: Tag;
 }
 
 export class NextProblemQueryDto extends QueueScopeQueryDto {

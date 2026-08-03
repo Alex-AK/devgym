@@ -7,6 +7,9 @@ import {
   type Difficulty,
   type SessionItem,
   type SessionResponse,
+  type Tag,
+  TAG_LABELS,
+  TAGS,
 } from '@devgym/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -135,6 +138,7 @@ function StartSession({
   const [size, setSize] = React.useState(DEFAULT_SESSION_SIZE);
   const [category, setCategory] = React.useState<Category | null>(null);
   const [difficulty, setDifficulty] = React.useState<Difficulty | null>(null);
+  const [tag, setTag] = React.useState<Tag | null>(null);
 
   const start = useStartSession();
 
@@ -187,12 +191,27 @@ function StartSession({
             </FilterChip>
           ))}
         </FilterRow>
+        <FilterRow label="Focus">
+          <FilterChip active={tag === null} onClick={() => setTag(null)}>
+            Any
+          </FilterChip>
+          {TAGS.map((entry) => (
+            <FilterChip
+              key={entry}
+              active={tag === entry}
+              onClick={() => setTag(tag === entry ? null : entry)}
+            >
+              {TAG_LABELS[entry]}
+            </FilterChip>
+          ))}
+        </FilterRow>
         <Button
           onClick={() =>
             start.mutate({
               size,
               ...(category ? { category } : {}),
               ...(difficulty ? { difficulty } : {}),
+              ...(tag ? { tag } : {}),
             })
           }
           disabled={start.isPending}

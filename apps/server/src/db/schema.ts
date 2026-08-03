@@ -5,6 +5,7 @@ import {
   PROBLEM_TYPES,
   QUEUE_MODES,
   RELEVANCES,
+  TAGS,
   VERDICTS,
 } from '@devgym/shared';
 import { sql } from 'drizzle-orm';
@@ -26,6 +27,12 @@ export const problems = sqliteTable('problems', {
   difficulty: text('difficulty', { enum: DIFFICULTIES }).notNull(),
   /** How often this comes up in real work. Orthogonal to difficulty. */
   relevance: text('relevance', { enum: RELEVANCES }).notNull().default('daily'),
+  /**
+   * JSON array of Tag. A column rather than a join table because every query
+   * that reads tags already loads the whole problem set into memory and filters
+   * there; a join would buy nothing and cost a table.
+   */
+  tags: text('tags').notNull().default('[]'),
   type: text('type', { enum: PROBLEM_TYPES }).notNull(),
   position: integer('position').notNull(),
   /** Markdown. */
@@ -111,6 +118,7 @@ export const sessions = sqliteTable(
     category: text('category', { enum: CATEGORIES }),
     difficulty: text('difficulty', { enum: DIFFICULTIES }),
     mode: text('mode', { enum: QUEUE_MODES }),
+    tag: text('tag', { enum: TAGS }),
     createdAt: text('created_at').notNull(),
     finishedAt: text('finished_at'),
   },

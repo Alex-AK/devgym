@@ -35,6 +35,7 @@ export class SessionsService {
       ...(request.category ? { category: request.category } : {}),
       ...(request.difficulty ? { difficulty: request.difficulty } : {}),
       ...(request.mode && request.mode !== 'all' ? { mode: request.mode } : {}),
+      ...(request.tag ? { tag: request.tag } : {}),
     };
 
     // Only one session runs at a time; starting a new one closes the old.
@@ -66,6 +67,7 @@ export class SessionsService {
         category: scope.category ?? null,
         difficulty: scope.difficulty ?? null,
         mode: scope.mode ?? null,
+        tag: scope.tag ?? null,
         createdAt,
       })
       .returning({ id: sessions.id })
@@ -187,6 +189,7 @@ export class SessionsService {
         ...(session.category ? { category: session.category } : {}),
         ...(session.difficulty ? { difficulty: session.difficulty } : {}),
         ...(session.mode ? { mode: session.mode } : {}),
+        ...(session.tag ? { tag: session.tag } : {}),
       },
       items,
       total: items.length,

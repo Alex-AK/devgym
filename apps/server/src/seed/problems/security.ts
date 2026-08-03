@@ -1175,6 +1175,7 @@ export const securityProblems: ProblemDraft[] = [
     category: 'security',
     difficulty: 'medium',
     relevance: 'occasional',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'A script is trying passwords against `/api/login` as fast as it can, and nothing is ever refused:',

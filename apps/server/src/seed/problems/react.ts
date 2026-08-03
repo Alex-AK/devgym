@@ -2091,6 +2091,7 @@ export const reactProblems: ProblemDraft[] = [
     category: 'react',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'explain',
     prompt: md(
       'A search box reads its term through this hook, as `useSearchTerm(query, 300)`:',

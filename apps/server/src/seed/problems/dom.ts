@@ -50,7 +50,7 @@ export const domProblems: ProblemDraft[] = [
 
   {
     slug: 'dom-target-vs-currenttarget',
-    title: 'The click that reported the icon',
+    title: 'The listener logged the icon, not the table',
     category: 'dom',
     difficulty: 'easy',
     relevance: 'daily',
@@ -66,7 +66,7 @@ export const domProblems: ProblemDraft[] = [
         '});'
       ),
       '',
-      'Name the property that is the element the listener is attached to, whatever was clicked.'
+      'Name the event property that gives you the element the listener is attached to, whatever was clicked.'
     ),
     graderConfig: {
       accept: ['currenttarget', 'event.currenttarget', 'e.currenttarget'],

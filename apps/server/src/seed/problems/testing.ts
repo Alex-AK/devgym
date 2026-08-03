@@ -423,6 +423,7 @@ export const testingProblems: ProblemDraft[] = [
     category: 'testing',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       '`createUser` resolves for a duplicate email instead of rejecting, and this test is green:',

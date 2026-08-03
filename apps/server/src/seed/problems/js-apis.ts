@@ -1058,6 +1058,7 @@ export const jsApiProblems: ProblemDraft[] = [
     category: 'js-apis',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'A loader, and the line that calls it:',
@@ -1116,6 +1117,7 @@ export const jsApiProblems: ProblemDraft[] = [
     category: 'js-apis',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'A helper fills in whatever the caller left out:',
@@ -1173,6 +1175,7 @@ export const jsApiProblems: ProblemDraft[] = [
     category: 'js-apis',
     difficulty: 'easy',
     relevance: 'foundational',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'Two id generators, made the same way:',
@@ -1224,6 +1227,7 @@ export const jsApiProblems: ProblemDraft[] = [
     category: 'js-apis',
     difficulty: 'medium',
     relevance: 'occasional',
+    tags: ['reading'],
     type: 'explain',
     prompt: md(
       'A leaderboard reads its top figure from this:',

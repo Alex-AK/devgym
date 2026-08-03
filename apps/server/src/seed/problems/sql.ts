@@ -1555,6 +1555,7 @@ export const sqlProblems: ProblemDraft[] = [
     category: 'sql',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'explain',
     prompt: md(
       'Postgres. You are reviewing this and have never seen it before:',
@@ -1627,6 +1628,7 @@ export const sqlProblems: ProblemDraft[] = [
     category: 'sql',
     difficulty: 'medium',
     relevance: 'daily',
+    tags: ['reading'],
     type: 'short-text',
     prompt: md(
       'Postgres. The endpoint builds its `IN` list from whatever the user ticked:',
