@@ -70,10 +70,10 @@ export function QueueEmpty({
           </Button>
         )}
         <Button asChild variant={scoped ? 'outline' : 'default'}>
-          <Link to="/">Back to dashboard</Link>
+          <Link to="/">Back to today</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link to="/problems">Browse all problems</Link>
+          <Link to="/library/problems">Browse all problems</Link>
         </Button>
       </CardContent>
     </Card>

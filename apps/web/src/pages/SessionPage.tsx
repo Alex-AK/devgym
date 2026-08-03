@@ -18,7 +18,7 @@ import {
   Target,
 } from 'lucide-react';
 import * as React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { DifficultyBadge, RelevanceBadge } from '@/components/badges';
 import { FilterChip, FilterRow } from '@/components/filters';
@@ -28,7 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { api, queryKeys } from '@/lib/api';
 import { describeScope, isScoped } from '@/lib/scope';
-import { formatElapsed } from '@/lib/session';
+import { formatElapsed, useStartSession } from '@/lib/session';
 
 const SIZES = [5, 10, 20];
 
@@ -132,24 +132,11 @@ function StartSession({
 }: {
   heading?: string;
 }): React.ReactElement {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [size, setSize] = React.useState(DEFAULT_SESSION_SIZE);
   const [category, setCategory] = React.useState<Category | null>(null);
   const [difficulty, setDifficulty] = React.useState<Difficulty | null>(null);
 
-  const start = useMutation({
-    mutationFn: () =>
-      api.createSession({
-        size,
-        ...(category ? { category } : {}),
-        ...(difficulty ? { difficulty } : {}),
-      }),
-    onSuccess: async (session) => {
-      await queryClient.invalidateQueries();
-      navigate(session.nextSlug ? `/problems/${session.nextSlug}` : '/session');
-    },
-  });
+  const start = useStartSession();
 
   return (
     <Card className="mx-auto max-w-2xl">
@@ -200,7 +187,16 @@ function StartSession({
             </FilterChip>
           ))}
         </FilterRow>
-        <Button onClick={() => start.mutate()} disabled={start.isPending}>
+        <Button
+          onClick={() =>
+            start.mutate({
+              size,
+              ...(category ? { category } : {}),
+              ...(difficulty ? { difficulty } : {}),
+            })
+          }
+          disabled={start.isPending}
+        >
           {start.isPending ? 'Starting…' : `Start ${size} problems`}
           <ArrowRight />
         </Button>

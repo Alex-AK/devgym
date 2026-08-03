@@ -16,15 +16,12 @@ export function PathsPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">The essentials path</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          An hour each, on one slice of the work. Read the pages in order, prove it on the reps,
-          then build the thing. This is the deliberate-study entrance: the daily session stays
-          interleaved, because that is what remembering wants, and a path is blocked and ordered,
-          because that is what understanding something the first time wants.
-        </p>
-      </div>
+      <p className="max-w-prose text-sm text-muted-foreground">
+        An hour each, on one slice of the work. Read the pages in order, prove it on the reps, then
+        build the thing. This is the deliberate-study entrance: the daily session stays interleaved,
+        because that is what remembering wants, and a path is blocked and ordered, because that is
+        what understanding something the first time wants.
+      </p>
 
       {data.length === 0 ? (
         <Card>

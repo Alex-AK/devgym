@@ -70,12 +70,9 @@ export function ProblemsPage(): React.ReactElement {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">All problems</h1>
-        <p className="text-sm text-muted-foreground">
-          {solved} of {data.length} solved. Solved problems can be re-attempted any time.
-        </p>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {solved} of {data.length} solved. Solved problems can be re-attempted any time.
+      </p>
 
       <Card>
         <CardContent className="space-y-3 p-4">

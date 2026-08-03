@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 /**
  * One labelled row of filter chips. The label column is wide enough for the
  * longest label we use ("DIFFICULTY"); anything narrower lets the text overflow
- * into the first chip. Shared so the dashboard and the problem list stay aligned.
+ * into the first chip. Shared so the session form and the problem list stay aligned.
  */
 export function FilterRow({
   label,

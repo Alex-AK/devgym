@@ -483,7 +483,7 @@ function Header({
 }): React.ReactElement {
   return (
     <div className="space-y-2">
-      <Link to="/problems" className="text-xs text-muted-foreground hover:underline">
+      <Link to="/library/problems" className="text-xs text-muted-foreground hover:underline">
         ← All problems
       </Link>
       <h1 className="text-2xl font-semibold tracking-tight">{detail.title}</h1>

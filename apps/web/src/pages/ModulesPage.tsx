@@ -19,14 +19,11 @@ export function ModulesPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Modules</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          One sitting with one API. Every step asks you to commit to an answer before it runs the
-          code, because being wrong on purpose is what makes the correction stick. For the APIs you
-          use constantly and have never quite sat down with.
-        </p>
-      </div>
+      <p className="max-w-prose text-sm text-muted-foreground">
+        One sitting with one API. Every step asks you to commit to an answer before it runs the
+        code, because being wrong on purpose is what makes the correction stick. For the APIs you
+        use constantly and have never quite sat down with.
+      </p>
 
       {data.length === 0 ? (
         <Card>

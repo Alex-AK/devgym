@@ -62,7 +62,7 @@ export function PathPage(): React.ReactElement {
   return (
     <article className="space-y-8">
       <header>
-        <Link to="/essentials" className="text-sm text-muted-foreground hover:underline">
+        <Link to="/library/essentials" className="text-sm text-muted-foreground hover:underline">
           The essentials path
         </Link>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{data.title}</h1>

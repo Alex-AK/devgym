@@ -414,6 +414,41 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   video or audio. No branching either: steps are linear, and a module that needs a decision tree is
   two modules.
 
+## Navigation, and what the first page asks
+
+- **The nav carries four entries and none of them is a content format.** It had grown to nine, one
+  per format plus the dashboard, which is what a nav does when every shipped thing is added to it:
+  a morning opened on nine choices, of which one was the one worth making. The four are the four
+  questions somebody actually arrives with. Today is what to do now, Library is where everything is,
+  Handbook is what to read, Progress is how it is going. The rule that keeps it at four is that a
+  new format earns a slot only by being a different question, and no format has been.
+
+- **Today asks one thing, and it starts the session rather than linking to a page that asks more.**
+  The old dashboard led with a scoreboard and put the session behind a card that then wanted a size,
+  a category and a difficulty before anything began. That is three decisions and a report in front of
+  fifteen minutes. The scoped form still exists on `/session` for when the scoping is the point; it
+  is the second button, not the first.
+
+- **The other formats are ranked by what they cost you, not by what they are.** On a morning the
+  question is never "module or workout", it is how long there is, so each tile carries the duration
+  the content itself declares and nothing rounds or estimates. Cards show a count instead, because a
+  run has no authored length and inventing one would be the first invented number in the app.
+
+- **Progress is a page you visit, not a page you land on.** Every number that was on the dashboard is
+  still there and several that were computed and never shown now are, including the difficulty split.
+  Moving them was the point: coverage is worth reading weekly and is worth nothing at the moment you
+  sit down to work, and a reset button belongs nowhere near a page opened every morning.
+
+- **The library is one page with tabs, and the list routes moved into it.** `/problems`,
+  `/workouts`, `/modules` and `/essentials` redirect to their tab; the detail routes keep their
+  top-level URLs, because a link to a workout is the workout and not a position in a browse surface.
+  A menu of menus was the alternative and is what a library page usually degrades into: this one
+  shows the content, and each tab is one click from the others rather than one click from an index.
+
+- **Cards are not a library tab.** There is nothing to list, since choosing a deck was refused for
+  the reason in the next section, so cards stay an entrance on Today. This is the same rule the decks
+  decision made, applied to the page that would otherwise quietly reintroduce the choice.
+
 ## Decks
 
 - **Decks are never surfaced in the UI, and the reason is the count of entrances rather than

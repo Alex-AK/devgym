@@ -53,7 +53,7 @@ function WorkoutIntro({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <Link to="/workouts" className="text-sm text-muted-foreground hover:underline">
+        <Link to="/library/workouts" className="text-sm text-muted-foreground hover:underline">
           ← Workouts
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{detail.title}</h1>
@@ -164,7 +164,7 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Link to="/workouts" className="text-sm text-muted-foreground hover:underline">
+        <Link to="/library/workouts" className="text-sm text-muted-foreground hover:underline">
           ← Workouts
         </Link>
         <h1 className="text-lg font-semibold tracking-tight">{detail.title}</h1>

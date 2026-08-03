@@ -21,13 +21,10 @@ export function WorkoutsPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Workouts</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Longer builds against a real toolchain. Set the timer, get as far as you can, run the
-          checkpoints to see where you stand.
-        </p>
-      </div>
+      <p className="max-w-prose text-sm text-muted-foreground">
+        Longer builds against a real toolchain. Set the timer, get as far as you can, run the
+        checkpoints to see where you stand.
+      </p>
 
       {data.length === 0 ? (
         <Card>

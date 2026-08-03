@@ -30,7 +30,31 @@ function normalizeTimestamp(value: string): string {
   return `${value.replace(' ', 'T')}Z`;
 }
 
+/** True when a timestamp falls on the reader's current local date. */
+export function isToday(isoOrSqlDate: string): boolean {
+  const timestamp = Date.parse(normalizeTimestamp(isoOrSqlDate));
+  if (Number.isNaN(timestamp)) return false;
+  return new Date(timestamp).toDateString() === new Date().toDateString();
+}
+
+/** "Sunday, 2 August", in whatever the reader's locale calls those. */
+export function todayLabel(): string {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export function percent(part: number, whole: number): number {
   if (whole <= 0) return 0;
   return Math.round((part / whole) * 100);
+}
+
+/** "20 min" or "20–45 min" over a set of authored durations. */
+export function minutesRange(values: number[]): string | undefined {
+  if (values.length === 0) return undefined;
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  return low === high ? `${low} min` : `${low}–${high} min`;
 }

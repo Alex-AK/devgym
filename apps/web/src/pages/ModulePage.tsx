@@ -48,7 +48,7 @@ function Steps({ module: entry }: { module: ModuleDetail }): React.ReactElement 
   return (
     <article className="space-y-6">
       <header>
-        <Link to="/modules" className="text-sm text-muted-foreground hover:underline">
+        <Link to="/library/modules" className="text-sm text-muted-foreground hover:underline">
           Modules
         </Link>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{entry.title}</h1>

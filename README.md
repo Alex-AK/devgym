@@ -32,8 +32,8 @@ pnpm install
 pnpm dev        # server on :3001, web on :5173; DB auto-migrates and auto-seeds
 ```
 
-Open http://localhost:5173 and hit **Start a session**. Requires Node 20+. Nothing else: no API
-keys, no accounts, no network calls at runtime.
+Open http://localhost:5173 and hit **Start**. Requires Node 20+. Nothing else: no API keys, no
+accounts, no network calls at runtime.
 
 ![A coding problem graded: two of four assertions passing, with expected vs actual for each failure and the first hint unlocked](docs/screenshot.jpg)
 
@@ -54,6 +54,12 @@ to upsert them into an existing one.
 
 ## The daily loop
 
+Four places, and the first one is where a morning starts. **Today** asks one thing, which is whether
+you are starting or carrying on a session, and lists the other formats underneath by how long they
+take. **Library** is where you go when you want something in particular: problems, workouts, modules
+and the essentials path, each a tab. **Handbook** is the reading. **Progress** is what you have
+covered and what is thin, on a page you visit rather than one you land on.
+
 `/session` pins a fixed set of problems (5, 10 or 20) so the list cannot shift underneath you.
 Every problem page then shows `Problem 3 of 10` with a progress bar, Next and Skip stay inside the
 session, and finishing gives you a summary with solved / skipped counts and elapsed time.
@@ -65,15 +71,15 @@ where today stopped. Only one session runs at a time; starting a new one closes 
   21 and 60 as you keep getting it right. Failing a review drops it back to the first rung. Solved
   is sticky, so a failed review never unsolves anything. `/practice?mode=due` serves what is due.
 - **Review queue.** `/practice?mode=review` serves everything you attempted **or skipped** and have
-  not yet solved. The dashboard links to it whenever there is something waiting.
+  not yet solved. Progress links to it whenever there is something waiting.
 - **Focused practice.** `/practice?category=react&difficulty=hard` drills one slice without pinning
   anything, running until the queue empties. The scope lives in the URL, so it survives a refresh
-  and follows you through Next / Previous / Skip. Start one from the dashboard, or from the problem
-  list with **Practice these**.
+  and follows you through Next / Previous / Skip. Start one from a category on Progress, or from the
+  problem list with **Practice these**.
 - **Keyboard.** `/` focuses the answer box, `Cmd/Ctrl+Enter` submits, `n` / `p` move, `s` skips,
   `Esc` leaves the box. The answer box takes focus on load, so press `Esc` before using the
   single-key shortcuts.
-- **Starting over.** The dashboard reset clears statuses only, or clears everything (attempts,
+- **Starting over.** The reset on Progress clears statuses only, or clears everything (attempts,
   schedules and sessions) and returns to the zero state.
 
 ## Problem library

@@ -1,4 +1,26 @@
-import type { SessionResponse } from '@devgym/shared';
+import type { CreateSessionRequest, SessionResponse } from '@devgym/shared';
+import { useMutation, type UseMutationResult, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+
+import { api } from '@/lib/api';
+
+/**
+ * Starting a session always lands you on its first problem, never on a list.
+ * Shared because there are two ways in: one click from today's page, and the
+ * scoped form on `/session`. They must not drift on what happens after.
+ */
+export function useStartSession(): UseMutationResult<SessionResponse, Error, CreateSessionRequest> {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: CreateSessionRequest) => api.createSession(body),
+    onSuccess: async (session) => {
+      await queryClient.invalidateQueries();
+      navigate(session.nextSlug ? `/problems/${session.nextSlug}` : '/session');
+    },
+  });
+}
 
 /**
  * The next problem to work on inside a session: the first pending item after

@@ -4,16 +4,18 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Four, and they are the four questions someone arrives with: what am I doing
+ * now, where is everything, what should I read, how am I doing. Every format
+ * used to have a nav slot, which made a morning start with nine decisions and
+ * buried the only one that matters. The formats are reachable from Today and
+ * from the library instead.
+ */
 const LINKS = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/session', label: 'Session', end: false },
-  { to: '/practice', label: 'Practice', end: false },
-  { to: '/problems', label: 'Problems', end: false },
-  { to: '/workouts', label: 'Workouts', end: false },
+  { to: '/', label: 'Today', end: true },
+  { to: '/library', label: 'Library', end: false },
   { to: '/handbook', label: 'Handbook', end: false },
-  { to: '/modules', label: 'Modules', end: false },
-  { to: '/cards', label: 'Cards', end: false },
-  { to: '/essentials', label: 'Essentials', end: false },
+  { to: '/progress', label: 'Progress', end: false },
 ];
 
 export function AppShell(): React.ReactElement {
@@ -29,7 +31,7 @@ export function AppShell(): React.ReactElement {
             <Dumbbell className="size-5 text-primary" />
             devgym
           </NavLink>
-          <nav className="flex items-center gap-1 text-sm">
+          <nav className="ml-auto flex items-center gap-1 text-sm">
             {LINKS.map((link) => (
               <NavLink
                 key={link.to}
