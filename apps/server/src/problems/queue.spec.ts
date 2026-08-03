@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { isOptInCategory } from '@hone/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -24,6 +25,9 @@ let progress: ProgressService;
 
 const firstSlugOf = (category: string): string =>
   problemSeeds.find((seed) => seed.category === category)?.slug ?? '';
+
+/** What an unscoped queue actually deals: everything bar the opt-in categories. */
+const dealt = problemSeeds.filter((seed) => !isOptInCategory(seed.category));
 
 beforeEach(() => {
   sqlite?.close();
@@ -50,8 +54,8 @@ afterAll(() => {
 describe('practice queue', () => {
   it('starts at the first problem by position', async () => {
     const next = problems.next();
-    expect(next?.slug).toBe(problemSeeds[0]?.slug);
-    expect(next?.queueSize).toBe(problemSeeds.length);
+    expect(next?.slug).toBe(dealt[0]?.slug);
+    expect(next?.queueSize).toBe(dealt.length);
   });
 
   it('narrows to a single category', async () => {
@@ -110,7 +114,47 @@ describe('practice queue', () => {
    * retention wants and a tag is a posture you choose on purpose.
    */
   it('leaves the unscoped queue dealing every rep, tagged or not', async () => {
-    expect(problems.next()?.queueSize).toBe(problemSeeds.length);
+    expect(problems.next()?.queueSize).toBe(dealt.length);
+  });
+
+  /**
+   * The opposite of a tag, and the reason they stayed two mechanisms: an
+   * opt-in category is a track you sit down to, so the round robin never deals
+   * it unless you name it.
+   */
+  it('keeps an opt-in category out of the unscoped queue', () => {
+    expect(dealt.length, 'nothing is opting out, so this test proves nothing').toBeLessThan(
+      problemSeeds.length
+    );
+    expect(problems.next()?.queueSize).toBe(dealt.length);
+  });
+
+  it('deals an opt-in category in full when the scope names it', () => {
+    const scope = { category: 'dsa-patterns' } as const;
+    const next = problems.next(undefined, 'next', scope);
+
+    expect(next?.category).toBe('dsa-patterns');
+    expect(next?.queueSize).toBe(
+      problemSeeds.filter((seed) => seed.category === 'dsa-patterns').length
+    );
+  });
+
+  /**
+   * Opting out holds back what you have never touched, not your own history.
+   * A rep you attempted and got wrong has to stay reachable, or review mode
+   * would hide misses the app is counting on the dashboard.
+   */
+  it('keeps an opt-in rep in the queue once you have attempted it', async () => {
+    const slug = firstSlugOf('dsa-patterns');
+    await problems.submitAttempt(slug, 'const nope = 1;');
+
+    expect(problems.next(undefined, 'next', { mode: 'review' })?.slug).toBe(slug);
+    expect(problems.next()?.queueSize).toBe(dealt.length + 1);
+  });
+
+  it('keeps an opt-in rep in the queue once you have skipped it', () => {
+    problems.skip(firstSlugOf('dsa-patterns'));
+    expect(problems.next()?.queueSize).toBe(dealt.length + 1);
   });
 
   it('review mode surfaces problems you attempted and did not solve', async () => {
@@ -158,7 +202,7 @@ describe('practice queue', () => {
     expect(result.next?.slug).not.toBe(first);
     // Still in the queue, just last.
     expect(problems.next()?.slug).not.toBe(first);
-    expect(problems.next(undefined, 'next')?.queueSize).toBe(problemSeeds.length);
+    expect(problems.next(undefined, 'next')?.queueSize).toBe(dealt.length);
   });
 
   it('keeps a skip inside the active session scope', async () => {
@@ -191,7 +235,7 @@ describe('practice queue', () => {
 
     // The anchor has left the queue, so this takes the position fallback path.
     const back = problems.next('js-find', 'prev');
-    const last = problemSeeds[problemSeeds.length - 1];
+    const last = dealt[dealt.length - 1];
     expect(back?.slug).not.toBe(last?.slug);
     expect(back?.difficulty).toBe('easy');
   });

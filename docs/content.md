@@ -28,7 +28,15 @@ slug, so editing one updates it in place and keeps its attempt history. `positio
 an empty database.
 
 A category is a member of `CATEGORIES` in `packages/shared/src/index.ts` with a label in
-`CATEGORY_LABELS` and a seed file of its own. Adding one is those three things and nothing else.
+`CATEGORY_LABELS` and a seed file of its own. Adding one is those three things and nothing else, and
+the suite refuses a category with no reps behind it.
+
+A fourth line is available and has one member: `OPT_IN_CATEGORIES` takes a category out of the daily
+round robin, so it is dealt only to somebody who scoped practice or a session to it. That is for a
+separate track like `dsa-patterns`, not for material somebody should meet in the morning, and the
+bar is whether a rep landing unannounced in a 15-minute session would be a misfire. It holds back
+only what you have never touched: attempt or skip one of its reps and the queue treats it normally
+from then on.
 
 ### The two axes
 

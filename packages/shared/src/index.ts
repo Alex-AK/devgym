@@ -22,8 +22,26 @@ export const CATEGORIES = [
   'html',
   'ai-engineering',
   'logic',
+  'dsa-patterns',
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
+
+/**
+ * Categories the daily queue never deals you. This is the exact opposite of a
+ * tag: a tag is opt-in, naming a slice you can enter deliberately, and this is
+ * opt-out, pulling a category out of a round robin that would otherwise deal it
+ * alongside everything else.
+ *
+ * It holds back what you have never touched, not your own history. Name the
+ * category in a scope and you get the whole thing; attempt or skip a rep and it
+ * behaves like any other rep from then on, review and spaced repetition
+ * included. Otherwise the morning would hide the misses it just gave you.
+ */
+export const OPT_IN_CATEGORIES: readonly Category[] = ['dsa-patterns'];
+
+export function isOptInCategory(category: Category): boolean {
+  return OPT_IN_CATEGORIES.includes(category);
+}
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
@@ -99,6 +117,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   html: 'HTML & Semantics',
   'ai-engineering': 'AI Engineering',
   logic: 'Logic',
+  'dsa-patterns': 'DSA Patterns',
 };
 
 /** Row in the problem list (`GET /api/problems`). */

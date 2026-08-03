@@ -55,17 +55,10 @@ blocks nothing, which is why it has outlasted every page that used to sit above 
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `sql-performance` | 10      | **Reading a plan**, which nothing does today: captured EXPLAIN output graded as short-text and explain, plus live `sql` rewrites (EXISTS against COUNT, filter before joining, keyset pagination). Index *design* is already covered by six `sql-index-*` reps, so this is narrower than it was |
 | `node`           | 12      | The runtime itself: event loop ordering past what `js-microtask-order` covers, streams and backpressure, buffers, process against worker threads, what blocks |
-| `dsa-patterns`   | 30      | Two pointers, sliding window, fast and slow pointers, prefix sum, monotonic stack, top-K with a heap, binary search variants, intervals, BFS and DFS, backtracking, basic DP. Two or three js-code problems per pattern, added in pattern-sized waves |
+| `dsa-patterns`   | 27      | Sliding window, fast and slow pointers, prefix sum, monotonic stack, top-K with a heap, binary search variants, intervals, BFS and DFS, backtracking, basic DP. Two or three js-code problems per pattern, added in pattern-sized waves. Two pointers is the wave already written, and the shape to follow |
 
 `sql-performance` stores each captured plan with the query and dataset that produced it, so a plan
 can be regenerated when engines update instead of rotting as a string.
-
-**`dsa-patterns` stays out of the daily queue** and is entered on purpose, which is the one
-application change left in this file. Tags now cut across categories and the queue, the session
-builder and focused practice all respect them, but a tag is opt-in and this is opt-out: the queue
-still deals every category equally, so a category needs a flag that takes it out of the round robin
-while leaving it reachable on purpose. The seam is the filter chain in `queue()`, next to the tag
-one. Small, but it is code rather than content.
 
 ## 5. The workout queue
 

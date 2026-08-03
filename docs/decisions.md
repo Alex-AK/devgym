@@ -97,9 +97,14 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   by getting the attempt wrong.
 
 - **`dsa-patterns` stays out of the daily queue.** DSA is a separate track you enter on purpose,
-  through focused practice or its own preset, not something the morning round-robin deals you. It is
-  the one piece of planned content that needs application code, because the queue currently treats
-  every category equally.
+  through focused practice or a scoped session, not something the morning round-robin deals you. The
+  mechanism is `OPT_IN_CATEGORIES` in `packages/shared` and one filter in `queue()`, and what it
+  holds back is only what you have never touched: name the category in a scope and you get the whole
+  thing, while a rep you have attempted or skipped is dealt like any other from then on. That second
+  half is not a courtesy. Review mode and the dashboard's missed count run the same predicate, so an
+  opt-out that also hid attempted reps would leave the app counting misses it then refused to serve.
+  The due queue needed no filter at all for the same reason: everything in it was solved, so every
+  row is a rep you already chose.
 
 - **`api-design` was cut as a category because four fifths of it had already shipped inside
   `http`.** The row asked for twelve reps on offset against cursor, idempotency keys, versioning,
@@ -132,7 +137,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   flag is opt-out, removing a category from a round robin that would otherwise deal it. Collapsing
   them would mean either every category becomes a tag, which is a rename, or the opt-out rides on a
   tag nobody would ever scope a session to. What they do share is the filter chain in `queue()`,
-  which is where the second one goes when `dsa-patterns` arrives.
+  which is where the second one went.
 
 - **One JSON column, not a join table.** Every query that reads tags already loads the whole problem
   set into memory and filters there, so a join table would have bought nothing and cost a table, a

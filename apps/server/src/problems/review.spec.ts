@@ -191,6 +191,19 @@ describe('due queue', () => {
     expect(progress.summary().due).toBe(0);
   });
 
+  /**
+   * `dsa-patterns` opts out of being dealt, not out of the ladder. Solving one
+   * is a rep you chose, so its review comes round with everything else.
+   */
+  it('serves a solved rep from an opt-in category', async () => {
+    const dsa = 'dsa-merge-sorted';
+    await service.submitAttempt(dsa, answerFor(dsa));
+    makeDue(dsa);
+
+    expect(service.next(undefined, 'next', { mode: 'due' })?.slug).toBe(dsa);
+    expect(progress.summary().due).toBe(1);
+  });
+
   it('is cleared by resetting the problem', async () => {
     await service.submitAttempt(SLUG, answerFor(SLUG));
     makeDue(SLUG);

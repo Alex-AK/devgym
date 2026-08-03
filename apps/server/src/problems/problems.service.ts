@@ -1,4 +1,4 @@
-import { REVIEW_INTERVALS_DAYS } from '@hone/shared';
+import { isOptInCategory, REVIEW_INTERVALS_DAYS } from '@hone/shared';
 import type {
   AttemptResponse,
   NextProblem,
@@ -295,31 +295,49 @@ export class ProblemsService {
    */
   private queue(_userId: number, scope: QueueScope = {}): QueueEntry[] {
     if (scope.mode === 'due') return this.dueQueue(scope);
-    return this.allWithProgress()
-      .filter((entry) => entry.progress.status !== 'solved')
-      .filter((entry) => !scope.category || entry.problem.category === scope.category)
-      .filter((entry) => !scope.difficulty || entry.problem.difficulty === scope.difficulty)
-      .filter((entry) => !scope.tag || parseTags(entry.problem.tags).includes(scope.tag))
-      .filter(
-        (entry) =>
-          scope.mode !== 'review' ||
-          entry.progress.attemptsCount > 0 ||
-          entry.progress.status === 'skipped'
-      )
-      .sort((a, b) => {
-        const aSkipped = a.progress.lastSkippedAt;
-        const bSkipped = b.progress.lastSkippedAt;
-        if (aSkipped === null && bSkipped === null) {
+    return (
+      this.allWithProgress()
+        .filter((entry) => entry.progress.status !== 'solved')
+        .filter((entry) => !scope.category || entry.problem.category === scope.category)
+        .filter((entry) => !scope.difficulty || entry.problem.difficulty === scope.difficulty)
+        .filter((entry) => !scope.tag || parseTags(entry.problem.tags).includes(scope.tag))
+        // An opt-in category is a track you sit down to, so the round robin holds
+        // back what you have never touched. Naming the category deals it, and so
+        // does having attempted or skipped the rep: this keeps a track you have
+        // not started out of the morning, it does not hide your own misses.
+        .filter(
+          (entry) =>
+            scope.category === entry.problem.category ||
+            !isOptInCategory(entry.problem.category) ||
+            entry.progress.attemptsCount > 0 ||
+            entry.progress.status === 'skipped'
+        )
+        .filter(
+          (entry) =>
+            scope.mode !== 'review' ||
+            entry.progress.attemptsCount > 0 ||
+            entry.progress.status === 'skipped'
+        )
+        .sort((a, b) => {
+          const aSkipped = a.progress.lastSkippedAt;
+          const bSkipped = b.progress.lastSkippedAt;
+          if (aSkipped === null && bSkipped === null) {
+            return a.problem.position - b.problem.position;
+          }
+          if (aSkipped === null) return -1;
+          if (bSkipped === null) return 1;
+          if (aSkipped !== bSkipped) return aSkipped < bSkipped ? -1 : 1;
           return a.problem.position - b.problem.position;
-        }
-        if (aSkipped === null) return -1;
-        if (bSkipped === null) return 1;
-        if (aSkipped !== bSkipped) return aSkipped < bSkipped ? -1 : 1;
-        return a.problem.position - b.problem.position;
-      });
+        })
+    );
   }
 
-  /** Solved problems scheduled to come round again, most overdue first. */
+  /**
+   * Solved problems scheduled to come round again, most overdue first. Nothing
+   * filters opt-in categories here on purpose: everything in this queue was
+   * solved, so it is a rep you already chose, and dropping it would leave the
+   * ladder broken for the one category you entered deliberately.
+   */
   private dueQueue(scope: QueueScope = {}): QueueEntry[] {
     const now = nowIso();
     return this.allWithProgress()

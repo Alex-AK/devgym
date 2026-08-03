@@ -89,6 +89,10 @@ apps/web/src/
   practised on purpose, and the bar is whether somebody would deliberately spend fifteen minutes on
   it. The daily queue ignores tags entirely. `problems.seed.spec.ts` refuses a tag with no reps, or
   one whose reps all sit in a single category.
+- **`OPT_IN_CATEGORIES` is the opposite of a tag**, and `dsa-patterns` is its one member: the daily
+  queue never deals a category listed there, so it is reached by scoping practice or a session to
+  it. It holds back only reps you have never touched, so review, the missed count and the review
+  ladder all keep working once you have attempted one.
 - **Every problem declares a `relevance`**, which is a separate axis from difficulty: `daily` for
   what you write in ordinary feature work, `occasional` for a bug or a perf pass or an edge case,
   `foundational` for what you meet through a framework more often than you write. Author it
