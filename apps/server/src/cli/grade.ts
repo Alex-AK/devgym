@@ -14,7 +14,7 @@ import { join } from 'node:path';
  * Use it when a verdict feels wrong — the output shows exactly which accept
  * strings, patterns and keyword groups the answer was measured against.
  */
-import { CATEGORY_LABELS } from '@devgym/shared';
+import { CATEGORY_LABELS } from '@hone/shared';
 
 import { PRACTICE_DB_PATH } from '../common/paths';
 import { gradeAnswer, parseGraderConfig } from '../grading';
@@ -104,7 +104,7 @@ async function main(): Promise<void> {
   // Reuse the seeded practice DB when it exists so SQL grades against real data.
   let practicePath = PRACTICE_DB_PATH;
   if (!existsSync(practicePath)) {
-    practicePath = join(mkdtempSync(join(tmpdir(), 'devgym-grade-')), 'practice.db');
+    practicePath = join(mkdtempSync(join(tmpdir(), 'hone-grade-')), 'practice.db');
     buildPracticeDatabase(practicePath);
   }
   const db = openPracticeDatabase(practicePath);

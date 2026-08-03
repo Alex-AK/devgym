@@ -3,7 +3,7 @@ import {
   type CategoryProgress,
   type DifficultyProgress,
   type ProgressResponse,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import * as React from 'react';

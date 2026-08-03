@@ -5,7 +5,7 @@ import type {
   ProblemSummary,
   QueueMoveResponse,
   RevealSolutionResponse,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 
 import { CreateAttemptDto, NextProblemQueryDto, QueueScopeQueryDto } from './dto';

@@ -6,7 +6,7 @@ import {
   type Relevance,
   RELEVANCE_BLURBS,
   RELEVANCE_LABELS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import * as React from 'react';
 
 import { Badge } from '@/components/ui/badge';

@@ -22,7 +22,7 @@ afterAll(() => {
 });
 
 function build(slug: string, from: 'files' | 'solution'): string {
-  const workspace = mkdtempSync(join(tmpdir(), `devgym-workout-${from}-`));
+  const workspace = mkdtempSync(join(tmpdir(), `hone-workout-${from}-`));
   scratch.push(workspace);
 
   const source = workoutDir(slug);

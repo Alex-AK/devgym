@@ -95,7 +95,7 @@ apps/web/src/
 - **`js-code` tests take an `expression`, not statements.** It is evaluated after the submission, so
   multi-step setup has to be wrapped in an IIFE. Use `expectedCode` for values JSON cannot hold.
 - **After editing problems, run `pnpm seed`.** Boot only auto-seeds an empty database.
-- **Schema changes** need `pnpm --filter @devgym/server db:generate` and the generated SQL
+- **Schema changes** need `pnpm --filter @hone/server db:generate` and the generated SQL
   committed. Migrations apply automatically at startup.
 - **`pnpm verify` is the gate**, and CI runs the same thing. It fans typecheck, ESLint, Prettier and
   the test suite out in parallel, after auto-fixing your changed files. Run it before saying you're

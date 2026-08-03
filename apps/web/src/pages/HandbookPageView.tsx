@@ -1,4 +1,4 @@
-import type { HandbookPageDetail, HandbookPractiseLink } from '@devgym/shared';
+import type { HandbookPageDetail, HandbookPractiseLink } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Dumbbell, Target } from 'lucide-react';
 import * as React from 'react';

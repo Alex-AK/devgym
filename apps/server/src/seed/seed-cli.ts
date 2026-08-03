@@ -8,8 +8,8 @@ function main(): void {
   try {
     runMigrations(db);
     const result = seedAll(db, PRACTICE_DB_PATH);
-    console.log(`devgym: seeded ${result.problems} problems into ${APP_DB_PATH}`);
-    console.log(`devgym: rebuilt practice dataset at ${result.practiceDbPath}`);
+    console.log(`hone: seeded ${result.problems} problems into ${APP_DB_PATH}`);
+    console.log(`hone: rebuilt practice dataset at ${result.practiceDbPath}`);
   } finally {
     sqlite.close();
   }

@@ -22,7 +22,7 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
 
   await app.listen(PORT);
-  new Logger('Bootstrap').log(`devgym API listening on http://localhost:${PORT}/api`);
+  new Logger('Bootstrap').log(`Hone API listening on http://localhost:${PORT}/api`);
 }
 
 void bootstrap();

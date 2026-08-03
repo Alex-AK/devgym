@@ -1,4 +1,4 @@
-import type { ProblemType } from '@devgym/shared';
+import type { ProblemType } from '@hone/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 
 import { gradeCode } from './code-grader';

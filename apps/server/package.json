@@ -1,5 +1,5 @@
 {
-  "name": "@devgym/server",
+  "name": "@hone/server",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@devgym/shared": "workspace:*",
+    "@hone/shared": "workspace:*",
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
     "@nestjs/platform-express": "^11.1.28",
@@ -36,6 +36,6 @@
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   },
-  "description": "devgym API: NestJS, Drizzle, SQLite, and the grading engine",
+  "description": "Hone API: NestJS, Drizzle, SQLite, and the grading engine",
   "license": "MIT"
 }

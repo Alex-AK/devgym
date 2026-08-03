@@ -5,7 +5,7 @@ import { createContext, runInContext } from 'node:vm';
  *
  * SECURITY NOTE: `node:vm` is an isolation convenience, not a security
  * boundary — determined code can reach the host realm through constructor
- * chains. That is acceptable here because devgym runs locally and executes
+ * chains. That is acceptable here because Hone runs locally and executes
  * only code the user typed themselves, which is the same trust level as
  * running `pnpm dev`. Do not reuse this to run code from anyone else.
  */

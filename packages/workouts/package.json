@@ -1,5 +1,5 @@
 {
-  "name": "@devgym/workouts",
+  "name": "@hone/workouts",
   "version": "1.0.0",
   "private": true,
   "description": "Workout content plus the dependency set every workout workspace resolves against",

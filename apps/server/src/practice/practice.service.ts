@@ -1,4 +1,4 @@
-import type { PracticeSchemaResponse, PracticeTable } from '@devgym/shared';
+import type { PracticeSchemaResponse, PracticeTable } from '@hone/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 

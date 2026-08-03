@@ -1,4 +1,4 @@
-# @devgym/decks
+# @hone/decks
 
 A deck is content, not code. One directory is one deck, and adding one touches no application source:
 

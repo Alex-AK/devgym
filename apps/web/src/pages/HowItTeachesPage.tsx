@@ -19,7 +19,7 @@ interface Source {
 export function HowItTeachesPage(): React.ReactElement {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-semibold tracking-tight">How devgym tries to teach</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">How Hone tries to teach</h1>
 
       <div className="md mt-6">
         <p>
@@ -142,7 +142,7 @@ export function HowItTeachesPage(): React.ReactElement {
           <p>The research supports spacing. It does not support 1, 3, 7, 21, 60.</p>
           <p>
             Those five numbers are a guess. They were picked because they looked reasonable, and
-            they have never been tuned against anything. devgym has one user, keeps no telemetry and
+            they have never been tuned against anything. Hone has one user, keeps no telemetry and
             sends nothing anywhere, so there is no data set on which 2, 5, 14, 45 could be shown to
             be better or worse. Nobody has measured this schedule against any other.
           </p>

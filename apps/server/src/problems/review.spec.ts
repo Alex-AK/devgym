@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { REVIEW_INTERVALS_DAYS } from '@devgym/shared';
+import { REVIEW_INTERVALS_DAYS } from '@hone/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
@@ -17,7 +17,7 @@ import { seedAll } from '../seed/seed';
 import { SessionsService } from '../sessions/sessions.service';
 import { ProblemsService } from './problems.service';
 
-const dir = mkdtempSync(join(tmpdir(), 'devgym-review-'));
+const dir = mkdtempSync(join(tmpdir(), 'hone-review-'));
 const practicePath = join(dir, 'practice.db');
 
 let db: AppDb;

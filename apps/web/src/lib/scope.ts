@@ -10,7 +10,7 @@ import {
   type Tag,
   TAG_LABELS,
   TAGS,
-} from '@devgym/shared';
+} from '@hone/shared';
 
 /**
  * The practice session scope lives in the URL, so it survives a refresh and

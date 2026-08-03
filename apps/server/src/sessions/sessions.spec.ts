@@ -14,7 +14,7 @@ import { problemSeeds } from '../seed/problems.seed';
 import { seedAll } from '../seed/seed';
 import { SessionsService } from './sessions.service';
 
-const dir = mkdtempSync(join(tmpdir(), 'devgym-session-'));
+const dir = mkdtempSync(join(tmpdir(), 'hone-session-'));
 const practicePath = join(dir, 'practice.db');
 
 let db: AppDb;

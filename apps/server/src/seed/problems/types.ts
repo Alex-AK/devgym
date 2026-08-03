@@ -1,4 +1,4 @@
-import type { Category, Difficulty, ProblemType, Relevance, Tag } from '@devgym/shared';
+import type { Category, Difficulty, ProblemType, Relevance, Tag } from '@hone/shared';
 
 import type {
   CodeGraderConfig,

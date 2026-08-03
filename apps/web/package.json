@@ -1,5 +1,5 @@
 {
-  "name": "@devgym/web",
+  "name": "@hone/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -18,7 +18,7 @@
     "@codemirror/language": "^6.12.4",
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.7",
-    "@devgym/shared": "workspace:*",
+    "@hone/shared": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-progress": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.2",
@@ -46,6 +46,6 @@
     "vite": "^6.1.0",
     "vitest": "^3.2.7"
   },
-  "description": "devgym web client: Vite, React, Tailwind",
+  "description": "Hone web client: Vite, React, Tailwind",
   "license": "MIT"
 }

@@ -1,4 +1,4 @@
-# @devgym/handbook
+# @hone/handbook
 
 The handbook is content, not code. A page is a markdown file with frontmatter, and adding one
 touches no application source:

@@ -8,7 +8,7 @@ import type {
   ProblemStatus,
   Relevance,
   WorkoutManifest,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 

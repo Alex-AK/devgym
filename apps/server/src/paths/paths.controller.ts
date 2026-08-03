@@ -1,4 +1,4 @@
-import type { PathDetail, PathSummary } from '@devgym/shared';
+import type { PathDetail, PathSummary } from '@hone/shared';
 import { Controller, Get, Param } from '@nestjs/common';
 
 import { PathsService } from './paths.service';

@@ -1,4 +1,4 @@
-import type { AttemptResponse, ProblemDetail, ProblemType } from '@devgym/shared';
+import type { AttemptResponse, ProblemDetail, ProblemType } from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,

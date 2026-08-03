@@ -1,4 +1,4 @@
-import type { CardLibrary } from '@devgym/shared';
+import type { CardLibrary } from '@hone/shared';
 import { Controller, Get } from '@nestjs/common';
 
 import { DecksService } from './decks.service';

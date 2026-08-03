@@ -1,4 +1,4 @@
-import type { ProblemDetail } from '@devgym/shared';
+import type { ProblemDetail } from '@hone/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

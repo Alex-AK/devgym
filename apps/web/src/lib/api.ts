@@ -23,7 +23,7 @@ import type {
   WorkoutFile,
   WorkoutRun,
   WorkoutSummary,
-} from '@devgym/shared';
+} from '@hone/shared';
 
 export class ApiError extends Error {
   constructor(

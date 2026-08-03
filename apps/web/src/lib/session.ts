@@ -1,4 +1,4 @@
-import type { CreateSessionRequest, SessionResponse } from '@devgym/shared';
+import type { CreateSessionRequest, SessionResponse } from '@hone/shared';
 import { useMutation, type UseMutationResult, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 

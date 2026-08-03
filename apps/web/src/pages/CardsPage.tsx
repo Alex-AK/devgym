@@ -5,7 +5,7 @@ import type {
   HandbookPractiseLink,
   HandbookSource,
   LibraryCard,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Check, Dumbbell, Eye, RotateCcw, Target, X } from 'lucide-react';
 import * as React from 'react';

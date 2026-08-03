@@ -1,4 +1,4 @@
-import type { ModuleDetail, ModuleRunResponse, ModuleSummary } from '@devgym/shared';
+import type { ModuleDetail, ModuleRunResponse, ModuleSummary } from '@hone/shared';
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 
 import { RunStepDto } from './dto';

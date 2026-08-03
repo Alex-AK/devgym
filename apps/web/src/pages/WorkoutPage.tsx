@@ -1,4 +1,4 @@
-import type { WorkoutCheckpointResult, WorkoutDetail, WorkoutFile } from '@devgym/shared';
+import type { WorkoutCheckpointResult, WorkoutDetail, WorkoutFile } from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Circle, Play, RotateCcw, Square, XCircle } from 'lucide-react';
 import * as React from 'react';

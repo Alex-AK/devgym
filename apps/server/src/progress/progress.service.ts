@@ -8,7 +8,7 @@ import {
   type ResetAllResponse,
   type TagProgress,
   TAGS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 

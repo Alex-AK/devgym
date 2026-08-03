@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { WorkoutCheckpoint, WorkoutCheckpointResult, WorkoutRun } from '@devgym/shared';
+import type { WorkoutCheckpoint, WorkoutCheckpointResult, WorkoutRun } from '@hone/shared';
 
 import { RUNTIME_MODULES } from './workout-content';
 

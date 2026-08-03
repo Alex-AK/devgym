@@ -9,7 +9,7 @@ import {
 } from 'node:fs';
 import { dirname, join, normalize, relative, sep } from 'node:path';
 
-import type { WorkoutFile, WorkoutManifest } from '@devgym/shared';
+import type { WorkoutFile, WorkoutManifest } from '@hone/shared';
 
 import { DATA_DIR } from '../common/paths';
 import { RUNTIME_MODULES, SCAFFOLD_DIR, workoutDir } from './workout-content';

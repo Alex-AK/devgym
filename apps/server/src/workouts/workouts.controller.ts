@@ -1,4 +1,4 @@
-import type { WorkoutDetail, WorkoutFile, WorkoutRun, WorkoutSummary } from '@devgym/shared';
+import type { WorkoutDetail, WorkoutFile, WorkoutRun, WorkoutSummary } from '@hone/shared';
 import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 
 import { RunWorkoutDto, SaveWorkoutFileDto, WorkoutFilePathDto } from './dto';

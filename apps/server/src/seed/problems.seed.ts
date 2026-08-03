@@ -1,4 +1,4 @@
-import { CATEGORIES, type Category, DIFFICULTIES } from '@devgym/shared';
+import { CATEGORIES, type Category, DIFFICULTIES } from '@hone/shared';
 
 import { a11yProblems } from './problems/a11y';
 import { aiEngineeringProblems } from './problems/ai-engineering';

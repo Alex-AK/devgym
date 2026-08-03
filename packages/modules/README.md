@@ -1,4 +1,4 @@
-# @devgym/modules
+# @hone/modules
 
 A module is content, not code. One directory is one module, and adding one touches no application
 source:

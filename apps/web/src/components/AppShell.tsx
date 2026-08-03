@@ -29,7 +29,7 @@ export function AppShell(): React.ReactElement {
         <div className={cn('mx-auto flex h-14 items-center gap-6 px-4', container)}>
           <NavLink to="/" className="flex items-center gap-2 font-semibold tracking-tight">
             <Dumbbell className="size-5 text-primary" />
-            devgym
+            Hone
           </NavLink>
           <nav className="ml-auto flex items-center gap-1 text-sm">
             {LINKS.map((link) => (

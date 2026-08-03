@@ -7,7 +7,7 @@ import {
   RELEVANCES,
   TAGS,
   VERDICTS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { sql } from 'drizzle-orm';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 

@@ -6,7 +6,7 @@ import {
   type AuthoredPathStepKind,
   PATH_STEP_KINDS,
   type PathStep,
-} from '@devgym/shared';
+} from '@hone/shared';
 
 import { SERVER_ROOT } from '../common/paths';
 

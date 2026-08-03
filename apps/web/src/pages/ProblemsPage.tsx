@@ -9,7 +9,7 @@ import {
   type Tag,
   TAG_LABELS,
   TAGS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Play, Search } from 'lucide-react';
 import * as React from 'react';

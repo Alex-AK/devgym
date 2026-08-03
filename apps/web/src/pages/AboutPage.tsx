@@ -9,13 +9,13 @@ import { Link } from 'react-router-dom';
 export function AboutPage(): React.ReactElement {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-semibold tracking-tight">About devgym</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">About Hone</h1>
 
       <div className="md mt-6">
         <section>
           <h2>What this is</h2>
           <p>
-            devgym is a practice gym for web-dev fundamentals: short daily problems, timed workouts
+            Hone is a practice tool for web-dev fundamentals: short daily problems, timed workouts
             against real toolchains, and a <Link to="/handbook">handbook</Link> to study from. It
             runs entirely on your machine, fully offline. Grading is deterministic; there is no AI
             anywhere in the loop at runtime.
@@ -77,7 +77,7 @@ export function AboutPage(): React.ReactElement {
           <h2>How it tries to teach</h2>
           <p>
             Four techniques with evidence behind them, and one ladder of review intervals that is a
-            guess. <Link to="/how-it-teaches">How devgym tries to teach</Link> names the file or the
+            guess. <Link to="/how-it-teaches">How Hone tries to teach</Link> names the file or the
             screen where each technique happens, cites the research it leans on, and says plainly
             which part of the schedule was made up.
           </p>

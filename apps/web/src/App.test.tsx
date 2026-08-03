@@ -6,7 +6,7 @@ import type {
   ProgressResponse,
   SessionResponse,
   WorkoutSummary,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -195,7 +195,7 @@ describe('today', () => {
     mockApi({ progress: { ...PROGRESS, hasActivity: false, solved: 0, totalAttempts: 0 } });
     renderAt('/');
 
-    expect(await screen.findByRole('heading', { name: 'devgym' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Hone' })).toBeTruthy();
     expect(screen.queryByText(/problems solved/)).toBeNull();
   });
 

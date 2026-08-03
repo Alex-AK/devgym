@@ -1,4 +1,4 @@
-import type { ModuleSummary } from '@devgym/shared';
+import type { ModuleSummary } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Clock, ListOrdered } from 'lucide-react';
 import * as React from 'react';

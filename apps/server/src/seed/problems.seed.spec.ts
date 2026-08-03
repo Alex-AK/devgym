@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { CATEGORIES, DIFFICULTIES, PROBLEM_TYPES, RELEVANCES, TAGS } from '@devgym/shared';
+import { CATEGORIES, DIFFICULTIES, PROBLEM_TYPES, RELEVANCES, TAGS } from '@hone/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -15,7 +15,7 @@ let dir: string;
 let db: SqliteDatabase;
 
 beforeAll(() => {
-  dir = mkdtempSync(join(tmpdir(), 'devgym-seed-'));
+  dir = mkdtempSync(join(tmpdir(), 'hone-seed-'));
   const path = join(dir, 'practice.db');
   buildPracticeDatabase(path);
   db = openPracticeDatabase(path);

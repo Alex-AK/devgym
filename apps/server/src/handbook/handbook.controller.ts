@@ -1,4 +1,4 @@
-import type { HandbookPageDetail, HandbookSectionSummary } from '@devgym/shared';
+import type { HandbookPageDetail, HandbookSectionSummary } from '@hone/shared';
 import { Controller, Get, Param } from '@nestjs/common';
 
 import { HandbookService } from './handbook.service';

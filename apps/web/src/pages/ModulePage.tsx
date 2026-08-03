@@ -1,4 +1,4 @@
-import type { ModuleDetail, ModuleRunResponse, ModuleStep } from '@devgym/shared';
+import type { ModuleDetail, ModuleRunResponse, ModuleStep } from '@hone/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check, Dumbbell, Play, Target, X } from 'lucide-react';
 import * as React from 'react';

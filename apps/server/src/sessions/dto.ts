@@ -1,4 +1,4 @@
-import { MAX_SESSION_SIZE } from '@devgym/shared';
+import { MAX_SESSION_SIZE } from '@hone/shared';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 

@@ -5,7 +5,7 @@ import type {
   WorkoutManifest,
   WorkoutRun,
   WorkoutSummary,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 

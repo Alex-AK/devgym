@@ -1,4 +1,4 @@
-import type { ModuleDetail, ModuleRunResponse, ModuleStep, ModuleSummary } from '@devgym/shared';
+import type { ModuleDetail, ModuleRunResponse, ModuleStep, ModuleSummary } from '@hone/shared';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import { resolvePractiseLinks } from '../common/practise';

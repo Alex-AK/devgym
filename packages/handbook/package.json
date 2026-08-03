@@ -1,5 +1,5 @@
 {
-  "name": "@devgym/handbook",
+  "name": "@hone/handbook",
   "version": "1.0.0",
   "private": true,
   "description": "Handbook content: one markdown page per concept, read by the server at runtime",

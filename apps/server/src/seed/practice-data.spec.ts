@@ -12,7 +12,7 @@ let dir: string;
 let db: SqliteDatabase;
 
 beforeAll(() => {
-  dir = mkdtempSync(join(tmpdir(), 'devgym-data-'));
+  dir = mkdtempSync(join(tmpdir(), 'hone-data-'));
   const path = join(dir, 'practice.db');
   buildPracticeDatabase(path);
   db = openPracticeDatabase(path);

@@ -1,4 +1,4 @@
-# @devgym/paths
+# @hone/paths
 
 The essentials path is content, not code. One session is a JSON manifest, and adding one touches no
 application source:

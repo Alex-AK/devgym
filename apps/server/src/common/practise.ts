@@ -1,4 +1,4 @@
-import type { HandbookPractiseLink } from '@devgym/shared';
+import type { HandbookPractiseLink } from '@hone/shared';
 
 import type { AppDb } from '../db/client';
 import { problems } from '../db/schema';

@@ -1,4 +1,4 @@
-import { WORKOUT_KIND_LABELS, type WorkoutSummary } from '@devgym/shared';
+import { WORKOUT_KIND_LABELS, type WorkoutSummary } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Clock, Dumbbell } from 'lucide-react';
 import * as React from 'react';

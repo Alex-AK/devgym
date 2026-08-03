@@ -1,5 +1,5 @@
 /**
- * Shared API types for devgym. Types + const tuples only — no runtime deps.
+ * Shared API types for Hone. Types + const tuples only — no runtime deps.
  */
 
 export const CATEGORIES = [

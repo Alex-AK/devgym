@@ -1,4 +1,4 @@
-import type { CardDeck, CardLibrary, HandbookPageRef } from '@devgym/shared';
+import type { CardDeck, CardLibrary, HandbookPageRef } from '@hone/shared';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { resolvePractiseLinks } from '../common/practise';

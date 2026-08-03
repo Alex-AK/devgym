@@ -6,7 +6,7 @@ import {
   type SessionItem,
   type SessionItemStatus,
   type SessionResponse,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 

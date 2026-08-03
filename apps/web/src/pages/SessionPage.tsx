@@ -10,7 +10,7 @@ import {
   type Tag,
   TAG_LABELS,
   TAGS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,

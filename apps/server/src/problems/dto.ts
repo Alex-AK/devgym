@@ -7,7 +7,7 @@ import {
   type QueueMode,
   type Tag,
   TAGS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateAttemptDto {

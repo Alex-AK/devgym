@@ -1,4 +1,4 @@
-import { REVIEW_INTERVALS_DAYS } from '@devgym/shared';
+import { REVIEW_INTERVALS_DAYS } from '@hone/shared';
 import type {
   AttemptResponse,
   NextProblem,
@@ -8,7 +8,7 @@ import type {
   QueueMoveResponse,
   QueueScope,
   RevealSolutionResponse,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { and, eq } from 'drizzle-orm';

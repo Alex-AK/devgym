@@ -1,4 +1,4 @@
-import type { PracticeSchemaResponse } from '@devgym/shared';
+import type { PracticeSchemaResponse } from '@hone/shared';
 import { Controller, Get } from '@nestjs/common';
 
 import { PracticeService } from './practice.service';

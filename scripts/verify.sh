@@ -15,11 +15,11 @@ fail() { printf "${RED}✗${RESET} %s\n" "$1"; }
 errors=""
 overall=0
 
-# Everything downstream typechecks against @devgym/shared's built .d.ts, so the
+# Everything downstream typechecks against @hone/shared's built .d.ts, so the
 # build has to happen first — it can't join the parallel block below.
-if ! pnpm --filter @devgym/shared build >/dev/null 2>&1; then
+if ! pnpm --filter @hone/shared build >/dev/null 2>&1; then
   fail "shared build"
-  printf "\n${RED}@devgym/shared failed to build — nothing else can typecheck.${RESET}\n"
+  printf "\n${RED}@hone/shared failed to build — nothing else can typecheck.${RESET}\n"
   exit 1
 fi
 
@@ -54,17 +54,17 @@ run_check() {
   fi
 }
 
-run_check "typecheck-server" pnpm --filter @devgym/server typecheck &
-run_check "typecheck-web"    pnpm --filter @devgym/web typecheck &
-run_check "typecheck-shared" pnpm --filter @devgym/shared typecheck &
+run_check "typecheck-server" pnpm --filter @hone/server typecheck &
+run_check "typecheck-web"    pnpm --filter @hone/web typecheck &
+run_check "typecheck-shared" pnpm --filter @hone/shared typecheck &
 run_check "lint"             pnpm exec eslint . &
 run_check "format"           pnpm exec prettier --check . &
 
 # SKIP_UNIT_TESTS=1 omits the test run — the pre-commit hook sets it so committing
 # stays fast, and pre-push runs the full suite instead.
 if [ -z "$SKIP_UNIT_TESTS" ]; then
-  run_check "tests"          pnpm --filter @devgym/server test &
-  run_check "tests-web"      pnpm --filter @devgym/web test &
+  run_check "tests"          pnpm --filter @hone/server test &
+  run_check "tests-web"      pnpm --filter @hone/web test &
 fi
 
 wait

@@ -1,4 +1,4 @@
-import type { ProgressResponse, ResetAllResponse } from '@devgym/shared';
+import type { ProgressResponse, ResetAllResponse } from '@hone/shared';
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 
 import { ResetAllDto } from '../problems/dto';

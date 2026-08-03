@@ -13,7 +13,7 @@ import { problemSeeds } from '../seed/problems.seed';
 import { seedAll } from '../seed/seed';
 import { ProblemsService } from './problems.service';
 
-const dir = mkdtempSync(join(tmpdir(), 'devgym-queue-'));
+const dir = mkdtempSync(join(tmpdir(), 'hone-queue-'));
 const practicePath = join(dir, 'practice.db');
 
 let db: AppDb;

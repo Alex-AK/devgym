@@ -1,4 +1,4 @@
-import type { PathSummary } from '@devgym/shared';
+import type { PathSummary } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Clock } from 'lucide-react';
 import * as React from 'react';

@@ -5,8 +5,8 @@ import type {
   PathProblemStep,
   PathStepDetail,
   PathWorkoutStep,
-} from '@devgym/shared';
-import { WORKOUT_KIND_LABELS } from '@devgym/shared';
+} from '@hone/shared';
+import { WORKOUT_KIND_LABELS } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, CheckCircle2, Clock, Dumbbell, ListOrdered, Target } from 'lucide-react';
 import * as React from 'react';

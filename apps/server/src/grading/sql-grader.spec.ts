@@ -26,7 +26,7 @@ const ordered: SqlGraderConfig = {
 };
 
 beforeAll(() => {
-  dir = mkdtempSync(join(tmpdir(), 'devgym-sql-'));
+  dir = mkdtempSync(join(tmpdir(), 'hone-sql-'));
   const path = join(dir, 'practice.db');
   buildPracticeDatabase(path);
   db = openPracticeDatabase(path);

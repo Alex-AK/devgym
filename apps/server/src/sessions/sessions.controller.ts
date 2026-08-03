@@ -1,4 +1,4 @@
-import type { SessionResponse } from '@devgym/shared';
+import type { SessionResponse } from '@hone/shared';
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post } from '@nestjs/common';
 
 import { CreateSessionDto } from './dto';

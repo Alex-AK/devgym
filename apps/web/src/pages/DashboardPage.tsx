@@ -4,7 +4,7 @@ import {
   type SessionResponse,
   TAG_BLURBS,
   TAG_LABELS,
-} from '@devgym/shared';
+} from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Compass, Dumbbell, Layers, ListOrdered, ScanEye } from 'lucide-react';
 import * as React from 'react';
@@ -171,7 +171,7 @@ function FirstRun({ total }: { total: number }): React.ReactElement {
   const start = useStartSession();
 
   return (
-    <HeroCard eyebrow="Welcome" title="devgym">
+    <HeroCard eyebrow="Welcome" title="Hone">
       <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
         A practice gym for the web-dev fundamentals you lean on and lose when you don&apos;t use
         them. Short problems graded on the spot, longer workouts against a real toolchain, and a

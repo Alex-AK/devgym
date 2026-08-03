@@ -1,4 +1,4 @@
-import type { CodeTestResult, ProblemType, Verdict } from '@devgym/shared';
+import type { CodeTestResult, ProblemType, Verdict } from '@hone/shared';
 
 import type { CodeTestSpec } from './code-runner';
 

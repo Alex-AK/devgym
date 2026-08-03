@@ -1,4 +1,4 @@
-import type { CardLibrary } from '@devgym/shared';
+import type { CardLibrary } from '@hone/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

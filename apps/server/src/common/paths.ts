@@ -21,7 +21,7 @@ function findServerRoot(): string {
 
 export const SERVER_ROOT = findServerRoot();
 
-export const DATA_DIR = process.env.DEVGYM_DATA_DIR ?? join(SERVER_ROOT, 'data');
+export const DATA_DIR = process.env.HONE_DATA_DIR ?? join(SERVER_ROOT, 'data');
 
 export const APP_DB_PATH = join(DATA_DIR, 'app.db');
 

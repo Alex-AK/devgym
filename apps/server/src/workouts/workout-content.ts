@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import type { WorkoutManifest } from '@devgym/shared';
+import type { WorkoutManifest } from '@hone/shared';
 
 import { SERVER_ROOT } from '../common/paths';
 
