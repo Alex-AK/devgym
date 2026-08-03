@@ -3,12 +3,18 @@ title: Boolean operators that do not return booleans
 question: Why did `|| 20` turn my 0 into 20, and why won't `??` sit next to `&&`?
 order: 9
 practise:
+  - logic-and-returns-operand
+  - logic-or-last-operand
+  - logic-short-circuit-side-effect
+  - logic-and-renders-zero
+  - logic-precedence-and-over-or
+  - logic-not-binds-tighter
+  - logic-invert-compound
+  - logic-de-morgan-code
+  - logic-empty-array-truthy
   - js-nullish-vs-or
   - ts-falsy-vs-nullish
   - debug-empty-query-param
-  - js-spread-undefined-overwrite
-  - js-optional-chaining
-  - code-safe-get
 sources:
   - author: MDN
     title: Logical AND (&&)

@@ -7,6 +7,8 @@ practise:
   - sql-coalesce-stock
   - sql-not-exists
   - sql-anti-join
+  - logic-sql-not-in-null
+  - logic-sql-not-equal-drops-null
 sources:
   - author: SQLite
     title: NULL Handling in SQLite Versus Other Database Engines

@@ -11,6 +11,7 @@ import { formProblems } from './problems/forms';
 import { htmlProblems } from './problems/html';
 import { httpProblems } from './problems/http';
 import { jsApiProblems } from './problems/js-apis';
+import { logicProblems } from './problems/logic';
 import { queryParamProblems } from './problems/query-params';
 import { reactProblems } from './problems/react';
 import { securityProblems } from './problems/security';
@@ -41,6 +42,7 @@ const drafts: ProblemDraft[] = [
   ...systemsProblems,
   ...htmlProblems,
   ...aiEngineeringProblems,
+  ...logicProblems,
 ];
 
 /**

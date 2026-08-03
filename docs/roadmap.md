@@ -57,7 +57,6 @@ blocks nothing, which is why it has outlasted every page that used to sit above 
 | `api-design`     | 12      | Offset against cursor, idempotency keys and check-store-replay, versioning, rate limit algorithms and what to key on, status codes past the basics            |
 | `node`           | 12      | The runtime itself: event loop ordering past what js-apis covers, streams and backpressure, buffers, process against worker threads, what blocks              |
 | `dsa-patterns`   | 30      | Two pointers, sliding window, fast and slow pointers, prefix sum, monotonic stack, top-K with a heap, binary search variants, intervals, BFS and DFS, backtracking, basic DP. Two or three js-code problems per pattern, added in pattern-sized waves |
-| `logic`          | 12      | Boolean algebra where it actually bites: what `&&`, `||` and `??` return (operands, not booleans), short-circuit evaluation and the side effect that therefore never runs, inverting a compound condition without getting it backwards, precedence, and SQL's three-valued logic where `NOT IN` against a set containing `NULL` returns nothing at all. Truth tables stay in as the model behind a conditional; gates as circuits stay out, because this is not a hardware course |
 
 `sql-performance` stores each captured plan with the query and dataset that produced it, so a plan
 can be regenerated when engines update instead of rotting as a string.
