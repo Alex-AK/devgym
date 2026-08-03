@@ -36,21 +36,13 @@ they keep holding when the snippet is changed, which is what makes the editor sa
 
 ## 2. The rest of the decks
 
-The format ships and `the-join-family` is written, so everything here is content: one `deck.json` in
-a directory, no application code. Each names the page it cites, because a deck drills a distinction
-the handbook already explains and a card is checked against that page.
+Two decks suggest themselves and cannot be written, both for the same reason: `page` is mandatory and
+neither has one. No page owns the redirect codes, 301 against 302 against 307 against 308. Time
+formats are a module rather than a page, because there was no model there to write down. A deck is
+not on its own a reason to write a page, so both wait until something else asks for one.
 
-| Deck                | Cites                               | The distinction it drills                                                                      |
-| ------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `the-null-family`   | `sql/null-is-not-a-value`           | `= NULL` against `IS NULL`, `NOT IN` against a set holding one, and which aggregates skip them |
-| `equality`          | `javascript/equality`               | `==` against `===` against `Object.is`, and where `NaN` and `-0` split them                    |
-| `cache-directives`  | `caching/no-store-no-cache-max-age` | `no-store` against `no-cache` against `max-age=0`, and which one keeps the page off disk       |
-| `cookie-attributes` | `security/storing-a-token`          | The `SameSite` values against each other, and what `HttpOnly` and `Secure` each stop           |
-
-Two more decks suggest themselves and cannot be written, both for the same reason: `page` is
-mandatory and neither has one. No page owns the redirect codes, 301 against 302 against 307 against
-308. Time formats are a module rather than a page, because there was no model there to write down. A
-deck is not on its own a reason to write a page, so both wait until something else asks for one.
+Everything else the contrast sets wanted is written. `packages/decks/content/` is the inventory, and
+a deck named there and not on disk is a name that changed, not a deck that is missing.
 
 ## 3. Pages missing from sections that already ship
 

@@ -525,6 +525,16 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   Revisit when a deck has been in use for a few weeks and its owner can either name the cards they
   keep missing or is annoyed that the app cannot.
 
+- **The roadmap's deck table went stale for two commits, and the fix is a habit rather than a
+  process.** Four decks shipped in one commit; the table lost one row and kept two whose decks had
+  shipped under different slugs, `the-four-equalities` and `the-cache-directives`, while
+  `freshness-and-validation` was never listed at all. Nothing caught it, and nothing can: the suite
+  validates decks against the handbook, not against a prose table, and a test that compares the two
+  would be a test asserting one document matches another. So the rule is the one the top of this file
+  already states, applied harder. **The directory is the inventory and the table is a guess at a
+  name.** Read `packages/decks/content/` before believing a row, and the same for
+  `packages/modules/content/`, `packages/handbook/content/` and the seed files.
+
 - **A deck is one JSON file, not one markdown file per card.** A module step is prose plus a runnable
   snippet and genuinely needs a file; a card is two sentences, and eight files with frontmatter for
   sixteen lines of text is ceremony. The size caps then do authorial work rather than merely bounding
