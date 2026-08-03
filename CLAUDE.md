@@ -74,6 +74,7 @@ apps/server/src/
 apps/web/src/
   pages/                           Dashboard, Session, Practice, Problem, Problems, Paths, Modules
   components/CodeEditor.tsx        CodeMirror 6 wrapper, used for sql and js-code answers
+  components/DiffView.tsx          your workout file against the reference; lib/diff.ts is the LCS
   components/ui/                   hand-written shadcn components
 ```
 

@@ -162,6 +162,10 @@ While you are iterating on one failure, **Run** on that checkpoint runs its suit
 are not re-checked, so they dim and say so rather than showing a tick nobody earned: a single
 checkpoint never raises your best score, and the reference unlocks only on a full green run.
 
+Once it is unlocked, the editor pane switches between **Mine**, **Diff** and **Reference**. Diff is
+the one to review with: your file against the reference, line by line, with the unchanged runs folded
+away.
+
 Two shapes: **build a feature** and **find the bugs**. A brief states the symptom and the
 constraints, never the cause, because working out what is wrong is the exercise.
 

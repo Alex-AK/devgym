@@ -139,6 +139,14 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   naming the diagnosis deletes the part worth doing. It is the easiest mistake to make, because by
   the time you write the brief you know the answer.
 
+- **The diff is hand-written, and it is a third view rather than a replacement for the reference.**
+  Fifty lines of LCS over lines, because a diff library would sit in the runtime bundle forever to
+  compare two files of a few hundred lines, and the shadcn components are already hand-written on the
+  same reasoning. Three views and not two: Mine, Diff, Reference. The toggle it replaces was a reveal,
+  and reading two files in turn is not comparing them, but the plain reference is still what you want
+  when the diff is large enough to be noise. The reference ships only the files it changes, so a file
+  it leaves alone says exactly that instead of rendering as an empty side.
+
 - **A single-checkpoint run says what it did not check, rather than quietly keeping the old ticks.**
   Running one suite while iterating on it is the point of the feature, and the trap is what happens to
   the other three rows in the panel. Blanking them to not-run throws away the picture you were working

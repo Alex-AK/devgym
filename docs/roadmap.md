@@ -176,8 +176,6 @@ page, Will Larson's migrations essay, the listed books.
 
 Content is the product, so this stays short. All of it is workout depth.
 
-- **Diff against the reference** rather than a side-by-side reveal, so the review after the timer is
-  a comparison rather than a read.
 - **Attempt history per workout**: second and third runs are the point, so the UI should show the
   trend in time-to-green.
 - **Multi-file tree** rather than a flat tab list, once a workout exceeds about five files.

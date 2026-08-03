@@ -1,10 +1,11 @@
 import type { WorkoutCheckpointResult, WorkoutDetail, WorkoutFile } from '@devgym/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Circle, Eye, Play, RotateCcw, Square, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Play, RotateCcw, Square, XCircle } from 'lucide-react';
 import * as React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { CodeEditor, type CodeEditorHandle } from '@/components/CodeEditor';
+import { DiffView } from '@/components/DiffView';
 import { HandbookLinks } from '@/components/HandbookLinks';
 import { Markdown } from '@/components/Markdown';
 import { ErrorState, LoadingState } from '@/components/states';
@@ -100,13 +101,17 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
   const [files, setFiles] = React.useState<WorkoutFile[]>(attempt?.files ?? []);
   const [activePath, setActivePath] = React.useState(files[0]?.path ?? '');
   const [run, setRun] = React.useState(attempt?.lastRun ?? null);
-  const [showSolution, setShowSolution] = React.useState(false);
+  // Three ways to look at the same file. `diff` is the one the review after the
+  // timer wants: reading two files in turn is not comparing them.
+  const [view, setView] = React.useState<'mine' | 'diff' | 'reference'>('mine');
   const [solution, setSolution] = React.useState<WorkoutFile[] | null>(detail.solution);
 
   const active = files.find((file) => file.path === activePath) ?? files[0];
-  const shown = showSolution
-    ? (solution?.find((file) => file.path === activePath)?.contents ?? active?.contents ?? '')
-    : (active?.contents ?? '');
+  // The reference only ships the files it changes, so a missing one is a real
+  // answer ("this file is already right") and not an empty editor.
+  const reference = solution?.find((file) => file.path === activePath)?.contents ?? null;
+  const shown =
+    view === 'reference' ? (reference ?? active?.contents ?? '') : (active?.contents ?? '');
 
   const refresh = React.useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.workouts });
@@ -127,7 +132,7 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
   });
 
   function edit(contents: string): void {
-    if (!active || showSolution) return;
+    if (!active || view !== 'mine') return;
     setFiles((current) =>
       current.map((file) => (file.path === active.path ? { ...file, contents } : file))
     );
@@ -204,19 +209,11 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
               </button>
             ))}
             <div className="ml-auto flex items-center gap-2 pb-1">
-              {solution && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowSolution((current) => !current)}
-                  className="h-7 text-xs"
-                >
-                  <Eye />
-                  {showSolution ? 'Back to my code' : 'Reference'}
-                </Button>
-              )}
+              {solution && <ViewSwitch value={view} onChange={setView} />}
               <Button
                 variant="ghost"
                 className="h-7 text-xs"
+                disabled={view !== 'mine'}
                 onClick={() => {
                   void api.resetWorkoutFile(slug, activePath).then((result) => {
                     setFiles(result.files);
@@ -229,23 +226,29 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
             </div>
           </div>
 
-          {showSolution && (
+          {view === 'reference' && (
             <p className="text-xs text-amber-700">
-              Showing the reference implementation. Edits here are not saved.
+              {reference === null
+                ? 'The reference leaves this file alone, so this is still your code.'
+                : 'Showing the reference implementation. Edits here are not saved.'}
             </p>
           )}
 
-          {active && (
-            <CodeEditor
-              key={`${activePath}-${showSolution ? 'solution' : 'mine'}`}
-              ref={editorRef}
-              value={shown}
-              onChange={edit}
-              language={languageForPath(activePath)}
-              placeholder=""
-              onSubmit={() => runMutation.mutate(undefined)}
-              minHeight="34rem"
-            />
+          {view === 'diff' ? (
+            <DiffView mine={active?.contents ?? ''} reference={reference} />
+          ) : (
+            active && (
+              <CodeEditor
+                key={`${activePath}-${view}`}
+                ref={editorRef}
+                value={shown}
+                onChange={edit}
+                language={languageForPath(activePath)}
+                placeholder=""
+                onSubmit={() => runMutation.mutate(undefined)}
+                minHeight="34rem"
+              />
+            )
           )}
         </div>
 
@@ -277,6 +280,40 @@ function notRunYet(detail: WorkoutDetail): WorkoutCheckpointResult[] {
     testsTotal: 0,
     failure: null,
   }));
+}
+
+const VIEWS = [
+  { value: 'mine', label: 'Mine' },
+  { value: 'diff', label: 'Diff' },
+  { value: 'reference', label: 'Reference' },
+] as const;
+
+function ViewSwitch({
+  value,
+  onChange,
+}: {
+  value: 'mine' | 'diff' | 'reference';
+  onChange: (next: 'mine' | 'diff' | 'reference') => void;
+}): React.ReactElement {
+  return (
+    <div className="flex items-center rounded-md border p-0.5">
+      {VIEWS.map((entry) => (
+        <button
+          key={entry.value}
+          type="button"
+          onClick={() => onChange(entry.value)}
+          className={cn(
+            'rounded px-2 py-0.5 text-xs transition-colors',
+            value === entry.value
+              ? 'bg-secondary font-medium text-secondary-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {entry.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function CheckpointPanel({
