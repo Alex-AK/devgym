@@ -205,7 +205,7 @@ passes every checkpoint, and every starter fails at least one.
 
 ## Handbook
 
-The study half of the gym. A page is one concept, in a fixed shape: the question it answers phrased
+The study half. A page is one concept, in a fixed shape: the question it answers phrased
 the way you would ask it when stuck, the model, a worked example, the traps stated as symptoms
 first, and where to practise it. A page that cannot fill the traps section honestly is a page nobody
 needed.
@@ -357,4 +357,4 @@ correct answer wrong, paste the output of
 
 ## Licence
 
-[MIT](./LICENSE). Fork it, take the graders, take the problems, build your own gym.
+[MIT](./LICENSE). Fork it, take the graders, take the problems, build your own.

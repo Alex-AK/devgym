@@ -454,7 +454,7 @@ export interface WorkoutRun {
 /* ------------------------------------------------------------------ handbook */
 
 /**
- * The handbook is the study half of the gym: short pages you read beside a
+ * The handbook is the study half: short pages you read beside a
  * workout, each wired to the problems and workouts that prove you absorbed it.
  * Content lives in `packages/handbook/content/<section>/<slug>.md`, so adding a
  * page touches no code.

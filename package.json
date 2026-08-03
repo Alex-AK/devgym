@@ -2,7 +2,7 @@
   "name": "hone",
   "version": "1.0.0",
   "private": true,
-  "description": "A local-first practice gym for staying sharp on web-dev fundamentals, with deterministic offline grading",
+  "description": "A local-first practice tool for staying sharp on web-dev fundamentals, with deterministic offline grading",
   "author": "Alex King",
   "license": "MIT",
   "packageManager": "pnpm@11.5.0",

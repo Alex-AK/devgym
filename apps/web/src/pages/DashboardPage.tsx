@@ -173,7 +173,7 @@ function FirstRun({ total }: { total: number }): React.ReactElement {
   return (
     <HeroCard eyebrow="Welcome" title="Hone">
       <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-        A practice gym for the web-dev fundamentals you lean on and lose when you don&apos;t use
+        A practice tool for the web-dev fundamentals you lean on and lose when you don&apos;t use
         them. Short problems graded on the spot, longer workouts against a real toolchain, and a
         handbook to study from. It runs locally: no accounts, no network, no telemetry, and no AI
         writing your answers for you.
