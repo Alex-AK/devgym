@@ -44,26 +44,10 @@ not on its own a reason to write a page, so both wait until something else asks 
 Everything else the contrast sets wanted is written. `packages/decks/content/` is the inventory, and
 a deck named there and not on disk is a name that changed, not a deck that is missing.
 
-## 3. Pages missing from sections that already ship
+## 3. The systems case-study shelf
 
-Each of these is named on the curriculum map and absent from `packages/handbook/content/`. Ordered
-by how often the gap is met in ordinary work, not by section.
-
-| Section        | Page                                | Note                                                                                       |
-| -------------- | ----------------------------------- | ------------------------------------------------------------------------------------------ |
-| javascript     | Boolean operators, and what they return | `equality.md` owns comparison. Nothing owns `&&`/`\|\|`/`??` returning an operand rather than a boolean, or inverting a compound condition |
-| databases      | Transactions and ACID               | A prerequisite the systems section already assumes                                          |
-| server-runtime | Middleware, and the order it runs in | The life-of-a-request page covers this in Nest's vocabulary and never says `next()`         |
-| databases      | Query refactorings that matter      | EXISTS against COUNT, OR into UNION, unpicking correlated subqueries                        |
-| databases      | Partial and expression indexes      | The third leg of the index material, after composite indexes and column order               |
-| moving-data    | Delivery guarantees over a socket   | What reconnection loses, client and server buffering, acks, and offset-and-replay           |
-| headers        | Conditional requests and ranges     | 304, 206, resumable downloads                                                               |
-| server-runtime | Three frameworks, one request       | Express, Nest and FastAPI on the same route. No Python runs; it is a comparison             |
-| moving-data    | SOAP, and why you are meeting it    | Written for the integration you inherit, not the service you build                          |
-| moving-data    | tRPC                                | The one transport from the v2 table still worth a page; see decisions.md for the other two  |
-
-Systems also owes the case-study shelf specified for it: curated further reading rather than pages,
-so it blocks nothing.
+Curated further reading rather than pages, specified for the systems section and never built. It
+blocks nothing, which is why it has outlasted every page that used to sit above it here.
 
 ## 4. The rest of the problem queue
 
