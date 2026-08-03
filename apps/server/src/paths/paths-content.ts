@@ -1,12 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import {
-  AUTHORED_PATH_STEP_KINDS,
-  type AuthoredPathStepKind,
-  PATH_STEP_KINDS,
-  type PathStep,
-} from '@hone/shared';
+import { PATH_STEP_KINDS, type PathStep, type PathStepKind } from '@hone/shared';
 
 import { SERVER_ROOT } from '../common/paths';
 
@@ -45,7 +40,7 @@ export const CONTENT_DIR = join(PATHS_PACKAGE, 'content');
  * is the daily queue's job rather than this one's. A module is a read step: it
  * is what a session about an API has instead of a page.
  */
-const PHASE: Record<AuthoredPathStepKind, number> = { page: 0, module: 0, problem: 1, workout: 2 };
+const PHASE: Record<PathStepKind, number> = { page: 0, module: 0, problem: 1, workout: 2 };
 
 export interface PathContent {
   slug: string;
@@ -124,9 +119,6 @@ function readStep(step: PathStep, index: number, fail: (why: string) => never): 
 
   if (!PATH_STEP_KINDS.includes(step?.kind)) {
     fail(`${at} has an unknown kind "${String(step?.kind)}"`);
-  }
-  if (!AUTHORED_PATH_STEP_KINDS.includes(step.kind)) {
-    fail(`${at} is a "${step.kind}" step, which is reserved and not yet valid`);
   }
   if (!step.ref?.trim()) fail(`${at} points at nothing`);
   if (step.kind === 'page' && !/^[^/]+\/[^/]+$/.test(step.ref)) {

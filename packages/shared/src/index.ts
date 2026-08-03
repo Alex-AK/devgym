@@ -617,17 +617,14 @@ export interface CardLibrary {
  * and the deliberate opposite of the daily queue's interleaving. Content lives
  * in `packages/paths/content/<slug>/path.json`, so adding an hour touches no
  * code.
+ *
+ * `PATH_STEP_KINDS` is every kind a session may author. `module` sat here as a
+ * reserved kind the loader refused, from before modules existed until the day
+ * they did, which cost exactly the one case in a switch it was reserved to
+ * cost. Nothing is reserved now, so there is one list rather than two.
  */
 export const PATH_STEP_KINDS = ['page', 'problem', 'workout', 'module'] as const;
 export type PathStepKind = (typeof PATH_STEP_KINDS)[number];
-
-/**
- * What a session may author. `module` was reserved here before modules existed
- * and became legal the day they did, which cost exactly the one case in a
- * switch it was reserved to cost.
- */
-export const AUTHORED_PATH_STEP_KINDS = ['page', 'problem', 'workout', 'module'] as const;
-export type AuthoredPathStepKind = (typeof AUTHORED_PATH_STEP_KINDS)[number];
 
 /** A step as authored: a kind, what it points at, and why it is here. */
 export interface PathStep {

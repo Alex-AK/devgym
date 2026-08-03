@@ -21,9 +21,10 @@ in the loop at runtime, fully offline, single user, no accounts.
 **Status:** built and in daily use. Content grows continuously and is never finished, so this README
 describes the shape rather than counting it; the app and the seed files are the live inventory. The
 same principle governs the docs: [docs/content.md](./docs/content.md) is the bar every problem, page,
-workout, module and deck clears, [docs/decisions.md](./docs/decisions.md) records why things are the
-way they are and what the project deliberately refuses to do, and
-[docs/roadmap.md](./docs/roadmap.md) holds only what is not built yet.
+workout, module, deck and essentials-path session clears,
+[docs/decisions.md](./docs/decisions.md) records why things are the way they are and what the project
+deliberately refuses to do, and [docs/roadmap.md](./docs/roadmap.md) holds only what is not built
+yet.
 
 ## Quickstart
 

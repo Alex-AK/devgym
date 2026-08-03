@@ -51,8 +51,8 @@ the read step from existing pages is not ready to be written.
   session you cannot name this way is two sessions or none.
 - `ref` is `section/slug` for a page and a bare slug for anything else. Every one must resolve.
 - `note` is optional and says why the step is here, not what it contains. Most steps need none.
-- `kind` is `page`, `problem` or `workout`. `module` is reserved in the type and refused by the
-  loader until modules exist.
+- `kind` is `page`, `module`, `problem` or `workout`. A module counts as a read step: it is what a
+  session about an API has instead of a page.
 - `order` places the session on the path and is unique across sessions.
 
 ## The rules, and the first one is the one that will get broken
@@ -71,8 +71,9 @@ the read step from existing pages is not ready to be written.
 
 ## The safety net
 
-`paths.spec.ts` refuses a session whose `ref` points at nothing, whose steps run out of order,
-which has no page step or no problem step, or which collides with another session's `order`. That
+`paths.spec.ts` refuses a session whose `ref` points at nothing, whose steps run out of order, which
+has no page step or no problem step, which names a kind nobody has heard of, or which collides with
+another session's `order`. That
 is the same safety net that already checks a handbook page's `practise` slugs resolve.
 
 Prose follows [WRITING.md](../../WRITING.md). The authoring rules live in

@@ -9,8 +9,9 @@ by design: the seed files and the `content/` directories under `packages/handboo
 inventory, and a status line would only go stale. Three documents hold what the code cannot say, and
 this file is the entry point to them:
 
-- **`docs/content.md`** — the bar every problem, handbook page, workout, module and deck clears, and
-  how to write each one. Read the relevant section before adding content.
+- **`docs/content.md`** — the bar every problem, handbook page, workout, module, deck and
+  essentials-path session clears, and how to write each one. Read the relevant section before adding
+  content.
 - **`docs/decisions.md`** — why things are the way they are, and what this project deliberately
   refuses to do. Read it before reopening a settled question or filling a gap that looks obvious;
   several of those gaps are recorded refusals.
@@ -27,9 +28,10 @@ being useful in that work, judged against a 15-minute morning session. Nothing e
 completing a set.
 
 **Completionism is the failure mode to watch for**, because it looks like diligence and is easy to
-measure. The library has three halves, problems, workouts and handbook pages, and they do not map
-1:1:1. A problem does not owe a page. A page does not owe a workout. A category does not owe an even
-spread of difficulties. The `explanation` field is read in the thirty seconds after solving and is
+measure. The library has four content types, problems, workouts, handbook pages and modules, and they
+do not map onto each other. A problem does not owe a page. A page does not owe a workout. An API that
+earns a module does not owe one to every neighbouring API. A category does not owe an even spread of
+difficulties. The `explanation` field is read in the thirty seconds after solving and is
 meant to carry the lesson on its own, so most reps need nothing behind them at all.
 
 What a page is for is the model that several reps share, where getting that model wrong is what makes

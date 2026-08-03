@@ -143,7 +143,7 @@ describe('the session validator', () => {
     expect(() => parsePath(session({ steps }), 'ok')).toThrow(/read, prove, then build/);
   });
 
-  it('accepts a module as a read step, now that modules exist', () => {
+  it('accepts a module as a read step', () => {
     const steps = [
       { kind: 'module', ref: 'js-date' },
       { kind: 'page', ref: 'moving-data/request-response' },
