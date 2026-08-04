@@ -71,6 +71,19 @@ so the next workout copies and adapts them rather than importing them. The fixtu
 per-query delay and not a fault, which is why `retry-with-backoff-node` had to build its failing
 downstream as part of the work.
 
+**Two rows are new, and they exist because a capability turned out to already be there.** "The
+migration that locks up" was cut because PGlite serves one in-process connection, and that was read
+at the time as the workout set having no way to show contention at all. It has one: two
+`better-sqlite3` handles on the same file are two real connections with real locking, and it needed
+no dependency and no change to the runner. Measured, on the version already installed: a second
+writer against a held `BEGIN IMMEDIATE` gets `SQLITE_BUSY` rather than blocking forever; a reader in
+rollback-journal mode sees the old value; in WAL mode the reader is not blocked at all and still
+cannot see the uncommitted write; and a second writer is refused in WAL too, because WAL removes the
+reader-writer conflict and not the writer-writer one. That is an entire family of lessons, locking,
+isolation and the lost update, that the library could not reach yesterday. **The cut row stays cut**:
+its lesson was a long lock during a migration, which wants a second session held open across DDL, and
+these two rows are the nearer and more useful half of what it was reaching for.
+
 **One row is blocked on tooling rather than on authorship.** `scaffold/vitest.config.ts` is the only
 config a workspace has, because `files/` lands under `src/`, so a workout cannot set `TZ` or register
 a global stub for its own suites. Timezone-correct booking wants a DST boundary and a fake clock
@@ -80,6 +93,8 @@ file. The same change would have saved the two React workouts their in-file jsdo
 | Workout                        | Stack                              | Shape    | Pairs with     | The lesson                                                                                                                                                                |
 | ------------------------------ | ---------------------------------- | -------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Two clients in sync            | WebSocket (`ws`) + React           | feature  | moving data    | The direction a one-way stream cannot go: the client writes too, and two of them have to converge. Reconnect and replay are `live-dashboard-sse`, so this is not that     |
+| The write that waited          | two `better-sqlite3` connections   | bug-hunt | databases      | A lock is not a transaction: `SQLITE_BUSY`, what `busy_timeout` actually waits for, and why the second writer fails rather than queues. See the note below                |
+| The update that got lost       | two `better-sqlite3` connections   | bug-hunt | databases      | Read, decide, write, from two places at once. The read-modify-write race, and why a transaction around it is not enough without the write being conditional               |
 | Cache the expensive report     | Express + fake Redis               | feature  | caching        | Cache-aside around a route: the key derived from the request, and the invalidation on write. The dedupe is `one-recompute-not-fifty`. Needs a brief that is not a report  |
 | Context re-render bug-hunt     | React                              | bug-hunt | React          | One context redrawing consumers that do not read the part that changed; the split is the fix. Not a typing lag in a filtered list: see the note below                     |
 | Timezone-correct booking       | Node + fixed clock, pinned `TZ`    | bug-hunt | dates          | Store UTC, render local, survive the DST boundary. A fixed clock does not fix the zone, and the suite has to pin it: see the note below                                   |
