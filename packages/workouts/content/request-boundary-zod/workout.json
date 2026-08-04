@@ -1,0 +1,40 @@
+{
+  "slug": "request-boundary-zod",
+  "title": "Stop trusting the query string",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "server": "express + zod"
+  },
+  "summary": "GET /orders reads five filters off the query string and trusts them all: five orders on page two comes back with fifty, a typo in the page number comes back empty, and the one query it does refuse says only Bad Request. Put a schema in front of it.",
+  "focus": ["schema validation", "zod", "query strings", "type inference"],
+  "editable": ["src/server/list-orders.ts"],
+  "checkpoints": [
+    {
+      "id": "pages-filters-and-sorts",
+      "title": "The list pages, filters and sorts the way it was asked",
+      "testFile": "tests/checkpoints/01-the-list-pages-filters-and-sorts.test.ts",
+      "hint": "orders.list trusts whatever it is handed, and perPage reaches slice as its end offset: 5 + '5' is '55', so a page of five comes back fifty long. Hand it the values a caller meant rather than the ones that arrived."
+    },
+    {
+      "id": "parsed-not-raw",
+      "title": "The endpoint works from the parsed query, not the raw one",
+      "testFile": "tests/checkpoints/02-the-endpoint-works-from-the-parsed-query.test.ts",
+      "hint": "Everything in req.query is a string, and 'false' is a truthy one. z.coerce.boolean() is Boolean(value), so it says true to both; z.stringbool() reads the string it was sent. safeParse puts the parsed query in .data, and that is the only copy worth passing on."
+    },
+    {
+      "id": "refuses-what-it-cannot-use",
+      "title": "A query the endpoint cannot use never reaches the listing",
+      "testFile": "tests/checkpoints/03-a-query-it-cannot-use-is-refused.test.ts",
+      "hint": "Number('abc') is NaN and nothing about that throws, so the check is the only thing that can refuse it. Answer and return: falling through to the listing after a 400 sends a second response. A schema that throws instead lands in Express's default error handler, which answers 500."
+    },
+    {
+      "id": "the-400-names-the-field",
+      "title": "The 400 says which field, and what was wrong with it",
+      "testFile": "tests/checkpoints/04-the-400-names-the-field.test.ts",
+      "hint": "error.issues holds one entry per problem, each carrying a path and a message. Map all of them rather than issues[0], and path.join('.') is the parameter's name."
+    }
+  ]
+}

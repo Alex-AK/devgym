@@ -8,6 +8,7 @@ practise:
   - ts-catch-unknown
   - ts-type-guard
   - ts-non-null-assertion
+  - request-boundary-zod
 sources:
   - author: TypeScript
     title: Everyday Types
