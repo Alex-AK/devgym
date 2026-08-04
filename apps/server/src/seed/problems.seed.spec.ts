@@ -153,7 +153,11 @@ describe('seeded problems', () => {
           ? 'SELECT country FROM authors'
           : seed.type === 'js-code'
             ? 'const nope = 1;'
-            : 'purple monkey dishwasher';
+            : // A `ts-type` answer has to compile before its checks mean
+              // anything, so give it something that does and is still wrong.
+              seed.type === 'ts-type'
+              ? 'type Nope = number;'
+              : 'purple monkey dishwasher';
       const result = await gradeAnswer(seed.type, config, answer, db);
       expect(result.verdict, seed.slug).not.toBe('correct');
     }
