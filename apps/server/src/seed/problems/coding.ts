@@ -228,6 +228,13 @@ export const codingProblems: ProblemDraft[] = [
       'A burst of calls should produce exactly one invocation, with the **last** arguments.'
     ),
     starter: 'function debounce(fn, ms) {\n  \n}',
+    // These sleep on real timers, and they have to: stub the clock and the rep
+    // is no longer about `setTimeout`. What keeps them honest under load is that
+    // no pair of them is a race. Node runs expired timers in expiry order and
+    // drains microtasks after each one, so a busy machine delays every timer and
+    // reorders none. Each sleep is therefore either longer than the delay it is
+    // waiting out or shorter than the one it must not reach, and moving one to
+    // the wrong side of its delay is how this rep would become flaky.
     tests: [
       {
         name: 'collapses a burst into one call with the last arguments',

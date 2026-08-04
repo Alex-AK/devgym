@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { gradeCode } from './code-grader';
-import { deepEqual, display, runCode } from './code-runner';
+import { CODE_TIMEOUT_MS, deepEqual, display, runCode } from './code-runner';
 import type { CodeGraderConfig } from './types';
 
 const config: CodeGraderConfig = {
@@ -106,6 +106,29 @@ describe('runCode', () => {
     const result = await runCode('while (true) {}', config.tests);
     expect(result.error).toBeDefined();
   }, 10_000);
+
+  /**
+   * The two budgets are separate for this: a rep about timers spends wall-clock
+   * time it asked for, and that is not the thing the script timeout is guarding.
+   */
+  it('lets an awaited test sleep past the budget a script gets', async () => {
+    const result = await runCode('const wait = (ms) => new Promise((r) => setTimeout(r, ms));', [
+      {
+        name: 'sleeps longer than a script may run for',
+        expression: `wait(${CODE_TIMEOUT_MS + 200}).then(() => 'slept')`,
+        expected: 'slept',
+      },
+    ]);
+    expect(result.outcomes[0]?.detail).toBeUndefined();
+    expect(result.outcomes[0]?.passed).toBe(true);
+  }, 20_000);
+
+  it('still stops an await that never settles', async () => {
+    const result = await runCode('const stuck = new Promise(() => {});', [
+      { name: 'never settles', expression: 'stuck', expected: 1 },
+    ]);
+    expect(result.outcomes[0]?.detail).toContain('Timed out');
+  }, 20_000);
 
   it('does not expose require, process or the filesystem', async () => {
     const result = await runCode('const probe = () => [typeof require, typeof process];', [

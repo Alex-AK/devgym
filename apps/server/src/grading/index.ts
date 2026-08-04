@@ -17,7 +17,7 @@ import type {
 } from './types';
 
 export { gradeCode } from './code-grader';
-export { runCode, deepEqual, display, CODE_TIMEOUT_MS } from './code-runner';
+export { runCode, deepEqual, display, CODE_TIMEOUT_MS, SETTLE_TIMEOUT_MS } from './code-runner';
 export type { CodeTestSpec, CodeTestOutcome } from './code-runner';
 export { gradeExplain } from './keyword-grader';
 export { levenshtein, similarity } from './levenshtein';

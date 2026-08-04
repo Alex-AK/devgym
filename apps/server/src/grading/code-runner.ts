@@ -10,8 +10,23 @@ import { createContext, runInContext } from 'node:vm';
  * running `pnpm dev`. Do not reuse this to run code from anyone else.
  */
 
-/** Milliseconds any single script or test may run for. */
+/** Milliseconds a script may hold the thread for, which is what stops an endless loop. */
 export const CODE_TIMEOUT_MS = 1_000;
+
+/**
+ * Milliseconds an awaited test has to settle in, and the cap on a delay the
+ * submission asks a timer for.
+ *
+ * Separate from the budget above because the two are spent on different things.
+ * A synchronous script is spending the thread, and a second of that is already
+ * an endless loop. An awaited one is mostly spending wall-clock time it asked
+ * for: `code-debounce` sleeps around 110ms on purpose, because a debounce that
+ * cannot use real timers is not a debounce. Sharing one number made a rep's
+ * verdict depend on what else the machine was doing. A timer is capped here
+ * rather than against the synchronous budget so that nothing the submission
+ * schedules can outlive the deadline that would report it.
+ */
+export const SETTLE_TIMEOUT_MS = 3_000;
 const MAX_LOG_LINES = 20;
 
 export interface CodeTestSpec {
@@ -148,7 +163,7 @@ export async function runCode(
   const sandbox: Record<string, unknown> = {
     console: { log: record, info: record, warn: record, error: record, debug: record },
     setTimeout: (fn: () => void, ms?: number) => {
-      const timer = setTimeout(fn, Math.min(ms ?? 0, CODE_TIMEOUT_MS));
+      const timer = setTimeout(fn, Math.min(ms ?? 0, SETTLE_TIMEOUT_MS));
       timers.add(timer);
       return timer;
     },
@@ -201,7 +216,7 @@ async function runOne(
     const result: unknown = runInContext(`(async () => (${test.expression}))()`, context, {
       timeout: CODE_TIMEOUT_MS,
     });
-    actual = await withDeadline(Promise.resolve(result), CODE_TIMEOUT_MS);
+    actual = await withDeadline(Promise.resolve(result), SETTLE_TIMEOUT_MS);
   } catch (error) {
     if (test.throws) {
       const text = message(error);
