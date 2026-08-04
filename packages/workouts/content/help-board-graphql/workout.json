@@ -1,0 +1,42 @@
+{
+  "slug": "help-board-graphql",
+  "title": "One request now, and the board is still slow",
+  "kind": "bug-hunt",
+  "minutes": 25,
+  "difficulty": "hard",
+  "relevance": "occasional",
+  "stack": {
+    "server": "graphql",
+    "orm": "drizzle",
+    "database": "sqlite"
+  },
+  "summary": "The board screen moved to GraphQL and the waterfall of small requests collapsed to a single POST. It is still slow, the more replies on screen the longer it takes, and there is nothing in the network tab to point at. Same response when you are done.",
+  "focus": ["graphql", "n+1", "resolvers", "batching"],
+  "editable": ["src/server/graph.ts"],
+  "checkpoints": [
+    {
+      "id": "screen-says-the-same-thing",
+      "title": "The screen says the same thing it always did",
+      "testFile": "tests/checkpoints/01-the-screen-says-the-same-thing.test.ts",
+      "hint": "The whole board is compared against the same board assembled by hand in SQL. Two rows are awkward: a thread nobody has replied to, and a reply whose author closed their account. Both have to survive."
+    },
+    {
+      "id": "cost-does-not-follow-the-data",
+      "title": "One request costs the same whether the board is busy or quiet",
+      "testFile": "tests/checkpoints/02-one-request-costs-the-same-either-way.test.ts",
+      "hint": "Count the statements for three threads and for twelve. If the numbers differ, a resolver is running once per row. It cannot join its way out, because the client picked the shape at request time and the resolver only knows about its own field: collect the ids asked for during a tick and answer all of them with one query."
+    },
+    {
+      "id": "second-request-sees-it-fresh",
+      "title": "A second request sees the database as it is",
+      "testFile": "tests/checkpoints/03-a-second-request-sees-the-database-as-it-is.test.ts",
+      "hint": "Anything that batches also remembers, and one built at module scope remembers across requests: the second caller gets the first caller's rows. Build them inside createContext, which runs once per request and is thrown away with it."
+    },
+    {
+      "id": "deeper-query-stays-flat",
+      "title": "Asking one level deeper does not bring it back",
+      "testFile": "tests/checkpoints/04-a-deeper-query-does-not-bring-it-back.test.ts",
+      "hint": "The team badge is a fourth level with a resolver of its own. Whatever collects ids for authors has to work for teams too, or the deeper document is back to a query per reply."
+    }
+  ]
+}

@@ -5,6 +5,7 @@ order: 5
 practise:
   - http-post-json
   - http-pagination-cursor
+  - help-board-graphql
   - slow-list-endpoint-kysely
   - orders-report-typeorm
 sources:
