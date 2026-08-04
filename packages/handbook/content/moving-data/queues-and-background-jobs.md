@@ -8,6 +8,7 @@ practise:
   - sys-idempotency
   - http-idempotency-key
   - code-promise-pool
+  - queue-consumer-node
 sources:
   - author: Amazon Web Services
     title: Amazon SQS standard queues

@@ -1,0 +1,40 @@
+{
+  "slug": "queue-consumer-node",
+  "title": "Build the queue consumer",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no dependencies"
+  },
+  "summary": "Documents are converted in the background, off a queue that redelivers anything it does not hear back about. Build the worker: a job that finishes leaves the queue, one that does not comes back, a slow one is not handed to a second worker, and one that keeps failing ends up somewhere you can find it.",
+  "focus": ["queues", "background jobs", "delivery semantics", "failure handling"],
+  "editable": ["src/lib/consumer.ts"],
+  "checkpoints": [
+    {
+      "id": "finished-job-leaves",
+      "title": "A finished job leaves the queue",
+      "testFile": "tests/checkpoints/01-a-finished-job-leaves-the-queue.test.ts",
+      "hint": "The ack is the consumer saying this job is done, and the only thing that makes that true is having done it. It belongs after the handler resolves, on the success path alone: a `finally` acknowledges the failures as reliably as the successes."
+    },
+    {
+      "id": "unfinished-job-returns",
+      "title": "An unfinished job comes back",
+      "testFile": "tests/checkpoints/02-an-unfinished-job-comes-back.test.ts",
+      "hint": "Leave the message alone when the handler throws, and when the ack itself throws. Doing nothing is what makes the redelivery happen. The second conversion is not a bug you are meant to remove here: it is the price of never losing one."
+    },
+    {
+      "id": "slow-job-stays",
+      "title": "A slow job stays with one worker",
+      "testFile": "tests/checkpoints/03-a-slow-job-stays-with-one-worker.test.ts",
+      "hint": "The visibility timeout is a bet on how long the work takes, and this job loses it. Move the deadline out from under the running handler with `queue.extend(receipt, queue.visibilityTimeoutMs)` on a `clock.sleep(heartbeatMs)` loop, and stop the loop in a `finally` so it does not keep going after the work has."
+    },
+    {
+      "id": "failing-job-dead-letters",
+      "title": "A job that keeps failing stops circulating",
+      "testFile": "tests/checkpoints/04-a-job-that-keeps-failing-stops-circulating.test.ts",
+      "hint": "`receiveCount` is 1 on the first delivery, so the attempt that just failed was the last one allowed when it already equals `maxReceiveCount`. Dead-letter it there, carrying the error's message as the reason, rather than leaving it for the deadline to redeliver."
+    }
+  ]
+}
