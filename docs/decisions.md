@@ -155,6 +155,100 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   problem carries its own lesson in its explanation, so an uncited problem is not a debt, and the
   queue should never be reordered to drive a number to zero.
 
+- **`node` and `sql-performance` became categories rather than more `systems` and `sql` reps.** Both
+  were already named as categories on the roadmap, but the cheaper option was real and was declined:
+  `sql` had forty-six reps and could have absorbed nine more. What the split buys is the round robin.
+  A category is the unit the daily queue deals from, so material folded into `sql` competes with
+  every other SQL rep for a morning slot and effectively never comes up, while a category of its own
+  is dealt in its own right. The same argument put the runtime beside `systems` rather than inside
+  it: `systems` is about the shape of a system and `node` is about the process running it, and a
+  reader wanting one is not asking for the other.
+
+- **"Filter before joining" was specified as a `sql-performance` rewrite and cut, because it is not
+  one.** The roadmap named it alongside `EXISTS` against `COUNT` and keyset pagination, and it turns
+  out to be folk advice: on SQLite, filtering inside a CTE and filtering after the join produce
+  byte-identical plans, because the planner pushes a plain predicate down without being asked.
+  Capturing both plans is what settled it, which is the engine-honesty rule in `content.md` paying
+  for itself on the first rep that tested it. What shipped instead is `sqlperf-limit-before-join`,
+  where the barrier is real: an `ORDER BY … LIMIT` applied before the join genuinely changes the
+  plan, because a limit is not a predicate and cannot be pushed through one. **The general lesson is
+  the one worth keeping: a rewrite earns a rep only once the two plans have been captured side by
+  side.** A rewrite that everybody repeats is exactly the kind that has stopped being true.
+
+- **A graph in `dsa-patterns` is a plain object of named nodes to arrays of named nodes**, and every
+  node is a key, leaves included: `{ home: ['docs', 'blog'], docs: ['api'], api: [], blog: [] }`.
+  This was settled before the BFS and DFS wave was written rather than by it, because a `js-code`
+  starter has to commit to one shape and the wave would otherwise have decided for everything after
+  it. The alternatives were a `Map`, an edge list and a grid.
+
+  What decided it is smaller than the design question and not recoverable from the code: **integer-like
+  keys are not insertion-ordered.** JavaScript hoists them ahead of string keys and sorts them
+  ascending, so `{ '2': [...], '1': [...] }` iterates `1, 2` whatever order it was written in, and
+  `{ b, '2', a, '1' }` iterates `'1', '2', 'b', 'a'`. A breadth-first answer is neighbour order made
+  visible, so numeric node ids would make the expected output an artefact of what the nodes were
+  called. **Node ids are therefore non-numeric strings, always**, and a fixture lists each node's
+  neighbours in the order a traversal should visit them.
+
+  Writing the first wave against this narrowed the second half of that rule. **Neighbour order is
+  load-bearing only where the rep's output is itself an order**: a shortest distance, a reachable
+  set and a yes-or-no on a cycle are all invariant under permuting the lists, so there it is a
+  readability convention and a prompt should not claim otherwise. `dsa-reachable-nodes` returns the
+  visit order deliberately, so that the convention is actually tested somewhere.
+
+  The rest follows the grain already set by the linked-list reps, which hand you `{ value, next }`
+  and a builder in `setup`. A `Map` is what you build from a graph, not what you are handed: a graph
+  that arrives over the wire is JSON, and a `Map` in a test would also force `expectedCode` on every
+  assertion, which trades a readable diff for nothing. Every node appearing as a key, including the
+  ones with no edges, keeps "has no neighbours" and "is not in the graph" from being the same
+  lookup, and a rep that wants that distinction has to say so.
+
+- **Bytes against characters was audited for a page and refused.** Two `node` reps share the model,
+  which is normally what earns one. The half that costs you in production is already written and
+  written well: `ai-engineering/streaming-a-model-response.md` opens on "a stream is bytes, and you
+  have to put the message boundaries back", its worked example is the `{ stream: true }` decoder, and
+  its first trap is the chunk boundary. A Node page would put one model in two places. What is left
+  over is that `Content-Length` counts bytes while `String#length` counts UTF-16 code units, and that
+  is a fact you would look up, so its traps section would be one symptom restated. The other UTF-8
+  mentions in the handbook are passing references in service of another subject and none of them is
+  failing for want of this page. The reps are cited from the pages that own their halves instead.
+
+- **The memoisation wave was written after the roadmap predicted it would be written badly, and the
+  prediction is what shaped it.** The row warned that climbing stairs and house robber teach a `dp`
+  array that appears from nowhere, and authorised cutting the wave. What shipped instead clears the
+  bar mechanically rather than by assertion: for each of the three reps the plain unmemoised
+  recursion passes every small test and hits the grader's one-second timeout on exactly one, so the
+  naive answer cannot pass. Measured naive runtimes were 34s, 7.4s and 5.6s against under a
+  millisecond memoised. **The generalisable part: where a lesson is about cost rather than
+  correctness, find the input that makes the slow answer fail rather than describing the cost in the
+  explanation.** Tabulation is named in two explanations as what you convert to once the recursion is
+  right, and refused as a rep of its own. Climbing stairs, house robber, knapsack and edit distance
+  were each rejected by name, the first three because the recursion is not anybody's first answer and
+  the last because it is a second two-dimensional rep beside `dsa-grid-routes`.
+
+- **The BFS queue discipline is not gradeable by a distance test, which decides where that bug can
+  live.** Marking a node visited on dequeue rather than on enqueue is the classic mistake and it does
+  not change a single shortest-path answer: it queues a node twice, wastes work, and still
+  terminates with the right number. It becomes an observable wrong answer only where the output is
+  the visit order or the node list, which is why that bug is what `dsa-reachable-nodes` tests and why
+  `dsa-shortest-hops` carries a depth-first bug instead. Worth knowing before writing the next graph
+  rep, because the natural assumption is that a distance test covers it.
+
+- **Grids stay out of the graph reps, and trees are not graph reps.** A grid's only real difference
+  is that neighbours are computed rather than looked up, which teaches bounds-checking rather than
+  traversal, and islands and flood fill are the two problems that make this category look like
+  interview prep rather than practice. The one thing that would reverse it is a rep whose lesson is
+  precisely that a graph is anything with a neighbours function, which is worth writing once and
+  never twice. A tree is `{ value, children }`, consistent with `{ value, next }`, and it is a
+  separate shape on purpose: no visited set, because the thing that makes a graph traversal a graph
+  traversal is the cycle it has to survive.
+
+- **`EXISTS` against `COUNT(*) > 0` is a real rep whose lesson the plan cannot show.** Both forms
+  plan as the same correlated subquery, so the rep would have been unteachable on its stated terms.
+  It survives because the difference is visible one level down, in the bytecode: `EXISTS` jumps out
+  of the inner loop on the first match where the count aggregates every row and then compares. The
+  rep says so, and says the plan will not show you this. Kept as a note rather than a refusal because
+  the next author to reach for a plan will otherwise conclude the rewrite does nothing.
+
 ## Workouts
 
 - **Workouts run server-side against the real toolchain.** A browser sandbox cannot run a real ORM,
@@ -276,6 +370,36 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   around and the whole content type sat behind a wall. A medium workout asks you to build a thing;
   an easy one asks you to get one thing right.
 
+- **Three queued workouts were cut on audit rather than written.** **The migration that locks up**
+  named a lesson the engine cannot show: PGlite serves one in-process connection and the Kysely
+  dialect holds a single `DatabaseConnection`, so there is no second session for a long lock to
+  block, and what is left is asserting on the shape of the DDL rather than on behaviour. A database
+  in the workout set that serves two connections would reverse it, and nothing else wants one.
+  **Accessible data table** was a rep and a citation: `records-sorting-drizzle` already builds the
+  sortable, paginated table, `autocomplete-react` owns the keyboard and aria layer, and
+  `html-table-caption-scope` is already a rep, so the row amounted to three attributes on somebody
+  else's work. A grid where the a11y is the hard part, with a roving tabindex and an interactive
+  cell, is a different row and has no page yet. **Search that ignores accents** was the product-search
+  brief a second time, and the audit that found it left two exits open; the one that moved it off
+  product search has stood empty since, which is the answer. Accents are a section on
+  `databases/search-past-like.md`. A uniqueness constraint that lets José and Jose both register is a
+  real bug and a different brief.
+
+- **A queued row's infrastructure claim ages the same way its stack does.** The workout queue said
+  its rows ran on infrastructure that already exists, and two of them leaned on that. The fake Redis,
+  the driven clock and the fixture API are each one workout's own file: `materialise` copies
+  `scaffold/` and then that workout's `files/`, so the next workout copies and adapts them. The
+  fixture API in particular injects a per-query delay and not a fault, which is what a retry exercise
+  would have needed. Check what a row assumes exists, not only what it assumes is available as a
+  dependency.
+
+- **A workout cannot configure its own test run, which is what rules the reader's timezone out.**
+  `scaffold/vitest.config.ts` is the only config a workspace has, because `files/` is copied into
+  `src/`. Assertions therefore run in whatever zone the reader is in, and a fake clock moves `now`
+  without touching `TZ`. A dated workout has to pin the zone inside its own suites, or write
+  assertions that hold everywhere, which deletes the DST boundary that is usually the lesson. This is
+  the trap already recorded for modules, one layer down.
+
 ## The handbook
 
 - **Pages are markdown that reads fine on GitHub.** The repo is public and that reach costs nothing.
@@ -372,8 +496,9 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 - **Index reps cannot be `sql` reps, and that constraint is load-bearing.** The SQL practice database
   carries no indexes on purpose, so a live query can never demonstrate one being used. Everything
   about index behaviour and full-text search is therefore authored as `short-text` and `explain`
-  against output captured from a real engine, which is the same shape `sql-performance` will need.
-  The engine is PGlite, which is real PostgreSQL, so the captured plans are measured rather than
+  against output captured from a real engine, which is the same shape `sql-performance` took when it
+  shipped, though against SQLite and `practice.db` rather than this engine. The engine here is
+  PGlite, which is real PostgreSQL, so the captured plans are measured rather than
   recalled. Two claims died in that process: a rep asserted that a composite index falls back to a
   sequential scan when the leading column has high cardinality, and it does not, it reads the whole
   index and reports `Index Searches: 1`; and a page and its rep disagreed about how many lexemes
@@ -620,8 +745,28 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   locally and executes only code the user typed, which is the same trust level as `pnpm dev`. Do not
   reuse `grading/code-runner.ts` to run code from anyone else.
 
+- **The code runner's realm has no Node in it, and that caps what a `node` rep can be.** The vm
+  context exposes `console`, the timer pair, `queueMicrotask`, `structuredClone`, `URL`,
+  `URLSearchParams`, the text encoders and `AbortController`, and nothing else: no `require`, no
+  `Buffer`, no `process`, no `setImmediate`, no streams. So nine of the ten reps about the runtime
+  are `short-text` or `explain`, because the only honest way to grade "what does `process.nextTick`
+  do first" here is to ask rather than to run. Widening the realm was the obvious alternative and is
+  declined: every global added is another surface the isolation convenience above has to be reasoned
+  about, and the reps that would benefit are the ones whose lesson is ordering, which a grader
+  observes no better than a reader does. **A rep about a Node API that must actually execute belongs
+  in a workout**, where the real runtime is already there.
+
 - **The workout workspace is not a security boundary either.** The path-escape guards exist to catch
   mistakes, not attackers.
+
+- **`streaming-export-express` listens on no port at all, and that is the pattern to copy.** The
+  recorded gotcha about handing supertest a listening server solves the `TIME_WAIT` failure; this
+  workout avoids the question by wiring an in-memory duplex pair into a real `http.Server` through
+  `server.emit('connection', …)`. Two things fall out. The socket failure mode has no surface, rather
+  than being handled correctly. And the kernel leaves the measurement: loopback socket buffers absorb
+  megabytes of an unread response, which would make a peak-bytes threshold depend on the operating
+  system running it. **Where a checkpoint asserts on a number the network can move, take the network
+  out** rather than picking a threshold loose enough to survive it.
 
 - **The solution is held back until the problem is solved or three attempts have gone in**, and
   revealing it marks the problem skipped rather than solved. Answering before you see the answer is
