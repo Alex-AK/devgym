@@ -89,7 +89,17 @@
 @layer components {
   .md {
     font-size: 0.9375rem;
-    line-height: 1.65;
+    line-height: 1.7;
+  }
+
+  /**
+   * A reading measure, for prose that is the point rather than the label on a
+   * control. The shell is 64rem wide because a workout needs the room, and a
+   * handbook page inheriting that ran to about 110 characters a line, which is
+   * roughly half as long again as anything anyone reads comfortably.
+   */
+  .measure {
+    max-width: 68ch;
   }
 
   .md > * + * {
@@ -155,12 +165,23 @@
     padding: 0.1rem 0.32rem;
   }
 
+  /**
+   * Code breaks the measure. Prose is capped at 68ch because that is what reads
+   * well, but a fenced block is not prose: twelve handbook pages carry lines
+   * past 100 characters and one ASCII diagram runs to 183, which inside the
+   * reading column is a long sideways drag. So a block widens toward the shell
+   * and keeps its own horizontal scroll for whatever still does not fit.
+   */
   .md pre {
     background-color: oklch(0.21 0.02 262);
     color: oklch(0.94 0.01 250);
     border-radius: var(--radius-md);
     padding: 0.85rem 1rem;
     overflow-x: auto;
+    /* The shell is 64rem with 1rem of padding a side, so this is its content
+       box exactly: a block that widens to the column edge and no further. */
+    width: min(calc(64rem - 2rem), calc(100vw - 2rem));
+    max-width: min(calc(64rem - 2rem), calc(100vw - 2rem));
   }
 
   .md pre code {
