@@ -8,6 +8,7 @@ practise:
   - sqlperf-keyset-page
   - sqlperf-count-total-cost
   - slow-list-endpoint-kysely
+  - alert-feed-sqlite
   - product-search-drizzle
   - records-sorting-drizzle
 sources:

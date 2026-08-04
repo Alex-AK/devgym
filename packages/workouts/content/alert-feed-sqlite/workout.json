@@ -1,0 +1,41 @@
+{
+  "slug": "alert-feed-sqlite",
+  "title": "The alert nobody saw",
+  "kind": "bug-hunt",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "server": "node, no framework",
+    "database": "sqlite via better-sqlite3"
+  },
+  "summary": "Two engineers chased the same alert on Tuesday night, because it was the last thing on one page of the feed and the first thing on the next. In the same hour an alert nobody ever saw ran for forty minutes, and it was in the feed the whole time.",
+  "focus": ["pagination", "cursors", "sql", "sqlite"],
+  "editable": ["src/server/feed.ts"],
+  "checkpoints": [
+    {
+      "id": "feed-is-unchanged",
+      "title": "The feed opens on the page it always opened on",
+      "testFile": "tests/checkpoints/01-the-feed-is-unchanged.test.ts",
+      "hint": "Whatever else changes, the page does not: firing alerts only, newest first, twenty by default, a smaller `limit` off the same end of the feed, and `nextCursor` null once the feed runs out rather than a walk that never ends."
+    },
+    {
+      "id": "alert-fires-mid-page",
+      "title": "An alert firing between two pages does not put one on both",
+      "testFile": "tests/checkpoints/02-an-alert-fires-mid-walk.test.ts",
+      "hint": "An alert fired above the window between the two reads and pushed everything under it down a row. The second read has to find its place by something that insert did not move: the row the last page ended on, rather than how many rows have gone past."
+    },
+    {
+      "id": "alert-acknowledged-mid-page",
+      "title": "An alert acknowledged between two pages does not hide the ones under it",
+      "testFile": "tests/checkpoints/03-an-alert-is-acknowledged-mid-walk.test.ts",
+      "hint": "Acknowledging an alert takes it out of the feed and pulls everything below it up a row, so a page found by counting from the top of a feed two rows shorter counts straight past two alerts nobody has read. The counting is the problem, not the number you are adding to it."
+    },
+    {
+      "id": "alerts-share-a-timestamp",
+      "title": "Alerts that share a created_at each come over once",
+      "testFile": "tests/checkpoints/04-alerts-that-share-a-timestamp.test.ts",
+      "hint": "Thirty alerts here carry the same `created_at` to the millisecond, and a page boundary lands in the middle of them. A cursor holding only the timestamp cannot say which of the thirty the page stopped at, so it either skips the rest of them or hands them back. Keep a unique column alongside it and compare the pair: `(created_at, id) < (?, ?)` is read left to right, stopping at the first pair that differs, which is the rule `ORDER BY created_at DESC, id DESC` sorts by."
+    }
+  ]
+}
