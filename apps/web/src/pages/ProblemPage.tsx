@@ -313,6 +313,19 @@ export function ProblemPage(): React.ReactElement {
 
       {data.type === 'sql' && <SchemaPanel orderMatters={data.orderMatters === true} />}
 
+      {/* Always visible rather than collapsed: the tests name these values, so a
+          failing assertion is unreadable without them. They are short by design. */}
+      {data.setup && (
+        <Card>
+          <CardContent className="space-y-2 p-6">
+            <p className="text-xs text-muted-foreground">
+              Already defined. Your solution and the tests can both use it.
+            </p>
+            <Markdown className="text-sm">{'```js\n' + data.setup + '\n```'}</Markdown>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="space-y-3 p-6">
           {isCodeShaped(data.type) ? (

@@ -18,7 +18,12 @@ import { CATEGORY_LABELS } from '@hone/shared';
 
 import { PRACTICE_DB_PATH } from '../common/paths';
 import { gradeAnswer, parseGraderConfig } from '../grading';
-import type { ExplainGraderConfig, ShortTextGraderConfig, SqlGraderConfig } from '../grading/types';
+import type {
+  CodeGraderConfig,
+  ExplainGraderConfig,
+  ShortTextGraderConfig,
+  SqlGraderConfig,
+} from '../grading/types';
 import { buildPracticeDatabase, openPracticeDatabase } from '../seed/practice-db';
 import { problemSeeds } from '../seed/problems.seed';
 
@@ -40,6 +45,11 @@ function listProblems(filter?: string): void {
   console.log(`\n  ${matches.length} problem(s)`);
 }
 
+/** Keep a multi-line snippet under its label, aligned with the single-line fields. */
+function indentBlock(source: string): string {
+  return source.split('\n').join('\n                ');
+}
+
 function describeConfig(seed: (typeof problemSeeds)[number]): void {
   if (seed.type === 'sql') {
     const config = seed.graderConfig as SqlGraderConfig;
@@ -56,6 +66,16 @@ function describeConfig(seed: (typeof problemSeeds)[number]): void {
     }
     for (const key of Object.keys(config.closeSubstrings ?? {})) {
       console.log(`  closeSubstring: "${key}"`);
+    }
+    return;
+  }
+  if (seed.type === 'js-code') {
+    const config = seed.graderConfig as CodeGraderConfig;
+    if (config.setup) console.log(`  setup:        ${indentBlock(config.setup)}`);
+    if (config.starter) console.log(`  starter:      ${indentBlock(config.starter)}`);
+    for (const test of config.tests) {
+      console.log(`  test:         ${test.name}`);
+      console.log(`                ${test.expression}`);
     }
     return;
   }

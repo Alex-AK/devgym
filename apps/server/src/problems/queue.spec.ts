@@ -64,10 +64,13 @@ describe('practice queue', () => {
     expect(next?.queueSize).toBe(problemSeeds.filter((seed) => seed.category === 'react').length);
   });
 
+  // Counted off `dealt` rather than every seed: naming a category is what opts
+  // you in, and a difficulty is not a category, so the opt-in ones stay held
+  // back here the way they are in an unscoped queue.
   it('narrows to a single difficulty', async () => {
     const next = problems.next(undefined, 'next', { difficulty: 'hard' });
     expect(next?.difficulty).toBe('hard');
-    expect(next?.queueSize).toBe(problemSeeds.filter((seed) => seed.difficulty === 'hard').length);
+    expect(next?.queueSize).toBe(dealt.filter((seed) => seed.difficulty === 'hard').length);
   });
 
   it('combines category and difficulty', async () => {

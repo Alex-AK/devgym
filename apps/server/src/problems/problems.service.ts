@@ -486,6 +486,7 @@ export class ProblemsService {
       revealedHints: config.hints.slice(0, progress.hintsRevealed),
       hintsTotal: config.hints.length,
       starter: problem.type === 'js-code' ? ((config as CodeGraderConfig).starter ?? null) : null,
+      setup: problem.type === 'js-code' ? ((config as CodeGraderConfig).setup ?? null) : null,
       solutionViewed: progress.solutionViewed,
       canRevealSolution: this.canReveal(progress),
       solution: showSolution ? problem.solution : null,

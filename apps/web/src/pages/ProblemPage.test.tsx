@@ -40,6 +40,7 @@ const SOLVED: ProblemDetail = {
   revealedHints: [],
   hintsTotal: 2,
   starter: null,
+  setup: null,
   solutionViewed: false,
   canRevealSolution: false,
   solution: '`find`',
@@ -55,7 +56,8 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-function renderSolved(): void {
+function renderSolved(detail: ProblemDetail = SOLVED): void {
+  vi.mocked(api.problem).mockResolvedValue(detail);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -100,5 +102,30 @@ describe('starting a solved problem over', () => {
 
     expect(api.reset).not.toHaveBeenCalled();
     expect(screen.queryByText(/drops it off the review ladder/)).toBeNull();
+  });
+});
+
+/**
+ * The fixtures a coding problem's tests are written against. They shipped
+ * server-side for months without ever reaching the page, which left assertions
+ * like `revenueByCategory(LINES)` naming a value the reader could not see.
+ */
+describe('a coding problem with fixtures', () => {
+  it('shows the setup code', async () => {
+    renderSolved({
+      ...SOLVED,
+      type: 'js-code',
+      starter: 'function revenueByCategory(items) {\n  \n}',
+      setup: "const LINES = [{ category: 'books', price: 10, qty: 2 }];",
+    });
+
+    expect(await screen.findByText(/const LINES/)).toBeTruthy();
+  });
+
+  it('shows nothing when there are none', async () => {
+    renderSolved({ ...SOLVED, type: 'js-code', starter: 'function f() {}', setup: null });
+
+    await screen.findByText(/Find the first match/);
+    expect(screen.queryByText(/Already defined/)).toBeNull();
   });
 });
