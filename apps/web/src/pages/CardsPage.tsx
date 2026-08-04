@@ -165,8 +165,8 @@ function Run({ library }: { library: CardLibrary }): React.ReactElement {
   return (
     <article className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight">Cards</h1>
+        <p className="measure mt-2 text-sm text-muted-foreground">
           {pass === 1
             ? `All ${cards.length} cards, shuffled. You mark yourself, and nothing is written down.`
             : `Pass ${pass}: the ${cards.length} you missed.`}
@@ -245,7 +245,7 @@ const Stage = React.forwardRef<HTMLDivElement, StageProps>(function Stage(
             <div role="status">
               {flipped && (
                 <div className="mt-4 border-t pt-4">
-                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Answer
                   </p>
                   <Markdown className="mt-1.5">{card.back}</Markdown>
@@ -363,7 +363,7 @@ const Summary = React.forwardRef<HTMLDivElement, SummaryProps>(function Summary(
             ) : (
               <>
                 <div>
-                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     What you missed
                   </p>
                   <ul className="mt-2 space-y-2">
@@ -387,62 +387,52 @@ const Summary = React.forwardRef<HTMLDivElement, SummaryProps>(function Summary(
         </Card>
       </div>
 
-      {(pages.length > 0 || practise.length > 0) && (
-        <Card>
-          <CardContent className="space-y-4 p-5">
-            {pages.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold">
-                  {missed.length > 0
-                    ? 'The pages behind what you missed'
-                    : 'The pages these came from'}
-                </h2>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {pages.map((page) => (
-                    <li key={`${page.section}/${page.slug}`}>
-                      <Link
-                        className="flex items-center gap-2 hover:underline"
-                        to={`/handbook/${page.section}/${page.slug}`}
-                      >
-                        <BookOpen className="size-4 shrink-0 text-muted-foreground" />
-                        {page.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+      {/* Not a card: what to read next is a list on the page, and stacking a
+          second box under the summary made it compete with the run itself. */}
+      {pages.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {missed.length > 0 ? 'The pages behind what you missed' : 'The pages these came from'}
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {pages.map((page) => (
+              <li key={`${page.section}/${page.slug}`}>
+                <Link
+                  className="flex items-center gap-2 hover:underline"
+                  to={`/handbook/${page.section}/${page.slug}`}
+                >
+                  <BookOpen className="size-4 shrink-0 text-muted-foreground" />
+                  {page.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-            {practise.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold">
-                  {missed.length > 0 ? 'Where to practise those' : 'Where to practise these'}
-                </h2>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {practise.map((link) => (
-                    <li key={`${link.kind}-${link.slug}`}>
-                      <Link
-                        className="flex items-center gap-2 hover:underline"
-                        to={
-                          link.kind === 'workout'
-                            ? `/workouts/${link.slug}`
-                            : `/problems/${link.slug}`
-                        }
-                      >
-                        {link.kind === 'workout' ? (
-                          <Dumbbell className="size-4 shrink-0 text-muted-foreground" />
-                        ) : (
-                          <Target className="size-4 shrink-0 text-muted-foreground" />
-                        )}
-                        {link.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {practise.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {missed.length > 0 ? 'Where to practise those' : 'Where to practise these'}
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {practise.map((link) => (
+              <li key={`${link.kind}-${link.slug}`}>
+                <Link
+                  className="flex items-center gap-2 hover:underline"
+                  to={link.kind === 'workout' ? `/workouts/${link.slug}` : `/problems/${link.slug}`}
+                >
+                  {link.kind === 'workout' ? (
+                    <Dumbbell className="size-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <Target className="size-4 shrink-0 text-muted-foreground" />
+                  )}
+                  {link.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {sources.length > 0 && (

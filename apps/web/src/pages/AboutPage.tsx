@@ -8,11 +8,13 @@ import { Link } from 'react-router-dom';
  */
 export function AboutPage(): React.ReactElement {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-semibold tracking-tight">About Hone</h1>
+    <div className="measure space-y-10">
+      <h1 className="text-3xl font-semibold tracking-tight">About Hone</h1>
 
-      <div className="md mt-6">
-        <section>
+      {/* `.md` only spaces its own direct children, so each section carries its
+          own rhythm: paragraphs a line apart, sections a block apart. */}
+      <div className="md space-y-10">
+        <section className="space-y-4">
           <h2>What this is</h2>
           <p>
             Hone is a practice tool for web-dev fundamentals: short daily problems, timed{' '}
@@ -32,7 +34,7 @@ export function AboutPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>What it owes to other people</h2>
           <p>
             Nearly everything. This project stands on open source software, freely shared writing,
@@ -43,7 +45,7 @@ export function AboutPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>How it was written</h2>
           <p>
             Largely by an LLM, then reviewed progressively as it gets used: a page gets read
@@ -56,7 +58,7 @@ export function AboutPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Credit</h2>
           <p>
             The only thing claimed as original here is the idea of consolidating all of this into
@@ -66,7 +68,7 @@ export function AboutPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Feedback</h2>
           <p>
             Issues and pull requests are welcome, for content errors above all. If a grader marked
@@ -76,7 +78,7 @@ export function AboutPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>How it tries to teach</h2>
           <p>
             Four techniques with evidence behind them, and one ladder of review intervals that is a
@@ -86,7 +88,7 @@ export function AboutPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Colophon</h2>
           <p>
             Built on pnpm workspaces, Vite, React, TypeScript, Tailwind, shadcn/ui, NestJS, Drizzle,

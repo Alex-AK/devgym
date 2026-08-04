@@ -37,7 +37,7 @@ export function DashboardPage(): React.ReactElement {
   if (latest.error) return <ErrorState error={latest.error} />;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <Hero progress={progress.data} session={latest.data.session} />
       <OtherWaysIn progress={progress.data} />
       {progress.data.hasActivity && <ProgressLine progress={progress.data} />}
@@ -72,8 +72,10 @@ function HeroCard({
     <Card className="border-primary/25 bg-gradient-to-b from-accent/40 to-card">
       <CardContent className="space-y-4 p-6 sm:p-8">
         <div>
-          <p className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {eyebrow}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{title}</h1>
         </div>
         {children}
       </CardContent>
@@ -95,7 +97,7 @@ function StartToday({ progress }: { progress: ProgressResponse }): React.ReactEl
 
   return (
     <HeroCard eyebrow={todayLabel()} title="Start today's session">
-      <p className="max-w-prose text-sm text-muted-foreground">{blurb}</p>
+      <p className="measure text-sm text-muted-foreground">{blurb}</p>
       <div className="flex flex-wrap items-center gap-3">
         <Button
           size="lg"
@@ -172,7 +174,7 @@ function FirstRun({ total }: { total: number }): React.ReactElement {
 
   return (
     <HeroCard eyebrow="Welcome" title="Hone">
-      <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+      <p className="measure text-sm leading-relaxed text-muted-foreground">
         A practice tool for the web-dev fundamentals you lean on and lose when you don&apos;t use
         them. Short problems graded on the spot, longer workouts against a real toolchain, and a
         handbook to study from. It runs locally: no accounts, no network, no telemetry, and no AI
@@ -227,8 +229,8 @@ function OtherWaysIn({ progress }: { progress: ProgressResponse }): React.ReactE
   const reading = progress.byTag.find((row) => row.tag === 'reading');
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+    <section className="space-y-4">
+      <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         Other ways in
       </h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -260,18 +262,24 @@ function OtherWaysIn({ progress }: { progress: ProgressResponse }): React.ReactE
           to="/library/essentials"
           meta={minutesRange(paths.data?.map((entry) => entry.minutes) ?? [])}
         />
-        {/* Not a format: a slice of the same queue, scoped by tag. It is here
-            because a posture you cannot enter is a posture nobody practises. */}
-        {reading && reading.total > 0 && (
-          <WayIn
-            icon={<ScanEye className="size-4" />}
-            title={TAG_LABELS.reading}
-            blurb={TAG_BLURBS.reading}
-            to="/practice?tag=reading"
-            meta={`${reading.total} reps`}
-          />
-        )}
       </div>
+
+      {/* Not a format, so not a fifth card: it is a slice of the same queue,
+          scoped by tag. It is here at all because a posture you cannot enter is
+          a posture nobody practises. */}
+      {reading && reading.total > 0 && (
+        <Link
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-dashed p-4 transition-colors hover:border-primary/50"
+          to="/practice?tag=reading"
+        >
+          <ScanEye className="size-4 text-primary" />
+          <span className="text-sm font-medium">{TAG_LABELS.reading}</span>
+          <span className="text-sm text-muted-foreground">{TAG_BLURBS.reading}</span>
+          <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+            {reading.total} reps
+          </span>
+        </Link>
+      )}
     </section>
   );
 }

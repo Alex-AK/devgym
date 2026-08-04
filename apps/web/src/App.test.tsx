@@ -263,8 +263,10 @@ describe('progress', () => {
 
     expect(await screen.findByRole('heading', { name: 'Progress' })).toBeTruthy();
     expect(screen.getByText('40/100')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'React' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: '3 due for review' })).toBeTruthy();
+    // Matched loosely: a coverage row puts its meter and count inside the link,
+    // so the accessible name carries the score too ("React 1/12").
+    expect(screen.getByRole('link', { name: /^React/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /3 due for review/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Reset progress/ })).toBeTruthy();
   });
 });

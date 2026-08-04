@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { PartyPopper } from 'lucide-react';
 import * as React from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 
 import { ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { api, queryKeys, scopeToParams } from '@/lib/api';
 import { describeScope, isScoped, scopeFromSearch } from '@/lib/scope';
 
@@ -40,20 +38,20 @@ export function QueueEmpty({
   label?: string;
 }): React.ReactElement {
   return (
-    <Card className="mx-auto max-w-xl">
-      <CardHeader>
-        <div className="flex items-center gap-2 text-primary">
-          <PartyPopper className="size-5" />
-          <span className="text-xs font-medium tracking-widest uppercase">Queue clear</span>
-        </div>
-        <CardTitle className="text-2xl">
+    <div className="space-y-8 py-8">
+      <div className="space-y-3">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Queue clear
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">
           {scoped ? 'Nothing left in this session' : 'Every problem solved'}
-        </CardTitle>
-        <CardDescription className="text-base">
+        </h1>
+        <p className="measure text-sm text-muted-foreground">
           {scoped ? (
             <>
-              You&apos;ve solved everything matching <strong>{label}</strong>. Widen the session, or
-              go back to the full queue.
+              You&apos;ve solved everything matching{' '}
+              <strong className="text-foreground">{label}</strong>. Widen the session, or go back to
+              the full queue.
             </>
           ) : (
             <>
@@ -61,9 +59,9 @@ export function QueueEmpty({
               them from the problem list.
             </>
           )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-wrap gap-3">
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
         {scoped && (
           <Button asChild>
             <Link to="/practice">Practice everything</Link>
@@ -75,7 +73,7 @@ export function QueueEmpty({
         <Button asChild variant="outline">
           <Link to="/library/problems">Browse all problems</Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

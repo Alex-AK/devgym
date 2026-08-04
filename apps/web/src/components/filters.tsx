@@ -1,6 +1,8 @@
+import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 /**
  * One labelled row of filter chips. The label column is wide enough for the
@@ -37,5 +39,48 @@ export function FilterChip({
     <Button variant={active ? 'secondary' : 'ghost'} size="sm" onClick={onClick}>
       {children}
     </Button>
+  );
+}
+
+/**
+ * One axis, one control. Native on purpose: it is keyboard-navigable, it types
+ * ahead to a category by name, and it costs no dependency.
+ *
+ * Chips are still right for an axis with four options. This is for the ones that
+ * do not stop growing: category reached twenty-two and wrapped to four rows,
+ * which made the quietest page in the app shout its filters at you.
+ */
+export function FilterSelect<T extends string>({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: T) => void;
+  options: Array<{ label: string; value: T }>;
+  value: T;
+}): React.ReactElement {
+  const active = value !== 'all';
+
+  return (
+    <div className="relative">
+      <select
+        aria-label={label}
+        className={cn(
+          'h-9 appearance-none rounded-md border py-1 pr-8 pl-3 text-sm shadow-sm',
+          active ? 'border-primary/40 bg-accent text-accent-foreground' : 'bg-card'
+        )}
+        onChange={(event) => onChange(event.target.value as T)}
+        value={value}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+    </div>
   );
 }

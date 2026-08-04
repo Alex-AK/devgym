@@ -18,18 +18,21 @@ interface Source {
  */
 export function HowItTeachesPage(): React.ReactElement {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-semibold tracking-tight">How Hone tries to teach</h1>
-
-      <div className="md mt-6">
-        <p>
+    <div className="measure space-y-10">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">How Hone tries to teach</h1>
+        <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
           Four techniques from the learning research shape how this app works. Each section names
           the file, the constant or the screen where the technique actually happens, so you can
           check the claim rather than take it. The last section covers the part that has no evidence
           behind it.
         </p>
+      </header>
 
-        <section>
+      {/* `.md` only spaces its own direct children, so each section carries its
+          own rhythm: paragraphs a line apart, sections a block apart. */}
+      <div className="md space-y-10">
+        <section className="space-y-4">
           <h2>Retrieval practice</h2>
           <p>
             You answer before you see the answer, everywhere. The server never sends a solution you
@@ -50,7 +53,7 @@ export function HowItTeachesPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Spaced repetition</h2>
           <p>
             The interval ladder is a constant: <code>REVIEW_INTERVALS_DAYS</code> in{' '}
@@ -86,7 +89,7 @@ export function HowItTeachesPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Interleaving</h2>
           <p>
             Consecutive problems come from different categories by construction.{' '}
@@ -106,7 +109,7 @@ export function HowItTeachesPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Desirable difficulty</h2>
           <p>The friction is the mechanism, in three places.</p>
           <p>
@@ -137,7 +140,7 @@ export function HowItTeachesPage(): React.ReactElement {
           </p>
         </section>
 
-        <section>
+        <section className="space-y-4">
           <h2>Where the evidence stops</h2>
           <p>The research supports spacing. It does not support 1, 3, 7, 21, 60.</p>
           <p>
@@ -212,11 +215,15 @@ const SOURCES: Source[] = [
   },
 ];
 
+/** Provenance, in the same small print a handbook page uses. */
 function Sources(): React.ReactElement {
   return (
-    <footer className="mt-10 border-t pt-4 text-sm text-muted-foreground">
-      <h2 className="font-medium text-foreground">Sources</h2>
-      <ol className="mt-2 space-y-3">
+    <footer className="space-y-3 border-t pt-6 text-xs leading-relaxed text-muted-foreground">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="font-medium tracking-wide uppercase">Sources</h2>
+        <p>Links checked 2 August 2026</p>
+      </div>
+      <ol className="space-y-2.5">
         {SOURCES.map((source) => (
           <li key={source.url}>
             <p>{source.citation}</p>
@@ -235,9 +242,9 @@ function Sources(): React.ReactElement {
           </li>
         ))}
       </ol>
-      <p className="mt-4 text-xs">
-        Every link was fetched on 2 August 2026. Where the journal version is paywalled the link is
-        an open copy of the same paper, and the credit belongs to the paper.
+      <p>
+        Where the journal version is paywalled the link is an open copy of the same paper, and the
+        credit belongs to the paper.
       </p>
     </footer>
   );

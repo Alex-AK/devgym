@@ -1,11 +1,10 @@
 import type { PathSummary } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, Clock } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import { ErrorState, LoadingState } from '@/components/states';
-import { Card, CardContent } from '@/components/ui/card';
 import { api, queryKeys } from '@/lib/api';
 
 export function PathsPage(): React.ReactElement {
@@ -16,7 +15,7 @@ export function PathsPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <p className="max-w-prose text-sm text-muted-foreground">
+      <p className="measure text-sm text-muted-foreground">
         An hour each, on one slice of the work. Read the pages in order, prove it on the reps, then
         build the thing. This is the deliberate-study entrance: the daily session stays interleaved,
         because that is what remembering wants, and a path is blocked and ordered, because that is
@@ -24,58 +23,44 @@ export function PathsPage(): React.ReactElement {
       </p>
 
       {data.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            No sessions yet. Add a directory under <code>packages/paths/content/</code>.
-          </CardContent>
-        </Card>
+        <p className="text-sm text-muted-foreground">
+          No sessions yet. Add a directory under <code>packages/paths/content/</code>.
+        </p>
       ) : (
-        <div className="grid gap-4">
+        <ul className="divide-y border-y">
           {data.map((path) => (
-            <PathCard key={path.slug} path={path} />
+            <PathRow key={path.slug} path={path} />
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
 }
 
-function PathCard({ path }: { path: PathSummary }): React.ReactElement {
+function PathRow({ path }: { path: PathSummary }): React.ReactElement {
   const complete = path.provable > 0 && path.done === path.provable;
 
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Link to={`/essentials/${path.slug}`} className="text-lg font-medium hover:underline">
-              {path.title}
-            </Link>
-            <p className="mt-1 text-sm text-muted-foreground">{path.summary}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="size-4" />
-            {path.minutes} min
-          </div>
-        </div>
+    <li className="py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <Link className="font-medium hover:underline" to={`/essentials/${path.slug}`}>
+          {path.title}
+        </Link>
+        <span className="text-xs text-muted-foreground tabular-nums">{path.minutes} min</span>
+      </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <span
-            className={
-              complete ? 'flex items-center gap-1.5 text-emerald-700' : 'text-muted-foreground'
-            }
-          >
-            {complete && <CheckCircle2 className="size-4" />}
-            {path.done} of {path.provable} proved
-          </span>
-          <Link
-            to={`/essentials/${path.slug}`}
-            className="ml-auto font-medium text-primary hover:underline"
-          >
-            {path.done === 0 ? 'Start the hour' : 'Pick it up'}
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+      <p className="measure mt-1 text-sm text-muted-foreground">{path.summary}</p>
+
+      <p
+        className={
+          complete
+            ? 'mt-2 flex items-center gap-1.5 text-xs text-emerald-700'
+            : 'mt-2 text-xs text-muted-foreground'
+        }
+      >
+        {complete && <CheckCircle2 className="size-3.5" />}
+        {path.done} of {path.provable} proved
+      </p>
+    </li>
   );
 }

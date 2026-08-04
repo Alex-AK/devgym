@@ -1,20 +1,26 @@
-import type { AttemptResponse, ProblemDetail, ProblemType } from '@hone/shared';
+import type {
+  AttemptResponse,
+  ProblemDetail,
+  ProblemType,
+  QueueScope,
+  SessionResponse,
+} from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  CircleAlert,
+  CircleCheck,
+  CircleX,
   Eye,
-  FlaskConical,
-  Lightbulb,
   RotateCcw,
   SkipForward,
-  Target,
 } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { CategoryBadge, DifficultyBadge, RelevanceBadge, StatusBadge } from '@/components/badges';
+import { ProblemMeta, StatusBadge } from '@/components/badges';
 import { CodeEditor, type CodeEditorHandle } from '@/components/CodeEditor';
 import { HandbookLinks } from '@/components/HandbookLinks';
 import { Markdown } from '@/components/Markdown';
@@ -22,7 +28,6 @@ import { SchemaPanel } from '@/components/SchemaPanel';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Kbd } from '@/components/ui/kbd';
 import { Progress } from '@/components/ui/progress';
 import { api, queryKeys, scopeToParams } from '@/lib/api';
@@ -30,10 +35,13 @@ import { describeScope, isScoped, scopeFromSearch } from '@/lib/scope';
 import { nextInSession, sessionPosition } from '@/lib/session';
 
 const VERDICT_UI = {
-  correct: { variant: 'success', icon: '✅', title: 'Correct' },
-  close: { variant: 'warning', icon: '🟡', title: 'Close' },
-  incorrect: { variant: 'danger', icon: '❌', title: 'Not close' },
+  correct: { variant: 'success', icon: CircleCheck, title: 'Correct' },
+  close: { variant: 'warning', icon: CircleAlert, title: 'Close' },
+  incorrect: { variant: 'danger', icon: CircleX, title: 'Not close' },
 } as const;
+
+/** One label style for every block on the page, so nothing invents a fifth size. */
+const LABEL = 'text-xs font-medium tracking-wide text-muted-foreground uppercase';
 
 const PLACEHOLDER = {
   sql: 'SELECT …',
@@ -278,67 +286,38 @@ export function ProblemPage(): React.ReactElement {
   };
 
   return (
-    <div className="space-y-5">
-      {session ? (
-        <div className="space-y-2 rounded-lg border bg-accent/40 px-3 py-2">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Target className="size-4 text-primary" />
-            <span className="font-medium">
-              Problem {sessionPosition(session, slug) ?? '?'} of {session.total}
-            </span>
-            <span className="text-muted-foreground">
-              {session.solved} solved, {session.remaining} to go
-            </span>
-            <Link to="/session" className="ml-auto text-xs text-muted-foreground hover:underline">
-              Session overview
-            </Link>
-          </div>
-          <Progress
-            value={
-              session.total === 0 ? 0 : ((session.total - session.remaining) / session.total) * 100
-            }
-          />
-        </div>
-      ) : (
-        scoped && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-accent/40 px-3 py-2 text-sm">
-            <Target className="size-4 text-primary" />
-            <span className="font-medium">Focused session</span>
-            <span className="text-muted-foreground">{describeScope(scope)}</span>
-            <Link to="/practice" className="ml-auto text-xs text-muted-foreground hover:underline">
-              Exit session
-            </Link>
-          </div>
-        )
-      )}
+    <div className="space-y-10">
+      {/* Where you are, then what you were asked. The prompt is the only thing
+          on the page at full contrast until an answer comes back. */}
+      <div className="space-y-5">
+        <ContextBar session={session} slug={slug} scope={scope} scoped={scoped} />
+        <Header detail={data} status={status} attemptsCount={attemptsCount} />
+        <Markdown className="measure">{data.prompt}</Markdown>
+      </div>
 
-      <Header detail={data} status={status} attemptsCount={attemptsCount} />
+      {/* The workspace: reference material, the box you type in, and the moves.
+          One group, because they are one thing you are doing. */}
+      <div className="space-y-4">
+        {data.type === 'sql' && <SchemaPanel orderMatters={data.orderMatters === true} />}
 
-      <Card>
-        <CardContent className="p-6">
-          <Markdown>{data.prompt}</Markdown>
-        </CardContent>
-      </Card>
-
-      {data.type === 'sql' && <SchemaPanel orderMatters={data.orderMatters === true} />}
-
-      {/* Always visible rather than collapsed: the tests name these values, so a
-          failing assertion is unreadable without them. They are short by design. */}
-      {data.setup && (
-        <Card>
-          <CardContent className="space-y-2 p-6">
-            <p className="text-xs text-muted-foreground">
-              Already defined. Your solution and the tests can both use it.
-            </p>
+        {/* Always visible rather than collapsed: the tests name these values, so a
+            failing assertion is unreadable without them. They are short by design. */}
+        {data.setup && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className={LABEL}>Already defined</span>
+              <span className="text-xs text-muted-foreground">
+                Your solution and the tests can both use it.
+              </span>
+            </div>
             <Markdown className="text-sm">
               {'```' + (data.type === 'ts-type' ? 'ts' : 'js') + '\n' + data.setup + '\n```'}
             </Markdown>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      <Card>
-        <CardContent className="space-y-3 p-6">
+        <div className="space-y-2">
+          <p className={LABEL}>Your answer</p>
           {isCodeShaped(data.type) ? (
             <CodeEditor
               ref={editorRef}
@@ -367,111 +346,78 @@ export function ProblemPage(): React.ReactElement {
               className="w-full resize-y rounded-md border bg-card px-3 py-2 font-mono text-sm shadow-sm placeholder:text-muted-foreground"
             />
           )}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={onSubmit} disabled={busy || answer.trim().length === 0}>
-              {submit.isPending ? 'Grading…' : 'Submit'}
-            </Button>
-            <span className="mr-auto text-xs text-muted-foreground">
-              <Kbd>{isMac ? '⌘' : 'Ctrl'}+↵</Kbd> submit · <Kbd>Esc</Kbd> leave box · <Kbd>/</Kbd>{' '}
-              focus · <Kbd>n</Kbd>/<Kbd>p</Kbd> move · <Kbd>s</Kbd> skip
-            </span>
-            <Button variant="outline" onClick={() => void move('prev')} disabled={busy}>
-              <ChevronLeft />
-              Previous
-            </Button>
-            <Button variant="outline" onClick={() => skip.mutate()} disabled={busy || solved}>
-              <SkipForward />
-              Skip
-            </Button>
-            <Button variant="outline" onClick={() => void move('next')} disabled={busy}>
-              Next
-              <ChevronRight />
-            </Button>
-          </div>
-          {submit.error && <p className="text-sm text-rose-700">{submit.error.message}</p>}
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={onSubmit} disabled={busy || answer.trim().length === 0}>
+            {submit.isPending ? 'Grading…' : 'Submit'}
+          </Button>
+          <Button
+            variant="ghost"
+            className="ml-auto text-muted-foreground"
+            onClick={() => void move('prev')}
+            disabled={busy}
+          >
+            <ChevronLeft />
+            Previous
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground"
+            onClick={() => skip.mutate()}
+            disabled={busy || solved}
+          >
+            <SkipForward />
+            Skip
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground"
+            onClick={() => void move('next')}
+            disabled={busy}
+          >
+            Next
+            <ChevronRight />
+          </Button>
+        </div>
+
+        {submit.error && <p className="text-sm text-rose-700">{submit.error.message}</p>}
+
+        {/* The box takes focus on load, so every single-key shortcut is unreachable
+            until you leave it. Say that, rather than listing five keys that look
+            broken when you try them. */}
+        <p className="text-xs text-muted-foreground">
+          <Kbd>{isMac ? '⌘' : 'Ctrl'}+↵</Kbd> submits. Single keys work outside the box:{' '}
+          <Kbd>Esc</Kbd> leaves it, then <Kbd>n</Kbd> and <Kbd>p</Kbd> move, <Kbd>s</Kbd> skips, and{' '}
+          <Kbd>/</Kbd> comes back.
+        </p>
+      </div>
 
       {attempt && (
-        <Alert variant={VERDICT_UI[attempt.verdict].variant}>
-          <AlertTitle className="flex items-center gap-2">
-            <span aria-hidden>{VERDICT_UI[attempt.verdict].icon}</span>
-            {VERDICT_UI[attempt.verdict].title}
-          </AlertTitle>
-          <AlertDescription>
-            {/* Feedback carries markdown (`ORDER BY`, *all*), so render it as such. */}
-            <Markdown className="text-sm">{attempt.feedback}</Markdown>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {attempt && attempt.tests.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FlaskConical className="size-4 text-muted-foreground" />
-              Tests ({attempt.tests.filter((test) => test.passed).length}/{attempt.tests.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {/* A near miss is a failure that got the shape right, so it reads
-                amber: an answer that widened to `any` satisfies every
-                assignability check and is still the wrong answer. */}
-            {attempt.tests.map((test) => (
-              <div key={test.name} className="flex gap-2.5 rounded-md px-2 py-1.5 text-sm">
-                <span
-                  aria-hidden
-                  className={
-                    test.passed
-                      ? 'text-emerald-600'
-                      : test.near
-                        ? 'text-amber-600'
-                        : 'text-rose-600'
-                  }
-                >
-                  {test.passed ? '✓' : test.near ? '~' : '✗'}
-                </span>
-                <span className="flex-1">
-                  <span className={test.passed ? 'text-muted-foreground' : 'font-medium'}>
-                    {test.name}
-                  </span>
-                  {test.detail && (
-                    <span
-                      className={`mt-0.5 block font-mono text-xs ${
-                        test.near ? 'text-amber-700' : 'text-rose-700'
-                      }`}
-                    >
-                      {test.detail}
-                    </span>
-                  )}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Verdict attempt={attempt} />
+          {attempt.tests.length > 0 && <TestResults tests={attempt.tests} />}
+        </div>
       )}
 
       {hints.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Lightbulb className="size-4 text-amber-500" />
-              Hints ({hints.length}/{hintsTotal})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="space-y-3">
+          <p className={LABEL}>
+            Hints {hints.length}/{hintsTotal}
+          </p>
+          <ul className="space-y-2">
             {hints.map((hint, index) => (
-              <div key={hint} className="flex gap-3 rounded-md bg-muted/60 p-3 text-sm">
+              <li key={hint} className="flex gap-3 rounded-md bg-muted/50 p-3 text-sm">
                 <span className="font-mono text-xs text-muted-foreground">{index + 1}</span>
-                <Markdown className="flex-1">{hint}</Markdown>
-              </div>
+                <Markdown className="measure flex-1">{hint}</Markdown>
+              </li>
             ))}
-          </CardContent>
-        </Card>
+          </ul>
+        </div>
       )}
 
       {!solved && canReveal && !solution && (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" onClick={() => reveal.mutate()} disabled={busy}>
             <Eye />
             Reveal solution
@@ -482,59 +428,123 @@ export function ProblemPage(): React.ReactElement {
         </div>
       )}
 
+      {/* The reveal, and the only other prose on the page that is the point. A
+          rule rather than a card: it belongs to the problem above it. */}
       {solution && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">
-              {solved ? 'Solution' : 'Solution (revealed)'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <Markdown>{solution}</Markdown>
-            {explanation && (
-              <div className="rounded-md border-l-2 border-primary bg-muted/50 p-4">
-                <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  Why
-                </p>
-                <Markdown>{explanation}</Markdown>
-              </div>
+        <div className="space-y-5 border-t pt-8">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className={LABEL}>Solution</span>
+            {!solved && (
+              <span className="text-xs text-muted-foreground">
+                Revealed, so this one counts as skipped.
+              </span>
             )}
-            <HandbookLinks slug={data.slug} />
-            <div className="flex flex-wrap items-center gap-3">
-              <Button onClick={() => void move('next')} disabled={busy}>
-                Next problem
-                <ArrowRight />
-              </Button>
-              {/* One click from "Next problem", and what it discards is a review
-                  interval built over months that only re-solving can rebuild.
-                  So it says what it costs, and asks twice. */}
-              {confirmingReset ? (
-                <>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => reset.mutate()}
-                    disabled={busy}
-                  >
-                    Start over
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setConfirmingReset(false)}>
-                    Cancel
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Clears its attempts and drops it off the review ladder, as if you had never seen
-                    it.
-                  </span>
-                </>
-              ) : (
-                <Button variant="ghost" onClick={() => setConfirmingReset(true)} disabled={busy}>
-                  <RotateCcw />
-                  Start over…
-                </Button>
-              )}
+          </div>
+          <Markdown className="measure">{solution}</Markdown>
+          {explanation && (
+            <div className="measure border-l-2 border-primary pl-4">
+              <p className={`mb-1 ${LABEL}`}>Why</p>
+              <Markdown>{explanation}</Markdown>
             </div>
-          </CardContent>
-        </Card>
+          )}
+          <HandbookLinks slug={data.slug} />
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Button onClick={() => void move('next')} disabled={busy}>
+              Next problem
+              <ArrowRight />
+            </Button>
+            {/* One click from "Next problem", and what it discards is a review
+                interval built over months that only re-solving can rebuild.
+                So it says what it costs, and asks twice. */}
+            {confirmingReset ? (
+              <>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => reset.mutate()}
+                  disabled={busy}
+                >
+                  Start over
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmingReset(false)}>
+                  Cancel
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Clears its attempts and drops it off the review ladder, as if you had never seen
+                  it.
+                </span>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                className="text-muted-foreground"
+                onClick={() => setConfirmingReset(true)}
+                disabled={busy}
+              >
+                <RotateCcw />
+                Start over…
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The line of chrome above the title: where you came from on the left, and what
+ * run you are in on the right. Both were bordered boxes; neither is worth one.
+ */
+function ContextBar({
+  session,
+  slug,
+  scope,
+  scoped,
+}: {
+  session: SessionResponse | null;
+  slug: string;
+  scope: QueueScope;
+  scoped: boolean;
+}): React.ReactElement {
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <Link to="/library/problems" className="hover:text-foreground hover:underline">
+          ← All problems
+        </Link>
+        {session ? (
+          <>
+            <span className="ml-auto text-foreground">
+              Problem {sessionPosition(session, slug) ?? '?'} of {session.total}
+            </span>
+            <span>
+              {session.solved} solved, {session.remaining} to go
+            </span>
+            <Link to="/session" className="hover:text-foreground hover:underline">
+              Session overview
+            </Link>
+          </>
+        ) : (
+          scoped && (
+            <>
+              <span className="ml-auto">
+                Practising <span className="text-foreground">{describeScope(scope)}</span>
+              </span>
+              <Link to="/practice" className="hover:text-foreground hover:underline">
+                Exit session
+              </Link>
+            </>
+          )
+        )}
+      </div>
+      {session && (
+        <Progress
+          className="h-1"
+          value={
+            session.total === 0 ? 0 : ((session.total - session.remaining) / session.total) * 100
+          }
+        />
       )}
     </div>
   );
@@ -550,20 +560,74 @@ function Header({
   attemptsCount: number;
 }): React.ReactElement {
   return (
-    <div className="space-y-2">
-      <Link to="/library/problems" className="text-xs text-muted-foreground hover:underline">
-        ← All problems
-      </Link>
-      <h1 className="text-2xl font-semibold tracking-tight">{detail.title}</h1>
-      <div className="flex flex-wrap items-center gap-2">
-        <CategoryBadge category={detail.category} />
-        <DifficultyBadge difficulty={detail.difficulty} />
-        <RelevanceBadge relevance={detail.relevance} />
-        <StatusBadge status={status} />
-        <span className="text-xs text-muted-foreground">
-          {attemptsCount} attempt{attemptsCount === 1 ? '' : 's'}
-        </span>
+    <div className="space-y-3">
+      <h1 className="text-3xl font-semibold tracking-tight">{detail.title}</h1>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {/* Status is the one fact here that changes and that you act on, so it
+            is the one that keeps a badge. Unseen is the default; it says nothing. */}
+        {status !== 'unseen' && <StatusBadge status={status} />}
+        <ProblemMeta
+          category={detail.category}
+          difficulty={detail.difficulty}
+          relevance={detail.relevance}
+          attempts={attemptsCount}
+        />
       </div>
+    </div>
+  );
+}
+
+function Verdict({ attempt }: { attempt: AttemptResponse }): React.ReactElement {
+  const { variant, icon: Icon, title } = VERDICT_UI[attempt.verdict];
+  return (
+    <Alert variant={variant}>
+      <Icon />
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>
+        {/* Feedback carries markdown (`ORDER BY`, *all*), so render it as such. */}
+        <Markdown className="text-sm">{attempt.feedback}</Markdown>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function TestResults({ tests }: { tests: AttemptResponse['tests'] }): React.ReactElement {
+  return (
+    <div className="space-y-3">
+      <p className={LABEL}>
+        Tests {tests.filter((test) => test.passed).length}/{tests.length}
+      </p>
+      {/* A near miss is a failure that got the shape right, so it reads amber: an
+          answer that widened to `any` satisfies every assignability check and is
+          still the wrong answer. */}
+      <ul className="space-y-1.5">
+        {tests.map((test) => (
+          <li key={test.name} className="flex gap-2.5 text-sm">
+            <span
+              aria-hidden
+              className={
+                test.passed ? 'text-emerald-600' : test.near ? 'text-amber-600' : 'text-rose-600'
+              }
+            >
+              {test.passed ? '✓' : test.near ? '~' : '✗'}
+            </span>
+            <span className="flex-1">
+              <span className={test.passed ? 'text-muted-foreground' : 'font-medium'}>
+                {test.name}
+              </span>
+              {test.detail && (
+                <span
+                  className={`mt-0.5 block font-mono text-xs ${
+                    test.near ? 'text-amber-700' : 'text-rose-700'
+                  }`}
+                >
+                  {test.detail}
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

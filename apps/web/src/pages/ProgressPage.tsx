@@ -3,6 +3,8 @@ import {
   type CategoryProgress,
   type DifficultyProgress,
   type ProgressResponse,
+  type RecentAttempt,
+  type Verdict,
 } from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, RotateCcw } from 'lucide-react';
@@ -10,18 +12,18 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import { ErrorState, LoadingState } from '@/components/states';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { api, queryKeys } from '@/lib/api';
 import { percent, relativeTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
-const VERDICT_BADGE = {
-  correct: 'green',
-  close: 'yellow',
-  incorrect: 'red',
-} as const;
+const VERDICT_DOT: Record<Verdict, string> = {
+  correct: 'bg-emerald-500',
+  close: 'bg-amber-500',
+  incorrect: 'bg-rose-500',
+};
 
 /**
  * What you have covered and what is thin. It is a page you visit rather than a
@@ -38,26 +40,22 @@ export function ProgressPage(): React.ReactElement {
   if (error) return <ErrorState error={error} />;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Progress</h1>
-        <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+    <div className="space-y-10">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">Progress</h1>
+        <p className="measure mt-2 text-sm text-muted-foreground">
           The problems are the progress tracking. Pages, modules and cards deliberately have none:
           what you can answer is the measurement, not what you have opened.
         </p>
-      </div>
+      </header>
 
       {data.hasActivity ? (
         <>
           <Headline progress={data} />
           <ReviewQueue progress={data} />
-          <div className="grid gap-4 md:grid-cols-2">
-            <ByCategory byCategory={data.byCategory} />
-            <div className="space-y-4">
-              <ByDifficulty byDifficulty={data.byDifficulty} />
-              <RecentActivity progress={data} />
-            </div>
-          </div>
+          <ByCategory byCategory={data.byCategory} />
+          <ByDifficulty byDifficulty={data.byDifficulty} />
+          <RecentActivity attempts={data.recentAttempts} />
         </>
       ) : (
         <Card>
@@ -80,9 +78,33 @@ export function ProgressPage(): React.ReactElement {
   );
 }
 
+/** A labelled block. The label is chrome, so it stays small and muted. */
+function Section({
+  action,
+  children,
+  label,
+}: {
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  label: string;
+}): React.ReactElement {
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 /**
  * Problems and workouts both measure progress; the handbook deliberately does
- * not, so it is counted rather than scored.
+ * not, so it is counted rather than scored. One strip rather than three cards:
+ * these are three readings of the same thing, not three objects.
  */
 function Headline({ progress }: { progress: ProgressResponse }): React.ReactElement {
   const { data: workouts } = useQuery({ queryKey: queryKeys.workouts, queryFn: api.workouts });
@@ -99,23 +121,23 @@ function Headline({ progress }: { progress: ProgressResponse }): React.ReactElem
   };
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-3">
       <StatTile
-        label="Problems solved"
-        value={`${progress.solved}/${progress.total}`}
-        meter={percent(progress.solved, progress.total)}
         footnote={`${progress.totalAttempts} attempt${progress.totalAttempts === 1 ? '' : 's'}, ${progress.accuracy}% correct`}
+        label="Problems solved"
+        meter={percent(progress.solved, progress.total)}
+        value={`${progress.solved}/${progress.total}`}
       />
       <StatTile
-        label="Workouts cleared"
-        value={workouts ? `${cleared}/${workouts.length}` : '–'}
-        meter={workouts ? percent(cleared, workouts.length) : 0}
         footnote={workoutFootnote()}
+        label="Workouts cleared"
+        meter={workouts ? percent(cleared, workouts.length) : 0}
+        value={workouts ? `${cleared}/${workouts.length}` : '–'}
       />
       <StatTile
+        footnote={progress.due === 0 ? 'nothing scheduled' : 'reviews come first in a session'}
         label="Due today"
         value={String(progress.due)}
-        footnote={progress.due === 0 ? 'nothing scheduled' : 'reviews come first in a session'}
       />
     </div>
   );
@@ -135,12 +157,12 @@ function ReviewQueue({ progress }: { progress: ProgressResponse }): React.ReactE
           </p>
         </div>
         {progress.due > 0 && (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild size="sm" variant="outline">
             <Link to="/practice?mode=due">{progress.due} due for review</Link>
           </Button>
         )}
         {progress.missed > 0 && (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild size="sm" variant="outline">
             <Link to="/practice?mode=review">Review {progress.missed} missed</Link>
           </Button>
         )}
@@ -151,7 +173,9 @@ function ReviewQueue({ progress }: { progress: ProgressResponse }): React.ReactE
 
 /**
  * Least covered first, then by how much is left, so an untouched big category
- * beats an untouched small one. Each row starts a session scoped to it.
+ * beats an untouched small one. Two columns of thin rows rather than 22 full
+ * bars: at this count the ordering is the finding, and a stack of near-empty
+ * meters buries it under a screen of chrome. Each row starts a scoped session.
  */
 function ByCategory({ byCategory }: { byCategory: CategoryProgress[] }): React.ReactElement {
   const rows = [...byCategory]
@@ -160,39 +184,46 @@ function ByCategory({ byCategory }: { byCategory: CategoryProgress[] }): React.R
       (a, b) => a.solved / a.total - b.solved / b.total || b.total - b.solved - (a.total - a.solved)
     );
 
+  const untouched = rows.filter((row) => row.solved === 0).length;
+
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base">By category</CardTitle>
-        <CardDescription>Thinnest first. Each one starts a scoped session.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3.5">
-        {rows.map((row) => (
-          <div key={row.category} className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <Link
-                to={`/practice?category=${row.category}`}
-                className="font-medium hover:underline"
-                title={`Practice ${CATEGORY_LABELS[row.category]}`}
-              >
-                {CATEGORY_LABELS[row.category]}
-              </Link>
-              <span className="text-muted-foreground tabular-nums">
-                {row.solved}/{row.total}
-              </span>
-            </div>
-            <Progress value={percent(row.solved, row.total)} />
-          </div>
-        ))}
+    <Section
+      action={
         <Link
+          className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           to="/library/problems"
-          className="inline-flex items-center gap-1.5 pt-1 text-sm text-primary hover:underline"
         >
           Browse every problem
           <ArrowRight className="size-3.5" />
         </Link>
-      </CardContent>
-    </Card>
+      }
+      label="Coverage by category"
+    >
+      <p className="measure text-sm text-muted-foreground">
+        Thinnest first, so the top of the list is what you have least of.{' '}
+        {untouched > 0 && `${untouched} of ${rows.length} are still untouched. `}
+        Each one starts a session scoped to it.
+      </p>
+
+      <div className="grid gap-x-10 sm:grid-cols-2">
+        {rows.map((row) => (
+          <Link
+            className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+            key={row.category}
+            to={`/practice?category=${row.category}`}
+          >
+            <span className="truncate">{CATEGORY_LABELS[row.category]}</span>
+            <Progress
+              className="ml-auto h-1 w-16 shrink-0"
+              value={percent(row.solved, row.total)}
+            />
+            <span className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+              {row.solved}/{row.total}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </Section>
   );
 }
 
@@ -202,64 +233,72 @@ function ByDifficulty({
   byDifficulty: DifficultyProgress[];
 }): React.ReactElement {
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base">By difficulty</CardTitle>
-        <CardDescription>
-          Difficulty is not relevance: an easy rep can be daily bread.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3.5">
+    <Section label="By difficulty">
+      <p className="measure text-sm text-muted-foreground">
+        Difficulty is not relevance: an easy rep can be daily bread.
+      </p>
+      <div className="grid gap-6 sm:grid-cols-3">
         {byDifficulty.map((row) => (
-          <div key={row.difficulty} className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
+          <div className="space-y-1.5" key={row.difficulty}>
+            <div className="flex items-baseline justify-between gap-2 text-sm">
               <Link
+                className="capitalize hover:underline"
                 to={`/practice?difficulty=${row.difficulty}`}
-                className="font-medium capitalize hover:underline"
               >
                 {row.difficulty}
               </Link>
-              <span className="text-muted-foreground tabular-nums">
+              <span className="text-xs text-muted-foreground tabular-nums">
                 {row.solved}/{row.total}
               </span>
             </div>
-            <Progress value={percent(row.solved, row.total)} />
+            <Progress className="h-1" value={percent(row.solved, row.total)} />
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </Section>
   );
 }
 
-function RecentActivity({ progress }: { progress: ProgressResponse }): React.ReactElement {
+/**
+ * A timestamp is only worth printing when it differs from the row above it.
+ * Answers arrive in bursts, so a session's worth of attempts would otherwise be
+ * a column of identical "just now" against nothing to compare it to.
+ */
+function RecentActivity({ attempts }: { attempts: RecentAttempt[] }): React.ReactElement {
+  const stamps = attempts.map((attempt) => relativeTime(attempt.createdAt));
+
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base">Recent activity</CardTitle>
-        <CardDescription>The last answers you gave.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        {progress.recentAttempts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing yet.</p>
-        ) : (
-          progress.recentAttempts.map((attempt) => (
-            <Link
-              key={attempt.id}
-              to={`/problems/${attempt.slug}`}
-              className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted"
-            >
-              <span className="truncate font-medium">{attempt.title}</span>
-              <span className="flex shrink-0 items-center gap-3">
-                <Badge variant={VERDICT_BADGE[attempt.verdict]}>{attempt.verdict}</Badge>
-                <span className="w-20 text-right text-xs text-muted-foreground">
-                  {relativeTime(attempt.createdAt)}
-                </span>
-              </span>
-            </Link>
-          ))
-        )}
-      </CardContent>
-    </Card>
+    <Section label="Recent activity">
+      {attempts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nothing yet.</p>
+      ) : (
+        <ol>
+          {attempts.map((attempt, index) => {
+            const stamp = stamps[index] === stamps[index - 1] ? '' : stamps[index];
+
+            return (
+              <li key={attempt.id}>
+                <Link
+                  className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted"
+                  to={`/problems/${attempt.slug}`}
+                >
+                  <span
+                    className={cn('size-1.5 shrink-0 rounded-full', VERDICT_DOT[attempt.verdict])}
+                  />
+                  <span className="truncate">{attempt.title}</span>
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    {attempt.verdict}
+                  </span>
+                  <span className="w-20 shrink-0 text-right text-xs text-muted-foreground">
+                    {stamp}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </Section>
   );
 }
 
@@ -276,7 +315,7 @@ function ResetPanel(): React.ReactElement {
   });
 
   return (
-    <Card className="border-dashed">
+    <Card className="border-dashed shadow-none">
       <CardContent className="flex flex-wrap items-center gap-3 p-5">
         <div className="mr-auto">
           <p className="text-sm font-medium">Start over</p>
@@ -287,27 +326,27 @@ function ResetPanel(): React.ReactElement {
         {confirming ? (
           <>
             <Button
-              variant="outline"
-              size="sm"
               disabled={reset.isPending}
               onClick={() => reset.mutate(false)}
+              size="sm"
+              variant="outline"
             >
               Reset statuses only
             </Button>
             <Button
-              variant="destructive"
-              size="sm"
               disabled={reset.isPending}
               onClick={() => reset.mutate(true)}
+              size="sm"
+              variant="destructive"
             >
               Reset everything
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
+            <Button onClick={() => setConfirming(false)} size="sm" variant="ghost">
               Cancel
             </Button>
           </>
         ) : (
-          <Button variant="outline" size="sm" onClick={() => setConfirming(true)}>
+          <Button onClick={() => setConfirming(true)} size="sm" variant="outline">
             <RotateCcw />
             Reset progress…
           </Button>
@@ -318,24 +357,22 @@ function ResetPanel(): React.ReactElement {
 }
 
 function StatTile({
-  label,
-  value,
-  meter,
   footnote,
+  label,
+  meter,
+  value,
 }: {
-  label: string;
-  value: string;
-  meter?: number;
   footnote?: string;
+  label: string;
+  meter?: number;
+  value: string;
 }): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
-        <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
-        {meter !== undefined && <Progress value={meter} className="mt-3" />}
-        {footnote && <p className="mt-2 text-xs text-muted-foreground">{footnote}</p>}
-      </CardContent>
-    </Card>
+    <div className="bg-card p-5">
+      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
+      <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
+      {meter !== undefined && <Progress className="mt-3 h-1" value={meter} />}
+      {footnote && <p className="mt-2 text-xs text-muted-foreground">{footnote}</p>}
+    </div>
   );
 }

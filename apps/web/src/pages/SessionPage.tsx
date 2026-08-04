@@ -12,28 +12,23 @@ import {
   TAGS,
 } from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  CheckCircle2,
-  CircleDashed,
-  PartyPopper,
-  SkipForward,
-  Target,
-} from 'lucide-react';
+import { ArrowRight, CheckCircle2, CircleDashed, SkipForward } from 'lucide-react';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-import { DifficultyBadge, RelevanceBadge } from '@/components/badges';
-import { FilterChip, FilterRow } from '@/components/filters';
+import { ProblemMeta } from '@/components/badges';
+import { FilterChip, FilterRow, FilterSelect } from '@/components/filters';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { api, queryKeys } from '@/lib/api';
 import { describeScope, isScoped } from '@/lib/scope';
 import { formatElapsed, useStartSession } from '@/lib/session';
 
 const SIZES = [5, 10, 20];
+
+/** Matches the problem page: one label style, and it is never full contrast. */
+const LABEL = 'text-xs font-medium tracking-wide text-muted-foreground uppercase';
 
 export function SessionPage(): React.ReactElement {
   const { data, isPending, error } = useQuery({
@@ -56,48 +51,41 @@ function ActiveSession({ session }: { session: SessionResponse }): React.ReactEl
   const complete = session.remaining === 0;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-primary">
-            {complete ? <PartyPopper className="size-5" /> : <Target className="size-5" />}
-            <span className="text-xs font-medium tracking-widest uppercase">
-              {complete ? 'Session complete' : "Today's session"}
-            </span>
-          </div>
-          <CardTitle className="text-2xl">
+    <div className="max-w-2xl space-y-10">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <p className={LABEL}>{complete ? 'Session complete' : "Today's session"}</p>
+          <h1 className="text-3xl font-semibold tracking-tight">
             {complete
               ? `${session.solved} of ${session.total} solved`
               : `${done} of ${session.total} done`}
-          </CardTitle>
-          <CardDescription>
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {isScoped(session.scope) ? `${describeScope(session.scope)}. ` : ''}
             {session.skipped > 0 ? `${session.skipped} skipped. ` : ''}
             {complete
               ? `Done in ${formatElapsed(session.elapsedSeconds)}.`
               : `${formatElapsed(session.elapsedSeconds)} so far.`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Progress value={session.total === 0 ? 0 : (done / session.total) * 100} />
-          <SessionItems items={session.items} />
-          <div className="flex flex-wrap gap-3">
-            {session.nextSlug ? (
-              <Button asChild>
-                <Link to={`/problems/${session.nextSlug}`}>
-                  Continue
-                  <ArrowRight />
-                </Link>
-              </Button>
-            ) : (
-              <FinishButton id={session.id} />
-            )}
-            {session.nextSlug && (
-              <FinishButton id={session.id} variant="outline" label="End session" />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </p>
+        </div>
+        <Progress className="h-1" value={session.total === 0 ? 0 : (done / session.total) * 100} />
+      </div>
+
+      <SessionItems items={session.items} />
+
+      <div className="flex flex-wrap gap-3">
+        {session.nextSlug ? (
+          <Button asChild>
+            <Link to={`/problems/${session.nextSlug}`}>
+              Continue
+              <ArrowRight />
+            </Link>
+          </Button>
+        ) : (
+          <FinishButton id={session.id} />
+        )}
+        {session.nextSlug && <FinishButton id={session.id} variant="ghost" label="End session" />}
+      </div>
     </div>
   );
 }
@@ -106,34 +94,38 @@ function FinishedSession({ session }: { session: SessionResponse }): React.React
   const accuracy = session.total === 0 ? 0 : Math.round((session.solved / session.total) * 100);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-primary">
-            <PartyPopper className="size-5" />
-            <span className="text-xs font-medium tracking-widest uppercase">Last session</span>
-          </div>
-          <CardTitle className="text-2xl">
-            {session.solved} of {session.total} solved
-          </CardTitle>
-          <CardDescription>
-            {session.skipped > 0 ? `${session.skipped} skipped. ` : ''}
-            {accuracy}% in {formatElapsed(session.elapsedSeconds)}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SessionItems items={session.items} />
-        </CardContent>
-      </Card>
-      <StartSession heading="Start another" />
+    <div className="max-w-2xl space-y-10">
+      <div className="space-y-2">
+        <p className={LABEL}>Last session</p>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {session.solved} of {session.total} solved
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {session.skipped > 0 ? `${session.skipped} skipped. ` : ''}
+          {accuracy}% in {formatElapsed(session.elapsedSeconds)}.
+        </p>
+      </div>
+
+      <SessionItems items={session.items} />
+
+      <div className="border-t pt-10">
+        <StartSession heading="Start another" compact />
+      </div>
     </div>
   );
 }
 
+/**
+ * `compact` is the version that sits under a finished session: a label rather
+ * than a second page title, and no description, because the page above it has
+ * already said what a session is.
+ */
 function StartSession({
   heading = "Start today's session",
+  compact = false,
 }: {
   heading?: string;
+  compact?: boolean;
 }): React.ReactElement {
   const [size, setSize] = React.useState(DEFAULT_SESSION_SIZE);
   const [category, setCategory] = React.useState<Category | null>(null);
@@ -143,19 +135,20 @@ function StartSession({
   const start = useStartSession();
 
   return (
-    <Card className="mx-auto max-w-2xl">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Target className="size-4 text-primary" />
-          {heading}
-        </CardTitle>
-        <CardDescription>
-          Pins a fixed set of problems so the list doesn&apos;t shift under you. Due reviews come
-          first, then new material, and solved problems drop out. Tomorrow picks up where today
-          stopped.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div className="max-w-2xl space-y-6">
+      {compact ? (
+        <p className={LABEL}>{heading}</p>
+      ) : (
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
+          <p className="measure text-sm text-muted-foreground">
+            Pins a fixed set of problems so the list doesn&apos;t shift under you. Due reviews come
+            first, then new material, and solved problems drop out. Tomorrow picks up where today
+            stopped.
+          </p>
+        </div>
+      )}
+      <div className="space-y-3">
         <FilterRow label="Problems">
           {SIZES.map((option) => (
             <FilterChip key={option} active={size === option} onClick={() => setSize(option)}>
@@ -164,18 +157,17 @@ function StartSession({
           ))}
         </FilterRow>
         <FilterRow label="Category">
-          <FilterChip active={category === null} onClick={() => setCategory(null)}>
-            Any
-          </FilterChip>
-          {CATEGORIES.map((entry) => (
-            <FilterChip
-              key={entry}
-              active={category === entry}
-              onClick={() => setCategory(category === entry ? null : entry)}
-            >
-              {CATEGORY_LABELS[entry]}
-            </FilterChip>
-          ))}
+          <FilterSelect
+            label="Category"
+            onChange={(value) => setCategory(value === 'all' ? null : value)}
+            options={[
+              { label: 'Any category', value: 'all' },
+              ...[...CATEGORIES]
+                .sort((a, b) => CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b]))
+                .map((entry) => ({ label: CATEGORY_LABELS[entry], value: entry })),
+            ]}
+            value={category ?? 'all'}
+          />
         </FilterRow>
         <FilterRow label="Difficulty">
           <FilterChip active={difficulty === null} onClick={() => setDifficulty(null)}>
@@ -220,8 +212,8 @@ function StartSession({
           <ArrowRight />
         </Button>
         {start.error && <p className="text-sm text-rose-700">{start.error.message}</p>}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -231,7 +223,7 @@ function FinishButton({
   label = 'Finish session',
 }: {
   id: number;
-  variant?: 'default' | 'outline';
+  variant?: 'default' | 'ghost';
   label?: string;
 }): React.ReactElement {
   const queryClient = useQueryClient();
@@ -246,14 +238,19 @@ function FinishButton({
   );
 }
 
+/**
+ * The list is pinned and worked in order, so the only thing a row is for is the
+ * title and whether it is done. Difficulty and relevance are on the problem page
+ * itself; as ten rows of pills they were the loudest thing on the screen.
+ */
 function SessionItems({ items }: { items: SessionItem[] }): React.ReactElement {
   return (
-    <ol className="space-y-1">
+    <ol className="space-y-0.5">
       {items.map((item) => (
         <li key={item.slug}>
           <Link
             to={`/problems/${item.slug}`}
-            className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+            className="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted"
           >
             <ItemIcon status={item.status} />
             <span
@@ -265,11 +262,11 @@ function SessionItems({ items }: { items: SessionItem[] }): React.ReactElement {
             >
               {item.title}
             </span>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {CATEGORY_LABELS[item.category]}
-            </span>
-            <DifficultyBadge difficulty={item.difficulty} />
-            <RelevanceBadge relevance={item.relevance} />
+            <ProblemMeta
+              category={item.category}
+              difficulty={item.difficulty}
+              className="shrink-0"
+            />
           </Link>
         </li>
       ))}

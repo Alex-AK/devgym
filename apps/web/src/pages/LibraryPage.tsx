@@ -21,10 +21,10 @@ const TABS = [
  */
 export function LibraryPage(): React.ReactElement {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Library</h1>
-        <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight">Library</h1>
+        <p className="measure mt-2 text-sm text-muted-foreground">
           Everything there is to practise, when you want something in particular rather than
           whatever the queue deals you.
         </p>

@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import { ErrorState, LoadingState } from '@/components/states';
-import { Card, CardContent } from '@/components/ui/card';
 import { api, queryKeys } from '@/lib/api';
 
 export function HandbookPage(): React.ReactElement {
@@ -19,57 +18,79 @@ export function HandbookPage(): React.ReactElement {
   const written = data.reduce((count, section) => count + section.pages.length, 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Handbook</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+    <div className="space-y-10">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">Handbook</h1>
+        <p className="measure mt-3 text-sm text-muted-foreground">
           Short pages to study from, each one wired to the problems and workouts that make you prove
           you absorbed it. Not exhaustive, and never finished.
         </p>
-      </div>
+      </header>
 
       {written === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            No pages yet. Add one under <code>packages/handbook/content/</code>.
-          </CardContent>
-        </Card>
+        <p className="text-sm text-muted-foreground">
+          No pages yet. Add one under <code>packages/handbook/content/</code>.
+        </p>
       ) : (
-        <div className="grid gap-4">
-          {data.map((section) => (
-            <SectionCard key={section.slug} section={section} />
-          ))}
-        </div>
+        <>
+          {/* Fifteen sections is more than fits on a screen, so the index gets a
+              way in that is not scrolling. */}
+          <nav
+            aria-label="Sections"
+            className="flex flex-wrap gap-x-4 gap-y-1.5 border-y py-3 text-xs text-muted-foreground"
+          >
+            {data.map((section) => (
+              <a key={section.slug} href={`#${section.slug}`} className="hover:text-foreground">
+                {section.title}
+              </a>
+            ))}
+          </nav>
+
+          <div className="space-y-10">
+            {data.map((section) => (
+              <Section key={section.slug} section={section} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function SectionCard({ section }: { section: HandbookSectionSummary }): React.ReactElement {
+/**
+ * The question leads, not the title. You arrive here stuck on something, and
+ * "Why did joining one table to another multiply my rows?" is what you are
+ * scanning for; "What a join actually does" is how the page is filed.
+ */
+function Section({ section }: { section: HandbookSectionSummary }): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <h2 className="text-lg font-medium">{section.title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{section.summary}</p>
+    <section id={section.slug} className="scroll-mt-20 space-y-4">
+      <div className="space-y-1.5 border-b pb-3">
+        <div className="flex items-baseline gap-2.5">
+          <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {section.title}
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {section.pages.length} {section.pages.length === 1 ? 'page' : 'pages'}
+          </span>
+        </div>
+        <p className="measure line-clamp-2 text-sm text-muted-foreground">{section.summary}</p>
+      </div>
 
-        {section.pages.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">Nothing written here yet.</p>
-        ) : (
-          <ul className="mt-4 divide-y border-t">
-            {section.pages.map((page) => (
-              <li key={page.slug} className="py-2.5">
-                <Link
-                  to={`/handbook/${page.section}/${page.slug}`}
-                  className="font-medium hover:underline"
-                >
-                  {page.title}
-                </Link>
-                <p className="mt-0.5 text-sm text-muted-foreground">{page.question}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+      {section.pages.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nothing written here yet.</p>
+      ) : (
+        <ul className="divide-y">
+          {section.pages.map((page) => (
+            <li key={page.slug}>
+              <Link to={`/handbook/${page.section}/${page.slug}`} className="group block py-2.5">
+                <span className="block text-sm group-hover:underline">{page.question}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{page.title}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

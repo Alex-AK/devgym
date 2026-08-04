@@ -6,7 +6,6 @@ import { Link, useParams } from 'react-router-dom';
 
 import { Markdown } from '@/components/Markdown';
 import { ErrorState, LoadingState } from '@/components/states';
-import { Card, CardContent } from '@/components/ui/card';
 import { api, queryKeys } from '@/lib/api';
 
 export function HandbookPageView(): React.ReactElement {
@@ -20,20 +19,27 @@ export function HandbookPageView(): React.ReactElement {
   if (error) return <ErrorState error={error} />;
 
   return (
-    <article className="space-y-8">
+    <article className="measure space-y-10">
       <header>
-        <Link to="/handbook" className="text-sm text-muted-foreground hover:underline">
+        <Link
+          to="/handbook"
+          className="text-xs font-medium tracking-wide text-muted-foreground uppercase hover:text-foreground"
+        >
           {data.sectionTitle}
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{data.title}</h1>
-        <p className="mt-2 text-muted-foreground">{data.question}</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{data.title}</h1>
+        <p className="mt-3 text-lg leading-relaxed text-muted-foreground">{data.question}</p>
       </header>
 
       <Markdown>{data.body}</Markdown>
 
-      <Practise links={data.practiseLinks} />
-      <Sources page={data} />
-      <Neighbours page={data} />
+      {/* Footnotes to the article, not peers of it: one rule separates the three
+          from the page, and nothing separates them from each other. */}
+      <footer className="space-y-8 border-t pt-6">
+        <Practise links={data.practiseLinks} />
+        <Neighbours page={data} />
+        <Sources page={data} />
+      </footer>
     </article>
   );
 }
@@ -42,36 +48,44 @@ function Practise({ links }: { links: HandbookPractiseLink[] }): React.ReactElem
   if (links.length === 0) return null;
 
   return (
-    <Card>
-      <CardContent className="p-5">
-        <h2 className="text-sm font-semibold">Where to practise this</h2>
-        <ul className="mt-3 space-y-2 text-sm">
-          {links.map((link) => (
-            <li key={`${link.kind}-${link.slug}`}>
-              <Link
-                to={link.kind === 'workout' ? `/workouts/${link.slug}` : `/problems/${link.slug}`}
-                className="flex items-center gap-2 hover:underline"
-              >
-                {link.kind === 'workout' ? (
-                  <Dumbbell className="size-4 shrink-0 text-muted-foreground" />
-                ) : (
-                  <Target className="size-4 shrink-0 text-muted-foreground" />
-                )}
-                {link.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <section className="space-y-3">
+      <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        Where to practise this
+      </h2>
+      <ul className="space-y-1.5 text-sm">
+        {links.map((link) => (
+          <li key={`${link.kind}-${link.slug}`}>
+            <Link
+              to={link.kind === 'workout' ? `/workouts/${link.slug}` : `/problems/${link.slug}`}
+              className="group flex items-center gap-2"
+            >
+              {link.kind === 'workout' ? (
+                <Dumbbell className="size-3.5 shrink-0 text-muted-foreground" />
+              ) : (
+                <Target className="size-3.5 shrink-0 text-muted-foreground" />
+              )}
+              <span className="group-hover:underline">{link.title}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
+/**
+ * Provenance, and it reads as small print. The date a page was last checked is
+ * bookkeeping, so it sits on the label line like a stamp rather than trailing
+ * the citations as a sentence of its own.
+ */
 function Sources({ page }: { page: HandbookPageDetail }): React.ReactElement {
   return (
-    <footer className="border-t pt-4 text-sm text-muted-foreground">
-      <h2 className="font-medium text-foreground">Sources</h2>
-      <ol className="mt-2 space-y-1">
+    <section className="space-y-2 text-xs leading-relaxed text-muted-foreground">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="font-medium tracking-wide uppercase">Sources</h2>
+        <p>Claims checked {page.verified}</p>
+      </div>
+      <ol className="space-y-1">
         {page.sources.map((source) => (
           <li key={source.url}>
             {source.author},{' '}
@@ -86,8 +100,7 @@ function Sources({ page }: { page: HandbookPageDetail }): React.ReactElement {
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-xs">Claims last checked against these sources on {page.verified}.</p>
-    </footer>
+    </section>
   );
 }
 
@@ -95,14 +108,17 @@ function Neighbours({ page }: { page: HandbookPageDetail }): React.ReactElement 
   if (!page.previous && !page.next) return null;
 
   return (
-    <nav className="flex items-center justify-between gap-4 border-t pt-4 text-sm">
+    <nav
+      aria-label="Nearby pages"
+      className="flex items-start justify-between gap-6 text-sm text-muted-foreground"
+    >
       {page.previous ? (
         <Link
           to={`/handbook/${page.previous.section}/${page.previous.slug}`}
-          className="flex items-center gap-1.5 hover:underline"
+          className="group flex items-start gap-1.5 hover:text-foreground"
         >
-          <ArrowLeft className="size-4" />
-          {page.previous.title}
+          <ArrowLeft className="mt-0.5 size-3.5 shrink-0" />
+          <span className="group-hover:underline">{page.previous.title}</span>
         </Link>
       ) : (
         <span />
@@ -110,10 +126,10 @@ function Neighbours({ page }: { page: HandbookPageDetail }): React.ReactElement 
       {page.next && (
         <Link
           to={`/handbook/${page.next.section}/${page.next.slug}`}
-          className="ml-auto flex items-center gap-1.5 hover:underline"
+          className="group ml-auto flex items-start gap-1.5 text-right hover:text-foreground"
         >
-          {page.next.title}
-          <ArrowRight className="size-4" />
+          <span className="group-hover:underline">{page.next.title}</span>
+          <ArrowRight className="mt-0.5 size-3.5 shrink-0" />
         </Link>
       )}
     </nav>
