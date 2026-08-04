@@ -55,6 +55,7 @@ export const code = (language: string, ...lines: string[]): string =>
 export function sqlProblem(draft: {
   slug: string;
   title: string;
+  category?: Category;
   difficulty: Difficulty;
   relevance: Relevance;
   tags?: Tag[];
@@ -69,7 +70,7 @@ export function sqlProblem(draft: {
   return {
     slug: draft.slug,
     title: draft.title,
-    category: 'sql',
+    category: draft.category ?? 'sql',
     difficulty: draft.difficulty,
     relevance: draft.relevance,
     ...(draft.tags ? { tags: draft.tags } : {}),
@@ -100,7 +101,8 @@ export function codeProblem(draft: {
   prompt: string;
   /** Prefilled into the editor: the signature, so the name matches the tests. */
   starter: string;
-  /** Runs before the submission — fixtures the tests and the user can both see. */
+  /** Runs before the submission. Shown read-only above the editor, because the
+   * tests name these values and a failing assertion has to be readable. */
   setup?: string;
   tests: CodeGraderConfig['tests'];
   /** The reference implementation. Must pass its own tests (asserted in the specs). */

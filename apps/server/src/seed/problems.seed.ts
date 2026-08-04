@@ -13,10 +13,12 @@ import { htmlProblems } from './problems/html';
 import { httpProblems } from './problems/http';
 import { jsApiProblems } from './problems/js-apis';
 import { logicProblems } from './problems/logic';
+import { nodeProblems } from './problems/node';
 import { queryParamProblems } from './problems/query-params';
 import { reactProblems } from './problems/react';
 import { securityProblems } from './problems/security';
 import { sqlProblems } from './problems/sql';
+import { sqlPerformanceProblems } from './problems/sql-performance';
 import { systemsProblems } from './problems/systems';
 import { testingProblems } from './problems/testing';
 import type { ProblemDraft, ProblemSeed } from './problems/types';
@@ -44,6 +46,8 @@ const drafts: ProblemDraft[] = [
   ...htmlProblems,
   ...aiEngineeringProblems,
   ...logicProblems,
+  ...nodeProblems,
+  ...sqlPerformanceProblems,
   ...dsaPatternProblems,
 ];
 

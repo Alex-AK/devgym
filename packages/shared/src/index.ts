@@ -22,6 +22,8 @@ export const CATEGORIES = [
   'html',
   'ai-engineering',
   'logic',
+  'node',
+  'sql-performance',
   'dsa-patterns',
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -117,6 +119,8 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   html: 'HTML & Semantics',
   'ai-engineering': 'AI Engineering',
   logic: 'Logic',
+  node: 'Node Runtime',
+  'sql-performance': 'SQL Performance',
   'dsa-patterns': 'DSA Patterns',
 };
 
@@ -147,6 +151,12 @@ export interface ProblemDetail extends ProblemSummary {
   canRevealSolution: boolean;
   /** Prefilled editor contents for `js-code` problems. */
   starter: string | null;
+  /**
+   * Fixtures a `js-code` problem's tests are written against, shown read-only
+   * above the editor. The tests name these values, so withholding them makes a
+   * failing assertion unreadable.
+   */
+  setup: string | null;
   /** Present only when solved or the solution has been revealed. */
   solution: string | null;
   explanation: string | null;
