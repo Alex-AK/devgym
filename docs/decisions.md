@@ -314,6 +314,18 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   query actually sent makes the failure message the teaching, and it separates an index that exists
   from an index the planner chooses, which is the distinction the exercise is about.
 
+- **That rule binds this repo's own suite too, and `workouts.spec.ts` was breaking it.** The proof
+  that running one checkpoint beats running all four was `one.durationMs < full.durationMs`: two
+  wall-clock measurements taken minutes apart, on a machine also running the rest of `pnpm verify`.
+  It inverted repeatedly (4000 against 3583, 4275 against 3155) on whichever workout happened to sort
+  first, so every red run had to be triaged before it could be dismissed. A wider margin would only
+  have made it rarer. The run already carries a count of the work it did, because vitest's report
+  gives every checkpoint its test total and a carried-over result is flagged `stale`, so the
+  assertion is now that a one-checkpoint run executed fewer tests than a full one. That is the
+  mechanism rather than a proxy for it: what `only` does is hand vitest one suite instead of every
+  suite. **Nothing in this repo asserts on elapsed time**, and a contract that seems to need it is a
+  contract with a countable version nobody has looked for yet.
+
 - **Fakes keep the awkward semantics of the real thing.** The fake Redis is worth having because
   `incr` creates a key with no deadline, and because `ttl` answers -1 for "no deadline" against -2
   for "no key". A fake that smoothed those over would teach an API that does not exist.
@@ -775,6 +787,25 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   about, and the reps that would benefit are the ones whose lesson is ordering, which a grader
   observes no better than a reader does. **A rep about a Node API that must actually execute belongs
   in a workout**, where the real runtime is already there.
+
+- **The code runner has two budgets, because a script holding the thread and a test waiting on a
+  timer are not the same problem.** `CODE_TIMEOUT_MS` is one second and bounds synchronous
+  execution, which is what stops `while (true) {}`. `SETTLE_TIMEOUT_MS` is three seconds, bounds an
+  awaited test, and caps any delay the submission asks a timer for, so nothing it schedules can
+  outlive the deadline that would report it. One number used to do both, which meant `code-debounce`
+  spent a tenth of the guard against endless loops simply doing its job: it sleeps around 110ms on
+  purpose, because a debounce that cannot use real timers is not a debounce.
+
+- **Those sleeps were suspected of being the flake and are not, and the reasoning is the rule for
+  the next rep about timers.** Node runs expired timers in expiry order and drains microtasks after
+  each callback, so a starved loop delays every timer and reorders none. Each sleep therefore sits
+  on the settled side of the delay it waits out or waits through, and no pair of them is a race.
+  Measured rather than argued: 872 grades run under three concurrent server suites plus every
+  `pnpm verify` check, load that stretched the suite from 83s to 206s, produced no failures, a worst
+  grade of 191ms against 110ms nominal, and a worst loop stall near 70ms against a three-second
+  deadline. **So a js-code test may sleep on a real timer, provided the sleep is not racing another
+  timer**, and a rep that would need one to win a race is asking for a fake clock and therefore for
+  a workout.
 
 - **`ts-type` asserts on type identity, not on assignability, and the gap between them is the
   `close` verdict.** Two types being assignable in both directions is a weaker claim than being the
