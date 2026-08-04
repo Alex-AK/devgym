@@ -1,7 +1,7 @@
 ---
 title: Dependency injection
 question: Why is my injected service undefined when the file plainly imports it?
-order: 3
+order: 5
 practise:
   - auth-guard-nestjs
 sources:

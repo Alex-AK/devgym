@@ -3,6 +3,10 @@ title: Reading EXPLAIN
 question: The query is slow. What is the plan actually telling me?
 order: 3
 practise:
+  - sqlperf-plan-scan-vs-search
+  - sqlperf-plan-covering-index
+  - sqlperf-plan-temp-btree-sort
+  - sqlperf-plan-correlated-subquery
   - slow-list-endpoint-kysely
   - orders-report-typeorm
 sources:

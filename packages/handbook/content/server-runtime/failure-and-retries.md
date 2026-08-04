@@ -1,7 +1,7 @@
 ---
 title: Failure and retries
 question: The call failed. Do I send it again, and how long do I wait first?
-order: 4
+order: 6
 practise:
   - http-retry-amplification
   - http-timeout-fetch
@@ -12,7 +12,7 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics, safe and idempotent methods'
-    url: https://www.rfc-editor.org/rfc/rfc9110#section-9.2
+    url: https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2
   - author: MDN
     title: Retry-After
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Retry-After

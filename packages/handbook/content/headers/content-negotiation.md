@@ -5,10 +5,11 @@ order: 2
 practise:
   - http-post-json
   - http-content-type-charset
+  - node-content-length-bytes
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics, section 12'
-    url: https://www.rfc-editor.org/rfc/rfc9110#section-12
+    url: https://www.rfc-editor.org/rfc/rfc9110.html#section-12
   - author: MDN
     title: Content negotiation
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Content_negotiation
@@ -23,7 +24,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching
   - author: IETF
     title: 'RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format'
-    url: https://www.rfc-editor.org/rfc/rfc8259
+    url: https://www.rfc-editor.org/rfc/rfc8259.html
 verified: 2026-08-01
 ---
 

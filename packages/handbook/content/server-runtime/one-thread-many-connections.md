@@ -5,6 +5,8 @@ order: 1
 practise:
   - js-microtask-order
   - js-await-in-loop
+  - node-await-does-not-yield
+  - node-worker-vs-child-process
   - code-promise-pool
   - slow-list-endpoint-kysely
 sources:

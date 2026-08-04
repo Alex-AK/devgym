@@ -5,6 +5,8 @@ order: 5
 practise:
   - http-offset-cost
   - http-pagination-cursor
+  - sqlperf-keyset-page
+  - sqlperf-count-total-cost
   - slow-list-endpoint-kysely
   - product-search-drizzle
   - records-sorting-drizzle

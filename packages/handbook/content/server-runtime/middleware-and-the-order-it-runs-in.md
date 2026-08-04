@@ -1,7 +1,7 @@
 ---
 title: Middleware and the order it runs in
 question: My middleware is registered and it never runs. Where in the file does it have to go?
-order: 6
+order: 8
 practise:
   - security-limiter-after-routes
   - http-webhook-raw-body
@@ -10,13 +10,13 @@ practise:
 sources:
   - author: Express
     title: Writing middleware for use in Express apps
-    url: https://expressjs.com/en/guide/writing-middleware.html
+    url: https://expressjs.com/en/guide/writing-middleware/
   - author: Express
     title: Using Express middleware
-    url: https://expressjs.com/en/guide/using-middleware.html
+    url: https://expressjs.com/en/guide/using-middleware/
   - author: Express
     title: Error handling
-    url: https://expressjs.com/en/guide/error-handling.html
+    url: https://expressjs.com/en/guide/error-handling/
   - author: NestJS
     title: Middleware
     url: https://docs.nestjs.com/middleware

@@ -1,7 +1,7 @@
 ---
 title: Three frameworks, one request
 question: Express, Nest or FastAPI, which parts of the route is each one writing for me?
-order: 7
+order: 9
 practise:
   - jwt-auth-express
   - auth-guard-nestjs
@@ -11,7 +11,7 @@ practise:
 sources:
   - author: Express
     title: Using middleware
-    url: https://expressjs.com/en/guide/using-middleware.html
+    url: https://expressjs.com/en/guide/using-middleware/
   - author: Express
     title: express.json()
     url: https://expressjs.com/en/5x/api/express/
@@ -20,7 +20,7 @@ sources:
     url: https://expressjs.com/en/5x/api/response/
   - author: Express
     title: Error handling
-    url: https://expressjs.com/en/guide/error-handling.html
+    url: https://expressjs.com/en/guide/error-handling/
   - author: Express
     title: Error handling (4.x)
     url: https://expressjs.com/en/4x/guide/error-handling/

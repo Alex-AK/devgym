@@ -1,7 +1,7 @@
 ---
 title: The life of a request in a framework
 question: What runs before my controller method, and where does the check I keep forgetting belong?
-order: 2
+order: 4
 practise:
   - auth-guard-nestjs
   - http-401-vs-403
@@ -22,7 +22,7 @@ sources:
     url: https://docs.nestjs.com/pipes
   - author: IETF
     title: 'RFC 9110: HTTP Semantics, client error 4xx'
-    url: https://www.rfc-editor.org/rfc/rfc9110#section-15.5
+    url: https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5
 verified: 2026-08-01
 ---
 

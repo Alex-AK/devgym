@@ -5,6 +5,7 @@ order: 1
 practise:
   - ai-stream-partial-chunk
   - ai-stream-error-after-200
+  - node-chunk-splits-a-character
   - http-sse-content-type
   - http-streaming-response
   - live-dashboard-sse

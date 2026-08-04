@@ -5,6 +5,9 @@ order: 8
 practise:
   - sql-not-exists
   - sql-anti-join
+  - sqlperf-exists-not-count
+  - sqlperf-scalar-subquery-to-join
+  - sqlperf-limit-before-join
   - sql-repeat-customers
   - sql-union-cities
   - slow-list-endpoint-kysely
