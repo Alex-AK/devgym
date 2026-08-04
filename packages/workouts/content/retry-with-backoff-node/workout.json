@@ -1,0 +1,40 @@
+{
+  "slug": "retry-with-backoff-node",
+  "title": "Retry with backoff",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no dependencies"
+  },
+  "summary": "A provider went down for ninety seconds, and the calls we made into that window turned into error pages, a spike on their graph and two customers charged twice. Build the client that decides what is worth sending again, how long to wait first, and when to stop.",
+  "focus": ["retries", "timeouts", "backoff", "idempotency"],
+  "editable": ["src/lib/retry.ts"],
+  "checkpoints": [
+    {
+      "id": "worth-retrying",
+      "title": "Only some failures get another attempt",
+      "testFile": "tests/checkpoints/01-only-some-failures-get-another-attempt.test.ts",
+      "hint": "Ask what the downstream actually said. A status you got back is proof it ran your request through, so 429, 502, 503 and 504 are worth another attempt and everything else is the caller's answer. An attempt that came back with no status at all is the ambiguous one, and it goes again only for GET, PUT and DELETE or a request carrying an `idempotency-key` header."
+    },
+    {
+      "id": "wait-between-attempts",
+      "title": "The wait doubles, with jitter",
+      "testFile": "tests/checkpoints/02-the-wait-doubles-with-jitter.test.ts",
+      "hint": "Full jitter multiplies the whole window by `random()`, so a random of 0 means no wait at all and a random of 1 means the whole window. The exponent is the number of waits already made rather than the number of attempts, so the first wait uses `2 ** 0`. `Retry-After` replaces the formula rather than joining it."
+    },
+    {
+      "id": "per-attempt-deadline",
+      "title": "Every attempt gets its own deadline",
+      "testFile": "tests/checkpoints/03-every-attempt-gets-its-own-deadline.test.ts",
+      "hint": "Call `clock.deadline(timeoutMs)` inside the loop, once per `send`, and pass the signal it returns. A signal made before the loop has already fired by the second attempt, which then fails without the downstream ever hearing about it."
+    },
+    {
+      "id": "giving-up",
+      "title": "It gives up, and says why",
+      "testFile": "tests/checkpoints/04-it-gives-up-and-says-why.test.ts",
+      "hint": "Both stopping conditions are asked between attempts rather than inside one. `maxAttempts` counts the first attempt, and the budget question is whether `clock.now()` plus `timeoutMs` still fits inside the deadline you took at the top of `request`, asked after the wait rather than before it."
+    }
+  ]
+}

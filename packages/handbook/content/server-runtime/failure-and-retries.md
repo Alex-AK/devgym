@@ -9,6 +9,7 @@ practise:
   - http-429-backoff
   - http-idempotency-key
   - code-retry
+  - retry-with-backoff-node
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics, safe and idempotent methods'
