@@ -1,0 +1,41 @@
+{
+  "slug": "approval-log-sqlite",
+  "title": "The log says it was approved",
+  "kind": "bug-hunt",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no framework",
+    "database": "sqlite via better-sqlite3"
+  },
+  "summary": "July's compliance export lists 41 approvals. The expenses table has 39 rows approved that month, and only 38 of those appear in the log at all. Get the two to agree, including when a month-end run stops half way through.",
+  "focus": ["transactions", "atomicity", "sqlite", "audit logging"],
+  "editable": ["src/server/approvals.ts", "src/server/audit.ts"],
+  "checkpoints": [
+    {
+      "id": "logs-what-it-changed",
+      "title": "An approval logs the status it changed from",
+      "testFile": "tests/checkpoints/01-an-approval-logs-what-it-changed.test.ts",
+      "hint": "The log row describes a transition, so `from_status` is the status the expense had before the update. Read it once, before you overwrite it, and log what you read."
+    },
+    {
+      "id": "only-pending-is-approvable",
+      "title": "Only a pending expense can be approved",
+      "testFile": "tests/checkpoints/02-only-a-pending-expense-can-be-approved.test.ts",
+      "hint": "An UPDATE with `WHERE status = 'pending'` can match nothing, and `run()` reports that as `changes: 0`. A log row written without looking is a log row for a decision that never happened."
+    },
+    {
+      "id": "interrupted-approval-leaves-nothing",
+      "title": "An interrupted approval leaves neither the change nor the log row",
+      "testFile": "tests/checkpoints/03-an-interrupted-approval-leaves-nothing.test.ts",
+      "hint": "The change and the log row are one unit of work: `db.transaction(fn)` runs `fn` between BEGIN and COMMIT and undoes all of it if `fn` throws. better-sqlite3 is synchronous, so `fn` has to be too, and so does everything it calls."
+    },
+    {
+      "id": "interrupted-batch-approves-nothing",
+      "title": "An interrupted batch approves nothing at all",
+      "testFile": "tests/checkpoints/04-an-interrupted-batch-approves-nothing.test.ts",
+      "hint": "The batch is one unit of work, not one per expense: a run that stops at the third has to leave the first two alone. Wrapping the whole loop is safe even where each approval already opens a transaction of its own, because a nested one becomes a SAVEPOINT."
+    }
+  ]
+}

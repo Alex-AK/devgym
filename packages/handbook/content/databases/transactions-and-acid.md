@@ -3,6 +3,7 @@ title: Transactions and ACID
 question: The whole handler is wrapped in a transaction. What can still go wrong?
 order: 7
 practise:
+  - approval-log-sqlite
   - idempotent-payments-express
   - sys-idempotency
   - debug-fire-and-forget-work
