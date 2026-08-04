@@ -28,7 +28,7 @@
       "url": "https://modern-sql.com/concept/null"
     }
   ],
-  "verified": "2026-08-02",
+  "verified": "2026-08-03",
   "cards": [
     {
       "id": "inner-against-left",
@@ -48,7 +48,7 @@
     {
       "id": "is-null-is-the-anti-join",
       "front": "Which test on a right-hand column survives a `LEFT JOIN`, and what does it get you?",
-      "back": "`IS NULL`, and it gets you the anti-join: the left rows that matched nothing. Every other `WHERE` test on that side deletes the padded rows the `LEFT` was for. Test a column that is never NULL in a real row, meaning the primary key. On the practice database `WHERE r.id IS NULL` finds the 3 never-reviewed books; `WHERE r.comment IS NULL` returns 12."
+      "back": "`IS NULL`, and it gets you the anti-join: the left rows that matched nothing. Every other `WHERE` test on that side deletes the padded rows the `LEFT` was for. Test a column that is never NULL in a real row, meaning the primary key. On the practice database `WHERE r.id IS NULL` finds the 3 never-reviewed books; `WHERE r.comment IS NULL` returns 13, the 3 plus 10 reviews that have no comment."
     },
     {
       "id": "full-outer-join",

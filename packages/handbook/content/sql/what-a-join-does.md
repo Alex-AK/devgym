@@ -23,7 +23,7 @@ sources:
   - author: Markus Winand
     title: NULL
     url: https://modern-sql.com/concept/null
-verified: 2026-08-01
+verified: 2026-08-03
 ---
 
 Every query and every number on this page was run against Hone's practice database, which is
@@ -37,7 +37,9 @@ that satisfies the condition. Postgres states it directly: "For each row R1 of T
 has a row for each row in T2 that satisfies the join condition with R1." SQLite describes the same
 thing from the other end. Every join starts as the cartesian product of the two sides, and the `ON`
 expression is a filter over that product: "Only rows for which the expression evaluates to true are
-included."
+included." `CROSS JOIN` is that product with the filter left off, so 10 customers and 20 orders give
+200 rows. Postgres lists its other two spellings, `FROM T1 INNER JOIN T2 ON TRUE` and the comma form
+`FROM T1, T2`, as equivalent to it.
 
 So the row count you get back is the number of matching pairs, not the number of rows in the table
 you started from. A customer with three orders is three rows. An order with three line items is
