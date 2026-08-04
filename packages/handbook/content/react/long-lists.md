@@ -3,6 +3,7 @@ title: Long lists
 question: Twenty thousand rows are in the DOM and scrolling stutters. Windowing, or pagination?
 order: 6
 practise:
+  - import-review-react
   - react-list-windowing
   - react-index-key
   - react-list-state-index

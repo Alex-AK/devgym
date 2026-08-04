@@ -1,0 +1,40 @@
+{
+  "slug": "import-review-react",
+  "title": "The rows I marked came back unmarked",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "hard",
+  "relevance": "occasional",
+  "stack": {
+    "client": "react + react-window"
+  },
+  "summary": "Three complaints about the review screen for a 10,000-row import: the rows marked to skip come back unmarked once you have scrolled past them, the keyboard loses its place, and the rows carrying errors run into the row below.",
+  "focus": ["windowing", "react state", "focus management", "keyboard"],
+  "editable": ["src/client/ImportReview.tsx"],
+  "checkpoints": [
+    {
+      "id": "dom-holds-a-window",
+      "title": "The DOM holds a window, and says how long the file is",
+      "testFile": "tests/checkpoints/01-the-dom-holds-a-window.test.tsx",
+      "hint": "The list hands every row an ariaAttributes prop carrying aria-posinset and aria-setsize. Spread it onto the row element: a handful of rows are in the DOM, and the number a screen reader has to announce is ten thousand."
+    },
+    {
+      "id": "marked-row-stays-marked",
+      "title": "A marked row stays marked",
+      "testFile": "tests/checkpoints/02-a-marked-row-stays-marked.test.tsx",
+      "hint": "A row component is unmounted the moment it scrolls out of range, and the useState inside it goes with it. Which rows are marked has to be held by something that outlives a row, and the count in the header has to be read off that same thing."
+    },
+    {
+      "id": "cursor-survives-a-scroll",
+      "title": "The cursor survives a scroll",
+      "testFile": "tests/checkpoints/03-the-cursor-survives-a-scroll.test.tsx",
+      "hint": "Hold the cursor as an index in state and give only that row tabIndex={0}. Then put the focus back on that row when it mounts again, which is what makes it survive being recycled. Doing that on every mount would take the focus on load, so the list also has to know whether the keyboard was in it."
+    },
+    {
+      "id": "row-fits-its-errors",
+      "title": "A row is as tall as its errors",
+      "testFile": "tests/checkpoints/04-a-row-is-as-tall-as-its-errors.test.tsx",
+      "hint": "rowHeight takes a function of the index, not only a number. The list works out where all ten thousand rows sit before any of them are on screen, so each height has to come from the row's own data."
+    }
+  ]
+}
