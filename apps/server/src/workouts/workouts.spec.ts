@@ -3,6 +3,7 @@ import { symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type { WorkoutRun } from '@hone/shared';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { listManifests, workoutDir } from './workout-content';
@@ -37,6 +38,17 @@ function build(slug: string, from: 'files' | 'solution'): string {
   return workspace;
 }
 
+/**
+ * How many tests a run actually executed. Carried-over results are somebody
+ * else's work, so they do not count, and the numbers come from vitest's own
+ * report rather than from a clock.
+ */
+function testsExecuted(run: WorkoutRun): number {
+  return run.checkpoints
+    .filter((checkpoint) => !checkpoint.stale)
+    .reduce((total, checkpoint) => total + checkpoint.testsTotal, 0);
+}
+
 describe('workout content', () => {
   it('finds at least one workout', () => {
     expect(manifests.length).toBeGreaterThan(0);
@@ -56,8 +68,9 @@ describe('workout content', () => {
    * the per-workout suites below already prove every checkpoint runs.
    */
   describe('a single checkpoint', () => {
-    // The most checkpoints available, so the timing assertion below has the
-    // widest margin it can get and does not turn into a coin flip in CI.
+    // The most checkpoints available, so there is the most for a one-checkpoint
+    // run to leave alone: the stale count and the tests-executed gap both get
+    // their widest margin from it.
     const manifest = [...manifests].sort((a, b) => b.checkpoints.length - a.checkpoints.length)[0];
 
     it('runs alone, and carries the rest forward marked stale', async () => {
@@ -81,8 +94,12 @@ describe('workout content', () => {
       // The whole point of the field: a carried-over pass is not a fresh one, so
       // one checkpoint can never total up to a cleared workout.
       expect(one.passedCount).toBe(1);
-      // And it is actually cheaper, which is the reason the feature exists.
-      expect(one.durationMs).toBeLessThan(full.durationMs);
+      // And it did less work, which is the reason the feature exists. Counted,
+      // not timed: the two runs are minutes apart on a machine also running the
+      // rest of `pnpm verify`, so comparing `durationMs` compares the load. What
+      // the feature actually does is hand vitest one suite instead of every
+      // suite, and the report says how many tests that came to.
+      expect(testsExecuted(one)).toBeLessThan(testsExecuted(full));
     }, 240_000);
 
     it('reports not-run for the others when there is nothing to carry', async () => {
