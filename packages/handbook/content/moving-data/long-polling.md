@@ -10,10 +10,10 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 6202: Known Issues and Best Practices for the Use of Long Polling and Streaming in Bidirectional HTTP'
-    url: https://www.rfc-editor.org/rfc/rfc6202
+    url: https://www.rfc-editor.org/rfc/rfc6202.html
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'
-    url: https://www.rfc-editor.org/rfc/rfc9110
+    url: https://www.rfc-editor.org/rfc/rfc9110.html
   - author: MDN
     title: 'AbortSignal: timeout() static method'
     url: https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static

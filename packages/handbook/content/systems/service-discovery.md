@@ -19,7 +19,7 @@ sources:
     url: https://developer.hashicorp.com/consul/docs
   - author: IETF
     title: 'RFC 1035: Domain Names, Implementation and Specification'
-    url: https://www.rfc-editor.org/rfc/rfc1035
+    url: https://www.rfc-editor.org/rfc/rfc1035.html
 verified: 2026-08-01
 ---
 

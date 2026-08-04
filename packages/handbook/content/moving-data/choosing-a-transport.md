@@ -11,13 +11,13 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'
-    url: https://www.rfc-editor.org/rfc/rfc9110
+    url: https://www.rfc-editor.org/rfc/rfc9110.html
   - author: WHATWG
     title: 'HTML Standard: Server-sent events'
     url: https://html.spec.whatwg.org/multipage/server-sent-events.html
   - author: IETF
     title: 'RFC 6455: The WebSocket Protocol'
-    url: https://www.rfc-editor.org/rfc/rfc6455
+    url: https://www.rfc-editor.org/rfc/rfc6455.html
   - author: MDN
     title: WebSockets API
     url: https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API

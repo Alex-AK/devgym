@@ -29,7 +29,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Strict-Transport-Security
   - author: IETF
     title: 'RFC 6797: HTTP Strict Transport Security (HSTS)'
-    url: https://www.rfc-editor.org/rfc/rfc6797
+    url: https://www.rfc-editor.org/rfc/rfc6797.html
   - author: Chromium
     title: HSTS Preload List Submission
     url: https://hstspreload.org/
@@ -44,7 +44,7 @@ sources:
     url: https://www.w3.org/TR/referrer-policy/
   - author: MDN
     title: Subresource Integrity
-    url: https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
+    url: https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Subresource_Integrity
   - author: MDN
     title: X-XSS-Protection header
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-XSS-Protection

@@ -22,7 +22,7 @@ sources:
     url: https://nginx.org/en/docs/http/ngx_http_proxy_module.html
   - author: IETF
     title: 'RFC 5861: HTTP Cache-Control Extensions for Stale Content'
-    url: https://www.rfc-editor.org/rfc/rfc5861
+    url: https://www.rfc-editor.org/rfc/rfc5861.html
   - author: Marc Brooker (AWS)
     title: Exponential backoff and jitter
     url: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/

@@ -13,13 +13,13 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts
   - author: MDN
     title: gap
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/gap
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/gap
   - author: MDN
     title: place-items
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/place-items
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/place-items
   - author: MDN
     title: CSS container queries
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Containment/Container_queries
   - author: W3C
     title: CSS Box Sizing Module Level 3
     url: https://www.w3.org/TR/css-sizing-3/

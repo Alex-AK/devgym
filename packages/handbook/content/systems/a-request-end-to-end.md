@@ -20,7 +20,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/preconnect
   - author: IETF
     title: 'RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3'
-    url: https://www.rfc-editor.org/rfc/rfc8446
+    url: https://www.rfc-editor.org/rfc/rfc8446.html
   - author: web.dev
     title: Time to First Byte (TTFB)
     url: https://web.dev/articles/ttfb

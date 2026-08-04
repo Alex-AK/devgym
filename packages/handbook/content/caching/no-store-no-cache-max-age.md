@@ -16,7 +16,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control
   - author: IETF
     title: 'RFC 9111: HTTP Caching'
-    url: https://www.rfc-editor.org/rfc/rfc9111
+    url: https://www.rfc-editor.org/rfc/rfc9111.html
   - author: web.dev
     title: Prevent unnecessary network requests with the HTTP Cache
     url: https://web.dev/articles/http-cache

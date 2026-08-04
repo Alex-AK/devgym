@@ -9,7 +9,7 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 9111: HTTP Caching'
-    url: https://www.rfc-editor.org/rfc/rfc9111
+    url: https://www.rfc-editor.org/rfc/rfc9111.html
   - author: MDN
     title: Vary
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Vary

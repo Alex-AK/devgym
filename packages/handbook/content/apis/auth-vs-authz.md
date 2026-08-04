@@ -10,7 +10,7 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'
-    url: https://www.rfc-editor.org/rfc/rfc9110
+    url: https://www.rfc-editor.org/rfc/rfc9110.html
   - author: IETF
     title: 'RFC 7519: JSON Web Token (JWT)'
     url: https://www.rfc-editor.org/rfc/rfc7519.html

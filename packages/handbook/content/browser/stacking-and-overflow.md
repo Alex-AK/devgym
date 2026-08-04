@@ -14,13 +14,13 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Positioned_layout/Stacking_context
   - author: MDN
     title: Layout and the containing block
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_display/Containing_block
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Display/Containing_block
   - author: MDN
     title: Mastering margin collapsing
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_box_model/Mastering_margin_collapsing
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Box_model/Margin_collapsing
   - author: MDN
     title: overflow
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/overflow
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/overflow
   - author: W3C
     title: CSS Flexible Box Layout Module Level 1
     url: https://www.w3.org/TR/css-flexbox-1/
@@ -29,16 +29,16 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Glossary/Top_layer
   - author: MDN
     title: visibility
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/visibility
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/visibility
   - author: MDN
     title: transition-behavior
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/transition-behavior
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/transition-behavior
   - author: MDN
     title: '@starting-style'
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/@starting-style
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@starting-style
   - author: MDN
     title: overlay
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/overlay
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/overlay
   - author: Una Kravets
     title: 'Now in Baseline: animating entry effects'
     url: https://web.dev/blog/baseline-entry-animations

@@ -23,7 +23,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/setCustomValidity
   - author: MDN
     title: ':user-invalid'
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/:user-invalid
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:user-invalid
   - author: MDN
     title: The autocomplete HTML attribute
     url: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/autocomplete

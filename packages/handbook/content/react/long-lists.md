@@ -23,7 +23,7 @@ sources:
     url: https://react.dev/reference/react/useState
   - author: MDN
     title: content-visibility
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/content-visibility
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/content-visibility
   - author: MDN
     title: 'Element: scrollTop property'
     url: https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop

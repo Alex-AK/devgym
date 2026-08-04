@@ -14,7 +14,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/tabindex
   - author: MDN
     title: ':focus-visible'
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:focus-visible
   - author: MDN
     title: The dialog element
     url: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog
@@ -29,7 +29,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/API/Document/activeElement
   - author: MDN
     title: order
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/order
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/order
   - author: WHATWG
     title: HTML Standard, the dialog element
     url: https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element

@@ -16,7 +16,7 @@ sources:
     url: https://learn.microsoft.com/en-us/azure/architecture/guide/design-principles/scale-out
   - author: Kubernetes
     title: Horizontal Pod Autoscaling
-    url: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+    url: https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/
   - author: nginx
     title: Module ngx_http_upstream_module
     url: https://nginx.org/en/docs/http/ngx_http_upstream_module.html

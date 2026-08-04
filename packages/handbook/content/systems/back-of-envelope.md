@@ -10,7 +10,7 @@ sources:
     url: https://github.com/donnemartin/system-design-primer
   - author: Peter Norvig
     title: Teach Yourself Programming in Ten Years
-    url: https://norvig.com/21-days.html
+    url: https://www.norvig.com/21-days.html
   - author: Colin Scott
     title: Latency Numbers Every Programmer Should Know
     url: https://colin-scott.github.io/personal_website/research/interactive_latency.html

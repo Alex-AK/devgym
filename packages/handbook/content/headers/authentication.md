@@ -16,10 +16,10 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie
   - author: IETF
     title: 'RFC 6265: HTTP State Management Mechanism'
-    url: https://www.rfc-editor.org/rfc/rfc6265
+    url: https://www.rfc-editor.org/rfc/rfc6265.html
   - author: IETF
     title: 'RFC 6750: The OAuth 2.0 Authorization Framework, Bearer Token Usage'
-    url: https://www.rfc-editor.org/rfc/rfc6750
+    url: https://www.rfc-editor.org/rfc/rfc6750.html
   - author: WHATWG
     title: Fetch Standard
     url: https://fetch.spec.whatwg.org/

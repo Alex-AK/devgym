@@ -12,13 +12,13 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Forwarded-For
   - author: IETF
     title: 'RFC 7239: Forwarded HTTP Extension'
-    url: https://www.rfc-editor.org/rfc/rfc7239
+    url: https://www.rfc-editor.org/rfc/rfc7239.html
   - author: MDN
     title: Forwarded
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Forwarded
   - author: Express
     title: Express behind proxies
-    url: https://expressjs.com/en/guide/behind-proxies.html
+    url: https://expressjs.com/en/guide/behind-proxies/
   - author: Express
     title: 'Express 5.x API: Request'
     url: https://expressjs.com/en/5x/api/request/

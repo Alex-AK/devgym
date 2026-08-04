@@ -18,7 +18,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control
   - author: IETF
     title: 'RFC 5861: HTTP Cache-Control Extensions for Stale Content'
-    url: https://www.rfc-editor.org/rfc/rfc5861
+    url: https://www.rfc-editor.org/rfc/rfc5861.html
   - author: MDN
     title: 'Window: localStorage property'
     url: https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage

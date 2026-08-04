@@ -12,16 +12,16 @@ sources:
     url: https://www.w3.org/TR/css-cascade-5/
   - author: MDN
     title: Specificity
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascade/Specificity
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascade/Specificity
   - author: MDN
     title: '@layer'
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/@layer
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@layer
   - author: MDN
     title: box-sizing
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/box-sizing
   - author: MDN
     title: length
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/length
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/length
   - author: web.dev
     title: The cascade
     url: https://web.dev/learn/css/the-cascade

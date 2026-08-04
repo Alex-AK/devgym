@@ -13,7 +13,7 @@ sources:
     url: https://github.com/apache/kafka/blob/trunk/docs/design/design.md
   - author: Apache Kafka
     title: Introduction
-    url: https://kafka.apache.org/intro
+    url: https://kafka.apache.org/intro/
   - author: RabbitMQ
     title: Consumer acknowledgements and publisher confirms
     url: https://www.rabbitmq.com/docs/confirms

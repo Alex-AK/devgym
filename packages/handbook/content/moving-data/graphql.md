@@ -22,7 +22,7 @@ sources:
     url: https://github.com/graphql/dataloader
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'
-    url: https://www.rfc-editor.org/rfc/rfc9110
+    url: https://www.rfc-editor.org/rfc/rfc9110.html
 verified: 2026-08-01
 ---
 

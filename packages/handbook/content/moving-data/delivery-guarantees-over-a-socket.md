@@ -11,7 +11,7 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 6455: The WebSocket Protocol'
-    url: https://www.rfc-editor.org/rfc/rfc6455
+    url: https://www.rfc-editor.org/rfc/rfc6455.html
   - author: WHATWG
     title: WebSockets Standard
     url: https://websockets.spec.whatwg.org/

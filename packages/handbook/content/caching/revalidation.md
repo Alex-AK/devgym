@@ -17,10 +17,10 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/ETag
   - author: IETF
     title: 'RFC 9110: HTTP Semantics'
-    url: https://www.rfc-editor.org/rfc/rfc9110
+    url: https://www.rfc-editor.org/rfc/rfc9110.html
   - author: IETF
     title: 'RFC 5861: HTTP Cache-Control Extensions for Stale Content'
-    url: https://www.rfc-editor.org/rfc/rfc5861
+    url: https://www.rfc-editor.org/rfc/rfc5861.html
 verified: 2026-08-01
 ---
 

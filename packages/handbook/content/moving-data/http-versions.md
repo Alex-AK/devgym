@@ -8,16 +8,16 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 9112: HTTP/1.1'
-    url: https://www.rfc-editor.org/rfc/rfc9112
+    url: https://www.rfc-editor.org/rfc/rfc9112.html
   - author: IETF
     title: 'RFC 9113: HTTP/2'
-    url: https://www.rfc-editor.org/rfc/rfc9113
+    url: https://www.rfc-editor.org/rfc/rfc9113.html
   - author: IETF
     title: 'RFC 9114: HTTP/3'
-    url: https://www.rfc-editor.org/rfc/rfc9114
+    url: https://www.rfc-editor.org/rfc/rfc9114.html
   - author: IETF
     title: 'RFC 9000: QUIC: A UDP-Based Multiplexed and Secure Transport'
-    url: https://www.rfc-editor.org/rfc/rfc9000
+    url: https://www.rfc-editor.org/rfc/rfc9000.html
   - author: MDN
     title: Head-of-line blocking
     url: https://developer.mozilla.org/en-US/docs/Glossary/Head_of_line_blocking

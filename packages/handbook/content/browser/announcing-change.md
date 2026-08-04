@@ -22,7 +22,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-invalid
   - author: MDN
     title: prefers-reduced-motion
-    url: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
+    url: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion
   - author: W3C
     title: 'Understanding Success Criterion 1.4.3: Contrast (Minimum)'
     url: https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html

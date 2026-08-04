@@ -9,10 +9,10 @@ practise:
 sources:
   - author: IETF
     title: 'RFC 9110: Conditional Requests'
-    url: https://www.rfc-editor.org/rfc/rfc9110#section-13
+    url: https://www.rfc-editor.org/rfc/rfc9110.html#section-13
   - author: IETF
     title: 'RFC 9110: Range Requests'
-    url: https://www.rfc-editor.org/rfc/rfc9110#section-14
+    url: https://www.rfc-editor.org/rfc/rfc9110.html#section-14
   - author: MDN
     title: HTTP range requests
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Range_requests

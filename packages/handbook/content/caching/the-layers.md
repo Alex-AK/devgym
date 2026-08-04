@@ -13,7 +13,7 @@ sources:
     url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching
   - author: IETF
     title: 'RFC 9111: HTTP Caching'
-    url: https://www.rfc-editor.org/rfc/rfc9111
+    url: https://www.rfc-editor.org/rfc/rfc9111.html
   - author: web.dev
     title: Service worker caching and HTTP caching
     url: https://web.dev/articles/service-worker-caching-and-http-caching
