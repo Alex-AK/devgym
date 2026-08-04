@@ -393,12 +393,32 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   would have needed. Check what a row assumes exists, not only what it assumes is available as a
   dependency.
 
-- **A workout cannot configure its own test run, which is what rules the reader's timezone out.**
-  `scaffold/vitest.config.ts` is the only config a workspace has, because `files/` is copied into
-  `src/`. Assertions therefore run in whatever zone the reader is in, and a fake clock moves `now`
-  without touching `TZ`. A dated workout has to pin the zone inside its own suites, or write
-  assertions that hold everywhere, which deletes the DST boundary that is usually the lesson. This is
-  the trap already recorded for modules, one layer down.
+- **A workout declares two things about its test run and is handed neither a config file nor a
+  default.** It used to declare nothing: `scaffold/vitest.config.ts` was the only config a workspace
+  had, so assertions ran in the reader's zone and a dated workout could not reach the DST boundary
+  that is usually its lesson. The obvious fix, letting a workout ship its own `vitest.config.ts`,
+  was rejected. That config decides `include`, the timeouts and the reporter, which is to say it
+  decides whether a checkpoint is capable of failing, and a workout that owns it can pass its own
+  suite by configuring the failure away rather than by fixing anything. So the manifest carries an
+  optional `testRun` with a `timezone` and one `setupFile`, and the runner translates the pair onto
+  the spawned process as `TZ` and `HONE_SETUP_FILE`. The scaffold config reads the second and merges
+  it into both projects. A workout still cannot name a suite, widen a timeout or change how results
+  are reported.
+
+- **The zone is set before the vitest process starts, not from inside the run.** Assigning
+  `process.env.TZ` in a setup file was measured and does move `Date` immediately on macOS and Node
+  24, so it looked like it would collapse the surface to one field. It is process state, and the
+  reason not to rely on it is what happens when a worker is reused: with `--no-isolate` and one
+  worker, a suite that set `Pacific/Kiritimati` handed that zone to the next file in the same pid.
+  The scaffold's defaults give every file its own child today, so nothing leaks, but a workout would
+  then be depending on an isolation setting it does not own and cannot see. Setting `TZ` on the spawn
+  is correct whatever the pool does later.
+
+- **A mis-spelled zone is refused rather than run.** `Intl` matches a zone name case insensitively
+  and `TZ` matches the zone database as spelled, so `America/New_york` does not fail: it yields a
+  fixed offset with no DST transition, and a workout about the boundary loses the boundary without
+  anything going red. The loader canonicalises the declared name and refuses it if the spelling
+  changed, which costs a legitimate alias like `Etc/UTC` its name and is worth it.
 
 ## The handbook
 
@@ -755,6 +775,39 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   about, and the reps that would benefit are the ones whose lesson is ordering, which a grader
   observes no better than a reader does. **A rep about a Node API that must actually execute belongs
   in a workout**, where the real runtime is already there.
+
+- **`ts-type` asserts on type identity, not on assignability, and the gap between them is the
+  `close` verdict.** Two types being assignable in both directions is a weaker claim than being the
+  same type, and the two ways to land in that gap are the two ways to write a type that looks right:
+  reaching for `any`, and writing a mapped type that forgot to strip a modifier. Grading either
+  `correct` would teach that the imprecision does not matter, and grading either `incorrect` would
+  say nothing about what went wrong. So identity passes, mutual assignability without identity is a
+  near miss that reads amber and counts toward `close`, and the feedback says which of the two
+  happened. Identity is checked with the deferred-conditional trick from
+  microsoft/TypeScript#27024, which is the only way to reach the checker's internal identity
+  relation from type syntax.
+
+- **The type grader never runs the submission, so its boundary is the filesystem instead.** Nothing
+  executes, which makes it a stronger boundary than the code runner rather than the same one
+  restated. What replaces it is that `tsc` will happily follow an import, a `/// <reference path>`
+  or a `@types` lookup. A `CompilerHost` is the compiler's only door to a disk, and this one answers
+  exclusively from an in-memory map: two synthetic files and the lib closure loaded once at startup.
+  `resolveModuleNameLiterals` returns nothing for every import. A test points a reference directive
+  at a file it has just read itself and asserts the compiler reports it missing.
+
+- **The lib is ES2022, and that caps what a `ts-type` rep can be**, exactly as the bare vm realm
+  caps a `node` rep. No DOM, no `@types/node`, no imports. A rep that needs a real library type is
+  asking for a workout.
+
+- **There is no timeout on a type check, and one was tried.** The compiler API takes a
+  `CancellationToken` on `getSemanticDiagnostics`, but it is not polled finely enough to interrupt
+  the pathological case: a token already past its deadline never fired. It does not need to.
+  TypeScript's own instantiation-depth, recursion and union-size limits bound the work themselves,
+  and a deliberate 160,000-member template literal union errors out as TS2590 in about 45ms. The
+  measured cost that did matter was startup: parsing the 57 lib files takes roughly 250ms, so they
+  are parsed once and the `SourceFile` objects are shared across compilations, which takes a grade
+  to single-digit milliseconds. Sharing them is safe only because a compilation is synchronous end
+  to end, so two programs never hold the same file at once.
 
 - **The workout workspace is not a security boundary either.** The path-escape guards exist to catch
   mistakes, not attackers.

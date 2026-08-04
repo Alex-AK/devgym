@@ -84,11 +84,11 @@ isolation and the lost update, that the library could not reach yesterday. **The
 its lesson was a long lock during a migration, which wants a second session held open across DDL, and
 these two rows are the nearer and more useful half of what it was reaching for.
 
-**One row is blocked on tooling rather than on authorship.** `scaffold/vitest.config.ts` is the only
-config a workspace has, because `files/` lands under `src/`, so a workout cannot set `TZ` or register
-a global stub for its own suites. Timezone-correct booking wants a DST boundary and a fake clock
-moves `now` without moving the zone, so that row waits on a runner that honours a per-workout setup
-file. The same change would have saved the two React workouts their in-file jsdom workarounds.
+**The row that was blocked on tooling is now blocked on nothing but writing it.** A manifest may
+declare an optional `testRun` with a `timezone` and one `setupFile`, which the runner applies to the
+process the suites run in, so Timezone-correct booking can pin the zone its DST boundary needs. See
+the Workouts section of `docs/content.md` for what a workout may and may not say about its own test
+run.
 
 | Workout                        | Stack                              | Shape    | Pairs with     | The lesson                                                                                                                                                                |
 | ------------------------------ | ---------------------------------- | -------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -97,7 +97,7 @@ file. The same change would have saved the two React workouts their in-file jsdo
 | The update that got lost       | two `better-sqlite3` connections   | bug-hunt | databases      | Read, decide, write, from two places at once. The read-modify-write race, and why a transaction around it is not enough without the write being conditional               |
 | Cache the expensive report     | Express + fake Redis               | feature  | caching        | Cache-aside around a route: the key derived from the request, and the invalidation on write. The dedupe is `one-recompute-not-fifty`. Needs a brief that is not a report  |
 | Context re-render bug-hunt     | React                              | bug-hunt | React          | One context redrawing consumers that do not read the part that changed; the split is the fix. Not a typing lag in a filtered list: see the note below                     |
-| Timezone-correct booking       | Node + fixed clock, pinned `TZ`    | bug-hunt | dates          | Store UTC, render local, survive the DST boundary. A fixed clock does not fix the zone, and the suite has to pin it: see the note below                                   |
+| Timezone-correct booking       | Node + fixed clock, pinned `TZ`    | bug-hunt | dates          | Store UTC, render local, survive the DST boundary. A fixed clock does not fix the zone, so the manifest declares it: see the note below                                   |
 | TypeORM relations bug-hunt     | TypeORM + SQLite, not the report   | bug-hunt | server runtime | `save` against `update`, and the nested-where trap. The write side, because `orders-report-typeorm` already owns the read side                                            |
 
 **All eighteen rows were audited against what is on disk, and ten of them shipped straight off that
@@ -176,12 +176,11 @@ Four more are narrowed against a workout already on disk, and the lesson column 
   has five reps and no workout. What the HTTP boundary does not have is the ack, so that is the
   workout: acking after the work rather than before, and where a message that will never succeed
   goes. If the answer is "store the message id and skip it", the row has been written already.
-- **Timezone-correct booking** hits the trap section 1 records for modules, one layer down.
-  Assertions run in the reader's zone, and a fixed clock moves `now` without touching `TZ`. A workout
-  cannot fix this from `files/`, because `materialise` copies those into `src/` and the scaffold's
-  `vitest.config.ts` is the only config in the workspace, so the suites have to pin the zone
-  themselves. The alternative, assertions that hold in every zone, deletes the DST boundary that is
-  the whole lesson.
+- **Timezone-correct booking** hit the trap section 1 records for modules, one layer down: assertions
+  ran in the reader's zone, and a fixed clock moves `now` without touching `TZ`. The manifest now
+  carries `testRun.timezone`, so the workout declares the zone and gets it. Declare it canonically,
+  because `America/New_york` is a fixed offset with no transition and the loader refuses that
+  spelling for exactly this row's sake.
 
 **Four sections have pages and no workout, and only two of them want one.** `security` gets its
 first from "Sessions, not just tokens" and `typescript` gets its first from the Zod row, which is

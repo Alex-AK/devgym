@@ -124,6 +124,10 @@ All grading is deterministic and local. No LLM, no network.
   punctuation), then checks exact matches, regex patterns, known near-misses, and finally fuzzy
   matching for typos.
 - **Explain** scores keyword groups: every idea must appear, half of them earns a "close".
+- **Types** type-checks what you wrote and asks the compiler what it inferred, so a conditional
+  type or an assertion function is practised by writing one rather than by describing it. A type
+  that is assignable to the answer and back again without being the answer, which is what `any` and
+  a forgotten `readonly` both produce, earns a "close" and a sentence saying so.
 
 Every non-correct attempt reveals the next hint. After three attempts you can reveal the solution,
 which marks the problem skipped rather than solved.
@@ -139,6 +143,10 @@ can reach the host realm through constructor chains. It is fine here because Hon
 executes only code you typed yourself, which is the same trust level as `pnpm dev`. Do not reuse
 `grading/code-runner.ts` to run code from anyone else.
 
+Type problems never execute anything. What they need instead is a compiler that cannot read the
+disk, so the one they use answers only from memory: an import, a `/// <reference path>` and a
+`@types` lookup all resolve to nothing, and the library is ES2022 with no DOM and no Node types.
+
 ### Tuning a grader
 
 Answers are matched by pattern, so a grader can be too strict. Check one directly:
@@ -147,6 +155,7 @@ Answers are matched by pattern, so a grader can be too strict. Check one directl
 pnpm grade js-find "find"                # verdict + the exact config it was measured against
 pnpm grade code-chunk "function chunk…"  # prints per-test results
 pnpm grade sql-anti-join "SELECT …"      # SQL runs against the seeded practice.db
+pnpm grade ts-mutable-mapped "type …"    # type-checked, with expected and inferred side by side
 pnpm grade js-find                       # show the prompt and the model answer
 pnpm grade --list react                  # slugs in a category
 ```
@@ -292,7 +301,7 @@ The path is a subset on purpose: most content is not on it and never will be. Se
 - `packages/handbook`: handbook pages · `packages/paths`: the essentials path, one manifest an hour
 - `packages/modules`: modules, one directory each, read by the server at runtime
 - `packages/decks`: decks of cards, one `deck.json` each, nothing persisted about them
-- `apps/server/src/grading`: the four graders plus the sandboxed code runner
+- `apps/server/src/grading`: the five graders, the sandboxed code runner and the type checker
 - `apps/server/src/seed/problems`: one file per category, positions generated at seed time
 - `apps/server/src/workouts`: workspace materialisation and the vitest checkpoint runner
 - `CLAUDE.md`: context for coding agents, and the entry point to the rest · `WRITING.md`: how

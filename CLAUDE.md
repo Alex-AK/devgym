@@ -65,7 +65,7 @@ packages/modules/content/<slug>/   modules: a manifest and one markdown file per
 packages/decks/content/<slug>/     decks: one deck.json of two-sided cards over one contrast set
 apps/server/src/
   db/                              Drizzle schema, client, migrations module
-  grading/                         four graders + the sandboxed code runner
+  grading/                         five graders + the code runner and the type checker
   seed/problems/<category>.ts      problem content, one file per category
   problems/ progress/ sessions/    Nest modules
   paths/                           the essentials path: loader, safety net, read-only API
@@ -100,6 +100,10 @@ apps/web/src/
   what lets a 15-minute session be judged on what it is actually teaching.
 - **`js-code` tests take an `expression`, not statements.** It is evaluated after the submission, so
   multi-step setup has to be wrapped in an IIFE. Use `expectedCode` for values JSON cannot hold.
+- **`ts-type` reps are type-checked, never run.** A check is `type` + `equals` (compared for
+  identity, not assignability), `compiles`, or `rejects`, and exactly one of the three. The library
+  is ES2022 and imports resolve to nothing. `close` is earned by a type that is assignable in both
+  directions without being the one asked for, which is what `any` and a dropped `readonly` both do.
 - **After editing problems, run `pnpm seed`.** Boot only auto-seeds an empty database.
 - **Schema changes** need `pnpm --filter @hone/server db:generate` and the generated SQL
   committed. Migrations apply automatically at startup.

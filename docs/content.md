@@ -87,7 +87,7 @@ posture: unfamiliar code, no run, and a grader.
 
 ### Picking a grader
 
-Four types, and the choice is made by what the answer is, not by the topic:
+Five types, and the choice is made by what the answer is, not by the topic:
 
 - **`sql`** — the answer is a query. Config is `{ solutionSql, orderMatters, hints }`. Expected rows
   are produced by running `solutionSql` at grade time against `practice.db`, so the dataset can grow
@@ -104,6 +104,8 @@ Four types, and the choice is made by what the answer is, not by the topic:
   the normalised answer; all groups is `correct`, half is `close`. Each group is one idea you
   require, so three groups is the practical ceiling.
 - **`js-code`** — the answer is a function. Config is `{ setup?, starter, tests, hints }`.
+- **`ts-type`** — the answer is a type. Same config shape as `js-code`, and nothing runs: the
+  submission is type-checked and the checks are made against the type the checker inferred.
 
 **Name the obvious wrong answer.** `nearMisses` and `closeSubstrings` map a specific wrong answer to
 specific feedback and grade it `close`, which is where most of the teaching in a short-text problem
@@ -128,6 +130,37 @@ into the editor and must carry the signature, so the name the tests call is the 
 The reference implementation doubles as the canonical answer and the displayed solution, which is
 what stops those two drifting apart.
 
+### ts-type specifics
+
+`ts-type` is for the questions the other four can only ask *about*: conditional types, `infer`,
+mapped types, template literal types, assertion functions, what `satisfies` preserves. A rep about
+one of those written as `short-text` grades the spelling of an answer rather than the answer, which
+is why `` `${string}:${infer Name}` `` and `` `${infer Prefix}:${infer Name}` `` both pass here and
+only one of them would survive an `acceptPattern`.
+
+The config mirrors `js-code`: `{ setup?, starter, tests, hints }`. `setup` is the declarations the
+answer builds on, in scope before it and shown read-only above the editor. `starter` carries the
+name the checks use, and the reference doubles as the canonical answer and the displayed solution.
+
+A check is `{ name }` plus **exactly one** of three assertion forms, and the parser refuses two:
+
+- `type` + `equals` — what the answer's type for `type` must be. Compared for **identity**, not
+  assignability, because `A extends B` and `B extends A` both holding is a weaker claim than
+  sameness: `any` satisfies it against everything, and so does a mapped type that dropped a
+  `readonly`. Those two land as `close`, which is the near-miss handling this type has instead of
+  `nearMisses`.
+- `compiles` — statements that must be accepted, written as if inside a function body. This is the
+  only way to observe narrowing, since a narrowed type has no name to assert on.
+- `rejects` — statements the checker must refuse, with an optional `errorCode`. Pair it with a
+  `compiles` check whenever the answer could pass by widening: `asserts value is any` satisfies
+  every `compiles` check there is.
+
+Three things to know before authoring one. The submission is checked against the strictness in
+`tsconfig.base.json`, so a rep cannot depend on a looser flag. The library is ES2022 and nothing
+else: no DOM, no Node types, and no imports, for the same reason the code runner's realm is bare.
+And a type error anywhere in the answer means no check runs, so the feedback is the compiler error
+against the user's own line numbers.
+
 ### The rest of a problem
 
 `prompt` is markdown and states the task. `solution` is the canonical answer as a user would type
@@ -139,9 +172,9 @@ restatement of the prompt.
 
 Every canonical answer grades `correct`, every declared near-miss grades `close`, every
 `acceptPattern` compiles, no keyword synonym normalises to an empty string, every tag is a known one
-with reps behind it in more than one category, and every coding problem's reference passes its own
-tests while its starter does not. That is what makes problem content safe to edit in volume, and it
-runs in `pnpm verify`.
+with reps behind it in more than one category, and every coding and type problem's reference passes
+its own tests while its starter does not. That is what makes problem content safe to edit in volume,
+and it runs in `pnpm verify`.
 
 ## Handbook pages
 
@@ -243,6 +276,36 @@ Each workspace symlinks its `node_modules` there, which is how a workout imports
 drizzle-orm with no install and no network. That line is the one part of a workout that is not just
 a directory, so adding it stays a decision rather than a reflex.
 
+### Configuring the test run
+
+Almost no workout needs this. The scaffold's vitest config decides how a suite runs, and a workout
+cannot replace it. What a workout may do is declare an optional `testRun` in the manifest, which the
+runner translates onto the process the suites run in:
+
+```json
+"testRun": {
+  "timezone": "America/New_York",
+  "setupFile": "tests/setup.ts"
+}
+```
+
+**`timezone`** is an IANA zone applied as `TZ`, and it is the only way to fix the zone a workout's
+suites run in. A fake clock moves `now` without moving the zone, so a workout about a DST boundary
+needs it and cannot get there by writing assertions more carefully. Spell the zone canonically:
+`TZ` matches the zone database as spelled where `Intl` does not, so `America/New_york` produces a
+fixed offset with no DST transition and quietly deletes the boundary. The loader refuses that
+spelling rather than let it through.
+
+**`setupFile`** names one file under the workout's own `tests/`, run before every suite in both
+projects. It is for registering a global the environment does not have: `ResizeObserver`,
+`IntersectionObserver`, `matchMedia`. Assign to `globalThis` rather than to `window`, because the
+same file also runs in front of the node suites. Do not use it for fixtures or shared helpers, which
+belong in `tests/support/` and get imported by the suites that want them.
+
+Both fields are optional and both default to nothing. Everything that decides whether a checkpoint
+can fail stays out of reach: `include`, the timeouts, the reporter. A workout that could set those
+could pass its own suite by configuring the failure away.
+
 ### Checkpoints
 
 A checkpoint is one test file, and its status is "did every assertion in that file pass". That is
@@ -308,7 +371,9 @@ semantics kept, and WASM databases. The awkward semantics are usually the lesson
 
 `workouts.spec.ts` asserts every solution passes every checkpoint and every starter fails at least
 one, and that every checkpoint has a distinct id and an existing suite. That is what makes workout
-content as safe to edit as problem content.
+content as safe to edit as problem content. `test-run.spec.ts` covers the manifest's `testRun`: a
+fixture workspace gets its declared zone and its declared setup file, the same fixture declaring
+neither is untouched, and a zone or a setup file that would fail quietly is refused at load.
 
 ## The essentials path
 
