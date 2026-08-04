@@ -1,0 +1,34 @@
+{
+  "slug": "streaming-export-express",
+  "title": "Stream the export",
+  "kind": "feature",
+  "minutes": 12,
+  "difficulty": "easy",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express"
+  },
+  "summary": "The CSV export works for every account except the biggest: 400,000 orders takes the container to its memory limit and the process restarts mid-download. Send the same bytes to a client that reads slowly, without the memory going with them.",
+  "focus": ["streams", "backpressure", "csv", "express"],
+  "editable": ["src/server/export.ts"],
+  "checkpoints": [
+    {
+      "id": "csv-download",
+      "title": "The export downloads as a CSV file",
+      "testFile": "tests/checkpoints/01-the-export-downloads-as-a-csv-file.test.ts",
+      "hint": "Nothing on the response says what it is, so a browser guesses and renders it. Set Content-Type and Content-Disposition before the first byte goes out: after that the headers are gone and setHeader throws."
+    },
+    {
+      "id": "every-row-arrives",
+      "title": "Every row arrives intact",
+      "testFile": "tests/checkpoints/02-every-row-arrives-intact.test.ts",
+      "hint": "A customer called Halden, Ross & Co is two columns wide. Wrap any field holding a comma or a quote in double quotes and double the quotes inside it. If the file arrives short instead, the loop stopped rather than waited."
+    },
+    {
+      "id": "nothing-piles-up",
+      "title": "Nothing piles up behind a slow client",
+      "testFile": "tests/checkpoints/03-nothing-piles-up-behind-a-slow-client.test.ts",
+      "hint": "write() came back false and the loop kept writing. It does not mean the write failed: the row was taken and queued, and the response is telling you its buffer is full, so every row written past that one is memory. Wait for a drain after a false write, and only after a false one. Yielding with setImmediate is not a substitute, because giving the loop a turn does not make the client read any faster."
+    }
+  ]
+}
