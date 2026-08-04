@@ -41,8 +41,14 @@ neither has one. No page owns the redirect codes, 301 against 302 against 307 ag
 formats are a module rather than a page, because there was no model there to write down. A deck is
 not on its own a reason to write a page, so both wait until something else asks for one.
 
-Everything else the contrast sets wanted is written. `packages/decks/content/` is the inventory, and
-a deck named there and not on disk is a name that changed, not a deck that is missing.
+**That wait is how a deck is meant to arrive, and `four-ways-to-run-it-later` is the worked example.**
+It could not be written yesterday and needed no argument today, because a page about `nextTick` and
+`setImmediate` was written for reps that wanted it, and the contrast set was sitting inside the page
+once it existed. So the rule holds in both directions: a deck does not justify a page, and a new page
+is worth re-reading for the contrast set it just made checkable.
+
+`packages/decks/content/` is the inventory, and a deck named there and not on disk is a name that
+changed, not a deck that is missing.
 
 ## 3. The systems case-study shelf
 
@@ -51,42 +57,41 @@ blocks nothing, which is why it has outlasted every page that used to sit above 
 
 ## 4. The workout queue
 
-Ordered by what the library cannot practise today. `graphql`, `react-window` and `zustand` are in
-`packages/workouts/package.json` and are imported by no workout on disk, so three rows below are
-what that batch was bought for and nothing else is waiting on it; `ws`, Hono and Zod are absent, and
-adding one is a decision rather than a reflex.
+Ordered by what the library cannot practise today. Of the dependencies bought ahead of a workout,
+`graphql` and `react-window` have now been spent and `zustand` has not: `optimistic-save-react`
+looked at it and reported that a store would relocate the reconciliation rather than change it, which
+is the more useful answer than using it would have been. `zod` was added for `request-boundary-zod`
+because the schema was the lesson. `ws` and Hono are still absent, and adding one is a decision
+rather than a reflex.
 
 **"Runs on infrastructure that already exists" was overstated, and two rows leaned on it.** PGlite
 and testing-library are real dependencies, but the fake Redis, the driven clock and the fixture API
 are each one workout's own file: `materialise` copies `scaffold/` and then that workout's `files/`,
-so the next workout copies and adapts them rather than importing them. Two consequences the rows
-below now carry. The fixture API injects a per-query delay and not a fault, which is not what a
-retry exercise needs. And `scaffold/vitest.config.ts` is the only config a workspace has, because
-`files/` lands under `src/`, so a workout cannot set `TZ` or anything else for its own suites.
+so the next workout copies and adapts them rather than importing them. The fixture API injects a
+per-query delay and not a fault, which is why `retry-with-backoff-node` had to build its failing
+downstream as part of the work.
+
+**One row is blocked on tooling rather than on authorship.** `scaffold/vitest.config.ts` is the only
+config a workspace has, because `files/` lands under `src/`, so a workout cannot set `TZ` or register
+a global stub for its own suites. Timezone-correct booking wants a DST boundary and a fake clock
+moves `now` without moving the zone, so that row waits on a runner that honours a per-workout setup
+file. The same change would have saved the two React workouts their in-file jsdom workarounds.
 
 | Workout                        | Stack                              | Shape    | Pairs with     | The lesson                                                                                                                                                                |
 | ------------------------------ | ---------------------------------- | -------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Two clients in sync            | WebSocket (`ws`) + React           | feature  | moving data    | The direction a one-way stream cannot go: the client writes too, and two of them have to converge. Reconnect and replay are `live-dashboard-sse`, so this is not that     |
-| Retry with backoff             | Node + a downstream that fails     | feature  | server runtime | Timeouts, jittered backoff, a retry budget, and giving up honestly. Nothing on disk injects a fault yet, so the failing dependency is part of the work                    |
 | Cache the expensive report     | Express + fake Redis               | feature  | caching        | Cache-aside around a route: the key derived from the request, and the invalidation on write. The dedupe is `one-recompute-not-fifty`. Needs a brief that is not a report  |
 | Context re-render bug-hunt     | React                              | bug-hunt | React          | One context redrawing consumers that do not read the part that changed; the split is the fix. Not a typing lag in a filtered list: see the note below                     |
-| The form says nothing is wrong | React                              | bug-hunt | the browser    | Errors nobody is told about: association, `aria-live`, and focus to the first failure. The only queued row that gives the browser section's a11y pages a workout          |
-| Cursor pagination bug-hunt     | **not Kysely**                     | bug-hunt | databases      | Offset pagination drifting under writes; keyset as the fix. One connection is enough to show it, so the stack is free: see the note below                                 |
-| Job queue consumer             | Node + in-repo fake queue          | feature  | moving data    | The ack, and what a redelivery costs when it lands after the work rather than before. Dedupe on a key is `idempotent-payments-express`                                    |
 | Timezone-correct booking       | Node + fixed clock, pinned `TZ`    | bug-hunt | dates          | Store UTC, render local, survive the DST boundary. A fixed clock does not fix the zone, and the suite has to pin it: see the note below                                   |
-| Optimistic UI that rolls back  | React                              | feature  | React          | Apply now, reconcile later, roll back on failure without discarding edits made in the meantime                                                                            |
-| Sessions, not just tokens      | Nest + SQLite (Express is 7 of 16) | feature  | APIs           | Revocation is the thing a stateless JWT cannot do; rotate, revoke, and prove it takes effect. Opens where `jwt-auth-express` closes, and gives security its first workout |
-| The audit row that lied        | SQLite + transactions              | bug-hunt | databases      | The state change and its audit row must land together or not at all; the checkpoint interrupts it                                                                         |
-| GraphQL N+1 bug-hunt           | GraphQL + Drizzle, not orders      | bug-hunt | moving data    | The client picks the query shape, so batching per request is the fix rather than a better join. A join is the third telling of an N+1 the library already owns twice      |
-| Windowed list                  | React + react-window               | feature  | React          | What windowing breaks: keyboard and focus surviving a recycled row, and the row whose height is not fixed. "No jank" on its own is `react-list-windowing`                 |
 | TypeORM relations bug-hunt     | TypeORM + SQLite, not the report   | bug-hunt | server runtime | `save` against `update`, and the nested-where trap. The write side, because `orders-report-typeorm` already owns the read side                                            |
-| Validated request boundary     | Zod, Hono optional                 | feature  | APIs           | Schema validation as the API's front door: query-string coercion, what the 400 says, and the handler typed from the schema. Gives typescript its first workout            |
 
-**All eighteen rows have now been audited against what is on disk.** Eight failed on their stated
-terms, three are cut outright, and the rest are narrowed in the lesson column above. The cause is
-structural rather than careless: a row is written before the workouts it will sit beside, so its
-stack and its brief age into a collision nobody chose. Re-read a row against
-`packages/workouts/content/` before starting it.
+**All eighteen rows were audited against what is on disk, and ten of them shipped straight off that
+audit.** Eight had failed on their stated terms and three were cut outright; the survivors were
+narrowed in the lesson column, and every one written since has been written from the narrowed
+version. The cause of the drift is structural rather than careless: a row is written before the
+workouts it will sit beside, so its stack and its brief age into a collision nobody chose. Re-read a
+row against `packages/workouts/content/` before starting it, and treat what is left below as audited
+in a library four workouts smaller than the one it now describes.
 
 Three rows are cut, and the argument is here rather than in git history:
 
