@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { MAX_SESSION_SIZE } from '@hone/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -66,9 +67,61 @@ describe('sessions', () => {
   });
 
   it('respects a category scope', async () => {
-    const session = sessions.create({ size: 5, category: 'react' });
+    const session = sessions.create({ size: 5, category: ['react'] });
     expect(session.items.every((i) => i.category === 'react')).toBe(true);
-    expect(session.scope.category).toBe('react');
+    expect(session.scope.category).toEqual(['react']);
+  });
+
+  /**
+   * Two categories is one session, not two. The scope is persisted rather than
+   * recomputed, so a list has to survive the round trip whole: a reload that
+   * came back with only the first category would describe a run nobody started.
+   */
+  it('respects a scope of several categories, and survives a reload of it', async () => {
+    const session = sessions.create({ size: 12, category: ['react', 'css'] });
+
+    expect(session.items.every((i) => i.category === 'react' || i.category === 'css')).toBe(true);
+    expect(new Set(session.items.map((i) => i.category)).size).toBe(2);
+    expect(sessions.active()?.scope.category).toEqual(['react', 'css']);
+  });
+
+  it('respects a scope of several difficulties', async () => {
+    const session = sessions.create({ size: 20, difficulty: ['medium', 'hard'] });
+
+    expect(session.items.every((i) => i.difficulty !== 'easy')).toBe(true);
+    expect(sessions.active()?.scope.difficulty).toEqual(['medium', 'hard']);
+  });
+
+  /**
+   * An opt-in category is dealt by naming it, and a list names it by containing
+   * it. The session builder runs the same queue as the morning, so this is the
+   * one place the two could drift.
+   */
+  it('pins an opt-in category named alongside another', async () => {
+    const session = sessions.create({ size: 20, category: ['dsa-patterns', 'react'] });
+    const categories = new Set(session.items.map((item) => item.category));
+
+    expect(categories.has('dsa-patterns')).toBe(true);
+    expect(sessions.active()?.scope.category).toEqual(['dsa-patterns', 'react']);
+  });
+
+  it('leaves an untouched opt-in category out of a session that does not name it', async () => {
+    // Seeds are in position order, so this is the window the session pins from.
+    const reachable = problemSeeds
+      .filter((seed) => seed.difficulty !== 'hard')
+      .slice(0, MAX_SESSION_SIZE)
+      .some((seed) => seed.category === 'dsa-patterns');
+    expect(reachable, 'no dsa rep is even in range, so this test proves nothing').toBe(true);
+
+    const session = sessions.create({ size: MAX_SESSION_SIZE, difficulty: ['easy', 'medium'] });
+    expect(session.items.some((item) => item.category === 'dsa-patterns')).toBe(false);
+  });
+
+  /** An unscoped session is one the form left alone, not one filtered to nothing. */
+  it('treats empty lists as no scope at all', async () => {
+    const session = sessions.create({ size: 5, category: [], difficulty: [] });
+    expect(session.scope).toEqual({});
+    expect(session.total).toBe(5);
   });
 
   /** Fifteen minutes of reading is a session, which is what the tag is for. */
@@ -84,7 +137,7 @@ describe('sessions', () => {
 
   it('takes what it can when the scope has fewer problems than asked for', async () => {
     const hardDom = problemSeeds.filter((s) => s.category === 'dom' && s.difficulty === 'hard');
-    const session = sessions.create({ size: 10, category: 'dom', difficulty: 'hard' });
+    const session = sessions.create({ size: 10, category: ['dom'], difficulty: ['hard'] });
     expect(session.total).toBe(hardDom.length);
   });
 
@@ -114,7 +167,7 @@ describe('sessions', () => {
   it('does not count a skip that happened before the session started', async () => {
     // Scoped to one category so the skipped problem, which sinks to the back of
     // the queue, is still inside the session window.
-    const scope = { category: 'dom' } as const;
+    const scope = { category: ['dom'] } as const;
     const first = problems.next(undefined, 'next', scope)?.slug ?? '';
     problems.skip(first, scope);
 
@@ -126,7 +179,7 @@ describe('sessions', () => {
   });
 
   it('sends a problem skipped during the session to the back of the next one', async () => {
-    const scope = { category: 'dom' } as const;
+    const scope = { category: ['dom'] } as const;
     const session = sessions.create({ size: 20, ...scope });
     const first = session.items[0]?.slug ?? '';
     problems.skip(first, scope);

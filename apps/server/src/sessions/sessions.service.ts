@@ -1,6 +1,8 @@
 import {
+  CATEGORIES,
   type CreateSessionRequest,
   DEFAULT_SESSION_SIZE,
+  DIFFICULTIES,
   MAX_SESSION_SIZE,
   type QueueScope,
   type SessionItem,
@@ -14,6 +16,7 @@ import { CurrentUserService } from '../common/current-user.service';
 import type { AppDb } from '../db/client';
 import { APP_DB } from '../db/db.module';
 import { problemProgress, problems, sessionItems, sessions } from '../db/schema';
+import { toQueueScope } from '../problems/dto';
 import { ProblemsService } from '../problems/problems.service';
 
 @Injectable()
@@ -31,12 +34,7 @@ export class SessionsService {
   create(request: CreateSessionRequest): SessionResponse {
     const userId = this.currentUser.getUserId();
     const size = clampSize(request.size);
-    const scope: QueueScope = {
-      ...(request.category ? { category: request.category } : {}),
-      ...(request.difficulty ? { difficulty: request.difficulty } : {}),
-      ...(request.mode && request.mode !== 'all' ? { mode: request.mode } : {}),
-      ...(request.tag ? { tag: request.tag } : {}),
-    };
+    const scope: QueueScope = toQueueScope(request);
 
     // Only one session runs at a time; starting a new one closes the old.
     this.finishActive(userId);
@@ -64,8 +62,8 @@ export class SessionsService {
       .insert(sessions)
       .values({
         userId,
-        category: scope.category ?? null,
-        difficulty: scope.difficulty ?? null,
+        category: writeList(scope.category),
+        difficulty: writeList(scope.difficulty),
         mode: scope.mode ?? null,
         tag: scope.tag ?? null,
         createdAt,
@@ -185,12 +183,12 @@ export class SessionsService {
       id: session.id,
       createdAt: session.createdAt,
       finishedAt: session.finishedAt,
-      scope: {
-        ...(session.category ? { category: session.category } : {}),
-        ...(session.difficulty ? { difficulty: session.difficulty } : {}),
+      scope: toQueueScope({
+        category: readList(session.category, CATEGORIES),
+        difficulty: readList(session.difficulty, DIFFICULTIES),
         ...(session.mode ? { mode: session.mode } : {}),
         ...(session.tag ? { tag: session.tag } : {}),
-      },
+      }),
       items,
       total: items.length,
       solved,
@@ -208,6 +206,30 @@ export class SessionsService {
       .where(and(eq(sessions.userId, userId), isNull(sessions.finishedAt)))
       .run();
   }
+}
+
+/** Nothing scoped is null, not `[]`: an unscoped session reads as one either way. */
+function writeList(values: readonly string[] | undefined): string | null {
+  return values && values.length > 0 ? JSON.stringify(values) : null;
+}
+
+/**
+ * Read a scope column, keeping only values this build knows. Written as JSON,
+ * but a session pinned before the axes took lists holds a bare `sql`, and that
+ * has to keep describing the run it described the day it was pinned.
+ */
+function readList<T extends string>(raw: string | null, allowed: readonly T[]): T[] {
+  if (raw === null || raw === '') return [];
+  const known = (value: unknown): value is T => (allowed as readonly unknown[]).includes(value);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return known(raw) ? [raw] : [];
+  }
+  if (!Array.isArray(parsed)) return known(parsed) ? [parsed] : [];
+  return parsed.filter(known);
 }
 
 function clampSize(size: number | undefined): number {

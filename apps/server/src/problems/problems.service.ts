@@ -1,4 +1,4 @@
-import { isOptInCategory, REVIEW_INTERVALS_DAYS } from '@hone/shared';
+import { inScope, isOptInCategory, REVIEW_INTERVALS_DAYS, scopeNames } from '@hone/shared';
 import type {
   AttemptResponse,
   NextProblem,
@@ -290,8 +290,8 @@ export class ProblemsService {
 
   /**
    * Unsolved problems: never-skipped first by position, then skipped oldest-first.
-   * `scope` narrows it to a focused session: one category, one difficulty, or
-   * `review` mode, which is everything you attempted or skipped and have not
+   * `scope` narrows it to a focused session: some categories, some difficulties,
+   * or `review` mode, which is everything you attempted or skipped and have not
    * yet solved.
    */
   private queue(_userId: number, scope: QueueScope = {}): QueueEntry[] {
@@ -299,16 +299,22 @@ export class ProblemsService {
     return (
       this.allWithProgress()
         .filter((entry) => entry.progress.status !== 'solved')
-        .filter((entry) => !scope.category || entry.problem.category === scope.category)
-        .filter((entry) => !scope.difficulty || entry.problem.difficulty === scope.difficulty)
+        .filter((entry) => inScope(scope.category, entry.problem.category))
+        .filter((entry) => inScope(scope.difficulty, entry.problem.difficulty))
         .filter((entry) => !scope.tag || parseTags(entry.problem.tags).includes(scope.tag))
         // An opt-in category is a track you sit down to, so the round robin holds
         // back what you have never touched. Naming the category deals it, and so
         // does having attempted or skipped the rep: this keeps a track you have
         // not started out of the morning, it does not hide your own misses.
+        //
+        // Naming is `scopeNames` and never `inScope`, which is the whole trap in
+        // making these lists. A list that contains the category names it, however
+        // many others sit beside it. A list that does not, an empty list, and no
+        // list at all all name nothing, so scoping to a difficulty or a tag keeps
+        // the track held back exactly as an unscoped morning does.
         .filter(
           (entry) =>
-            scope.category === entry.problem.category ||
+            scopeNames(scope.category, entry.problem.category) ||
             !isOptInCategory(entry.problem.category) ||
             entry.progress.attemptsCount > 0 ||
             entry.progress.status === 'skipped'
@@ -344,8 +350,8 @@ export class ProblemsService {
     return this.allWithProgress()
       .filter((entry) => entry.progress.status === 'solved')
       .filter((entry) => entry.progress.dueAt !== null && entry.progress.dueAt <= now)
-      .filter((entry) => !scope.category || entry.problem.category === scope.category)
-      .filter((entry) => !scope.difficulty || entry.problem.difficulty === scope.difficulty)
+      .filter((entry) => inScope(scope.category, entry.problem.category))
+      .filter((entry) => inScope(scope.difficulty, entry.problem.difficulty))
       .filter((entry) => !scope.tag || parseTags(entry.problem.tags).includes(scope.tag))
       .sort((a, b) => (a.progress.dueAt ?? '').localeCompare(b.progress.dueAt ?? ''));
   }

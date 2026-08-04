@@ -100,7 +100,11 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   through focused practice or a scoped session, not something the morning round-robin deals you. The
   mechanism is `OPT_IN_CATEGORIES` in `packages/shared` and one filter in `queue()`, and what it
   holds back is only what you have never touched: name the category in a scope and you get the whole
-  thing, while a rep you have attempted or skipped is dealt like any other from then on. That second
+  thing, while a rep you have attempted or skipped is dealt like any other from then on. Once a scope
+  could name several categories, naming became "the list contains it", never "the list admits it":
+  an empty list admits everything and names nothing, so scoping to a difficulty still holds the track
+  back. The two questions are `scopeNames` and `inScope`, kept apart deliberately, because a queue
+  that answered this one with `inScope` would deal 33 untouched DSA reps into an ordinary morning. That second
   half is not a courtesy. Review mode and the dashboard's missed count run the same predicate, so an
   opt-out that also hid attempted reps would leave the app counting misses it then refused to serve.
   The due queue needed no filter at all for the same reason: everything in it was solved, so every

@@ -17,7 +17,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import { ProblemMeta } from '@/components/badges';
-import { FilterChip, FilterRow, FilterSelect } from '@/components/filters';
+import { FilterChip, FilterMultiSelect, FilterRow } from '@/components/filters';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -128,8 +128,8 @@ function StartSession({
   compact?: boolean;
 }): React.ReactElement {
   const [size, setSize] = React.useState(DEFAULT_SESSION_SIZE);
-  const [category, setCategory] = React.useState<Category | null>(null);
-  const [difficulty, setDifficulty] = React.useState<Difficulty | null>(null);
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [difficulties, setDifficulties] = React.useState<Difficulty[]>([]);
   const [tag, setTag] = React.useState<Tag | null>(null);
 
   const start = useStartSession();
@@ -157,27 +157,33 @@ function StartSession({
           ))}
         </FilterRow>
         <FilterRow label="Category">
-          <FilterSelect
+          <FilterMultiSelect
+            allLabel="Any category"
             label="Category"
-            onChange={(value) => setCategory(value === 'all' ? null : value)}
-            options={[
-              { label: 'Any category', value: 'all' },
-              ...[...CATEGORIES]
-                .sort((a, b) => CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b]))
-                .map((entry) => ({ label: CATEGORY_LABELS[entry], value: entry })),
-            ]}
-            value={category ?? 'all'}
+            onChange={setCategories}
+            options={[...CATEGORIES]
+              .sort((a, b) => CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b]))
+              .map((entry) => ({ label: CATEGORY_LABELS[entry], value: entry }))}
+            selected={categories}
           />
         </FilterRow>
+        {/* Chips still fit three difficulties, and picking two is one more tap
+            rather than a panel: "Any" is the empty list, not a fourth value. */}
         <FilterRow label="Difficulty">
-          <FilterChip active={difficulty === null} onClick={() => setDifficulty(null)}>
+          <FilterChip active={difficulties.length === 0} onClick={() => setDifficulties([])}>
             Any
           </FilterChip>
           {DIFFICULTIES.map((entry) => (
             <FilterChip
               key={entry}
-              active={difficulty === entry}
-              onClick={() => setDifficulty(difficulty === entry ? null : entry)}
+              active={difficulties.includes(entry)}
+              onClick={() =>
+                setDifficulties((current) =>
+                  current.includes(entry)
+                    ? current.filter((value) => value !== entry)
+                    : DIFFICULTIES.filter((value) => value === entry || current.includes(value))
+                )
+              }
             >
               <span className="capitalize">{entry}</span>
             </FilterChip>
@@ -201,8 +207,8 @@ function StartSession({
           onClick={() =>
             start.mutate({
               size,
-              ...(category ? { category } : {}),
-              ...(difficulty ? { difficulty } : {}),
+              ...(categories.length > 0 ? { category: categories } : {}),
+              ...(difficulties.length > 0 ? { difficulty: difficulties } : {}),
               ...(tag ? { tag } : {}),
             })
           }

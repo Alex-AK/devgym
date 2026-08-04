@@ -35,9 +35,10 @@ export type Category = (typeof CATEGORIES)[number];
  * alongside everything else.
  *
  * It holds back what you have never touched, not your own history. Name the
- * category in a scope and you get the whole thing; attempt or skip a rep and it
- * behaves like any other rep from then on, review and spaced repetition
- * included. Otherwise the morning would hide the misses it just gave you.
+ * category in a scope, alone or alongside others, and you get the whole thing;
+ * attempt or skip a rep and it behaves like any other rep from then on, review
+ * and spaced repetition included. Otherwise the morning would hide the misses it
+ * just gave you.
  */
 export const OPT_IN_CATEGORIES: readonly Category[] = ['dsa-patterns'];
 
@@ -237,13 +238,45 @@ export const QUEUE_MODES = ['all', 'review', 'due'] as const;
  */
 export type QueueMode = (typeof QUEUE_MODES)[number];
 
-/** Narrows the practice queue to a focused session. */
+/**
+ * Narrows the practice queue to a focused session.
+ *
+ * `category` and `difficulty` are lists, because a morning is often two or three
+ * categories rather than one. They keep their singular names because the wire
+ * spells a list as a repeated `?category=sql&category=react`, and one word from
+ * the link you click to the filter that reads it is worth more than grammar: a
+ * repeated param also means a slug can never collide with a separator. Absent or
+ * empty means every value on that axis, so ask with `inScope` rather than by
+ * hand — an empty array is truthy and would otherwise scope a queue to nothing.
+ *
+ * `mode` and `tag` stay single. A tag is one axis by design, and the modes are
+ * three different queues rather than three values of one.
+ */
 export interface QueueScope {
-  category?: Category;
-  difficulty?: Difficulty;
+  category?: readonly Category[];
+  difficulty?: readonly Difficulty[];
   mode?: QueueMode;
   /** Cuts across categories: the one axis `category` cannot express. */
   tag?: Tag;
+}
+
+/**
+ * Whether a scope axis lets a value through. An absent or empty list is every
+ * value on that axis, which is what an unscoped queue is.
+ */
+export function inScope<T>(selected: readonly T[] | undefined, value: T): boolean {
+  return selected === undefined || selected.length === 0 || selected.includes(value);
+}
+
+/**
+ * Whether a scope *names* a category, which is a different question from whether
+ * the category is in scope: an unscoped queue admits every category and names
+ * none of them. Naming is what deals an opt-in category, so a list containing
+ * `dsa-patterns` opts you into it however many other categories sit beside it,
+ * and a list that leaves it out holds it back exactly as no list at all does.
+ */
+export function scopeNames(selected: readonly Category[] | undefined, category: Category): boolean {
+  return selected !== undefined && selected.includes(category);
 }
 
 /**

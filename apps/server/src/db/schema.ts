@@ -115,8 +115,16 @@ export const sessions = sqliteTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id),
-    category: text('category', { enum: CATEGORIES }),
-    difficulty: text('difficulty', { enum: DIFFICULTIES }),
+    /**
+     * The scope the session was pinned with: JSON arrays of Category and
+     * Difficulty, since both axes take several values. The columns keep their
+     * singular names, which is also what the URL calls them; renaming a column
+     * in SQLite costs a table rebuild and would buy nothing this comment cannot
+     * say. Both are read defensively, so a session pinned before the axes took
+     * lists holds a bare `sql` and still reads back as one category.
+     */
+    category: text('category'),
+    difficulty: text('difficulty'),
     mode: text('mode', { enum: QUEUE_MODES }),
     tag: text('tag', { enum: TAGS }),
     createdAt: text('created_at').notNull(),

@@ -137,10 +137,15 @@ export const api = {
   reset: (slug: string): Promise<QueueMoveResponse> => post(`/problems/${slug}/reset`),
 };
 
+/**
+ * One param per value, repeated: `?category=sql&category=react`. Express reads a
+ * repeated param as an array and a single one as a string, and the server
+ * normalises both, so the URL a link was written with years ago still works.
+ */
 export function scopeToParams(scope: QueueScope): URLSearchParams {
   const params = new URLSearchParams();
-  if (scope.category) params.set('category', scope.category);
-  if (scope.difficulty) params.set('difficulty', scope.difficulty);
+  for (const category of scope.category ?? []) params.append('category', category);
+  for (const difficulty of scope.difficulty ?? []) params.append('difficulty', difficulty);
   if (scope.mode && scope.mode !== 'all') params.set('mode', scope.mode);
   if (scope.tag) params.set('tag', scope.tag);
   return params;

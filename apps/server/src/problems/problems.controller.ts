@@ -8,7 +8,7 @@ import type {
 } from '@hone/shared';
 import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 
-import { CreateAttemptDto, NextProblemQueryDto, QueueScopeQueryDto } from './dto';
+import { CreateAttemptDto, NextProblemQueryDto, QueueScopeQueryDto, toQueueScope } from './dto';
 import { ProblemsService } from './problems.service';
 
 @Controller('problems')
@@ -23,8 +23,7 @@ export class ProblemsController {
   /** Declared before `:slug` so "next" is not swallowed as a slug. */
   @Get('next')
   next(@Query() query: NextProblemQueryDto): { next: NextProblem | null } {
-    const { after, dir, ...scope } = query;
-    return { next: this.problems.next(after, dir ?? 'next', scope) };
+    return { next: this.problems.next(query.after, query.dir ?? 'next', toQueueScope(query)) };
   }
 
   @Get(':slug')
@@ -40,8 +39,8 @@ export class ProblemsController {
 
   @Post(':slug/skip')
   @HttpCode(200)
-  skip(@Param('slug') slug: string, @Query() scope: QueueScopeQueryDto): QueueMoveResponse {
-    return this.problems.skip(slug, scope);
+  skip(@Param('slug') slug: string, @Query() query: QueueScopeQueryDto): QueueMoveResponse {
+    return this.problems.skip(slug, toQueueScope(query));
   }
 
   @Post(':slug/reveal-solution')

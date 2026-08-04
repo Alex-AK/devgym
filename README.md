@@ -74,7 +74,8 @@ where today stopped. Only one session runs at a time; starting a new one closes 
 - **Review queue.** `/practice?mode=review` serves everything you attempted **or skipped** and have
   not yet solved. Progress links to it whenever there is something waiting.
 - **Focused practice.** `/practice?category=react&difficulty=hard` drills one slice without pinning
-  anything, running until the queue empties. The scope lives in the URL, so it survives a refresh
+  anything, running until the queue empties. Repeat a param to widen the slice:
+  `?category=react&category=css` runs both. The scope lives in the URL, so it survives a refresh
   and follows you through Next / Previous / Skip. Start one from a category on Progress, or from the
   problem list with **Practice these**.
 - **Tags cut across categories.** `/practice?tag=reading` runs the reps that hand you unfamiliar code

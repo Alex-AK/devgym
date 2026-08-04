@@ -29,6 +29,9 @@ const firstSlugOf = (category: string): string =>
 /** What an unscoped queue actually deals: everything bar the opt-in categories. */
 const dealt = problemSeeds.filter((seed) => !isOptInCategory(seed.category));
 
+/** The other side of the same line: the track you only get by naming it. */
+const optIn = problemSeeds.filter((seed) => isOptInCategory(seed.category));
+
 beforeEach(() => {
   sqlite?.close();
   practiceDb?.close();
@@ -59,22 +62,45 @@ describe('practice queue', () => {
   });
 
   it('narrows to a single category', async () => {
-    const next = problems.next(undefined, 'next', { category: 'react' });
+    const next = problems.next(undefined, 'next', { category: ['react'] });
     expect(next?.category).toBe('react');
     expect(next?.queueSize).toBe(problemSeeds.filter((seed) => seed.category === 'react').length);
+  });
+
+  it('narrows to several categories at once', async () => {
+    const wanted: readonly string[] = ['react', 'css'];
+    const next = problems.next(undefined, 'next', { category: ['react', 'css'] });
+
+    expect(next?.queueSize).toBe(
+      problemSeeds.filter((seed) => wanted.includes(seed.category)).length
+    );
   });
 
   // Counted off `dealt` rather than every seed: naming a category is what opts
   // you in, and a difficulty is not a category, so the opt-in ones stay held
   // back here the way they are in an unscoped queue.
   it('narrows to a single difficulty', async () => {
-    const next = problems.next(undefined, 'next', { difficulty: 'hard' });
+    const next = problems.next(undefined, 'next', { difficulty: ['hard'] });
     expect(next?.difficulty).toBe('hard');
     expect(next?.queueSize).toBe(dealt.filter((seed) => seed.difficulty === 'hard').length);
   });
 
+  it('narrows to several difficulties at once', async () => {
+    const next = problems.next(undefined, 'next', { difficulty: ['medium', 'hard'] });
+    expect(next?.queueSize, 'two difficulties are a union, not an intersection').toBe(
+      dealt.filter((seed) => seed.difficulty !== 'easy').length
+    );
+  });
+
+  /** An empty list is a filter nobody set, not a filter matching nothing. */
+  it('treats an empty list as no filter at all', async () => {
+    expect(problems.next(undefined, 'next', { category: [], difficulty: [] })?.queueSize).toBe(
+      dealt.length
+    );
+  });
+
   it('combines category and difficulty', async () => {
-    const scope = { category: 'sql', difficulty: 'hard' } as const;
+    const scope = { category: ['sql'], difficulty: ['hard'] } as const;
     const next = problems.next(undefined, 'next', scope);
     expect(next?.category).toBe('sql');
     expect(next?.difficulty).toBe('hard');
@@ -101,7 +127,7 @@ describe('practice queue', () => {
   });
 
   it('combines a tag with a category, which is an intersection and not a union', async () => {
-    const scope = { tag: 'reading', category: 'sql' } as const;
+    const scope = { tag: 'reading', category: ['sql'] } as const;
     const next = problems.next(undefined, 'next', scope);
 
     expect(next?.category).toBe('sql');
@@ -133,12 +159,55 @@ describe('practice queue', () => {
   });
 
   it('deals an opt-in category in full when the scope names it', () => {
-    const scope = { category: 'dsa-patterns' } as const;
+    const scope = { category: ['dsa-patterns'] } as const;
     const next = problems.next(undefined, 'next', scope);
 
     expect(next?.category).toBe('dsa-patterns');
-    expect(next?.queueSize).toBe(
-      problemSeeds.filter((seed) => seed.category === 'dsa-patterns').length
+    expect(next?.queueSize).toBe(optIn.length);
+  });
+
+  /**
+   * Naming is what deals an opt-in category, and with a list of categories
+   * naming means the list *contains* it. Sitting down to DSA and React is
+   * sitting down to DSA, so the whole track comes with it rather than only the
+   * reps you have already touched.
+   */
+  it('deals an opt-in category named alongside others', () => {
+    const react = problemSeeds.filter((seed) => seed.category === 'react');
+    const next = problems.next(undefined, 'next', { category: ['dsa-patterns', 'react'] });
+
+    expect(next?.queueSize).toBe(optIn.length + react.length);
+  });
+
+  /**
+   * The other half, and the regression a list invites: a scope that names other
+   * categories, or names no category at all because it only picked difficulties,
+   * still holds back a track you have never touched. Otherwise picking two
+   * categories on the library page would deal every untouched DSA rep into a
+   * morning that never asked for one.
+   */
+  it('holds an opt-in category back when a list does not name it', () => {
+    const wanted: readonly string[] = ['react', 'sql'];
+    const byCategory = problems.next(undefined, 'next', { category: ['react', 'sql'] });
+    expect(byCategory?.queueSize).toBe(
+      problemSeeds.filter((seed) => wanted.includes(seed.category)).length
+    );
+
+    const byDifficulty = problems.next(undefined, 'next', { difficulty: ['easy', 'medium'] });
+    expect(
+      byDifficulty?.queueSize,
+      'a difficulty names no category, so it opts you into none'
+    ).toBe(dealt.filter((seed) => seed.difficulty !== 'hard').length);
+  });
+
+  /** The same rule, one rep at a time: your own history outranks the opt-out. */
+  it('keeps an attempted opt-in rep dealt under a scope that names no category', async () => {
+    const seed = problemSeeds.find((entry) => entry.category === 'dsa-patterns');
+    const difficulty = seed?.difficulty ?? 'easy';
+    await problems.submitAttempt(seed?.slug ?? '', 'const nope = 1;');
+
+    expect(problems.next(undefined, 'next', { difficulty: [difficulty] })?.queueSize).toBe(
+      dealt.filter((entry) => entry.difficulty === difficulty).length + 1
     );
   });
 
@@ -209,8 +278,8 @@ describe('practice queue', () => {
   });
 
   it('keeps a skip inside the active session scope', async () => {
-    const first = problems.next(undefined, 'next', { category: 'react' })?.slug ?? '';
-    const result = problems.skip(first, { category: 'react' });
+    const first = problems.next(undefined, 'next', { category: ['react'] })?.slug ?? '';
+    const result = problems.skip(first, { category: ['react'] });
     expect(result.next?.category).toBe('react');
   });
 
@@ -222,7 +291,7 @@ describe('practice queue', () => {
   });
 
   it('steps forward and back without wrapping past the ends', async () => {
-    const scope = { category: 'dom' } as const;
+    const scope = { category: ['dom'] } as const;
     const first = problems.next(undefined, 'next', scope)?.slug ?? '';
     const second = problems.next(first, 'next', scope)?.slug ?? '';
     expect(second).not.toBe(first);
