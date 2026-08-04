@@ -5,6 +5,7 @@ order: 2
 practise:
   - react-lifting-state
   - invoice-panel-react
+  - optimistic-save-react
   - react-state-colocation
   - react-derived-state
   - react-unnecessary-effect

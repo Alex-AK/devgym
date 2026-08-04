@@ -1,0 +1,41 @@
+{
+  "slug": "optimistic-save-react",
+  "title": "Save now, reconcile later",
+  "kind": "feature",
+  "minutes": 22,
+  "difficulty": "hard",
+  "relevance": "daily",
+  "stack": {
+    "client": "react",
+    "server": "local fake API"
+  },
+  "summary": "Nothing in the profile panel moves until the server answers: the change shows up late, the whole form locks while it saves, and a save that does not go through says nothing at all.",
+  "focus": ["react state", "optimistic ui", "race conditions", "failure handling"],
+  "editable": ["src/client/ProfileSettings.tsx"],
+  "checkpoints": [
+    {
+      "id": "change-lands-before-the-answer",
+      "title": "The change lands before the server answers",
+      "testFile": "tests/checkpoints/01-the-change-lands-before-the-server-answers.test.tsx",
+      "hint": "Show the value you are betting on, not the last one the server confirmed. Keep the two apart: what the server has told you, and what you have sent it and not heard back about. Nothing gets disabled, because a second save has to be able to go out while the first is still in flight."
+    },
+    {
+      "id": "failure-takes-back-its-own",
+      "title": "A failure takes back only its own change",
+      "testFile": "tests/checkpoints/02-a-failure-takes-back-only-its-own-change.test.tsx",
+      "hint": "A snapshot of everything taken before the request is stale by the time the request fails, so restoring it wipes whatever happened in between. Undo one field. The same goes the other way: the reply to a save describes the whole profile, and the only part of it worth believing is the field you sent."
+    },
+    {
+      "id": "late-answer-cannot-win",
+      "title": "A late answer cannot bring back an old value",
+      "testFile": "tests/checkpoints/03-a-late-answer-cannot-bring-back-an-old-value.test.tsx",
+      "hint": "Two saves of one field are in flight and the answers can come back either way round. Nothing in the reply itself says which save it belongs to, so give each save a number as it goes out, keep the newest number per field, and drop any answer that is not carrying it."
+    },
+    {
+      "id": "failure-says-so",
+      "title": "A save that failed says so",
+      "testFile": "tests/checkpoints/04-a-save-that-failed-says-so.test.tsx",
+      "hint": "A value that changes back on its own looks like the app eating your work. Put the field's name in a role=alert, and take it away once a later save of that field gets through."
+    }
+  ]
+}
