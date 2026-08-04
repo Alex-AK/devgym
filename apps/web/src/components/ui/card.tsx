@@ -7,7 +7,9 @@ type DivProps = React.HTMLAttributes<HTMLDivElement>;
 export function Card({ className, ...props }: DivProps): React.ReactElement {
   return (
     <div
-      className={cn('rounded-xl border bg-card text-card-foreground shadow-sm', className)}
+      // Border, no shadow. A hairline on warm paper is enough separation, and
+      // stacking both is what made every surface read as a Material panel.
+      className={cn('rounded-xl border bg-card text-card-foreground', className)}
       {...props}
     />
   );

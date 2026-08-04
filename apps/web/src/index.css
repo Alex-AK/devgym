@@ -1,29 +1,35 @@
 @import 'tailwindcss';
 
+/**
+ * Warm neutrals and a clay accent. The palette was blue-grey with an indigo
+ * primary, which is Material's default pairing and read like a framework rather
+ * than like anything of ours. Every hue here sits between 40 and 80: paper
+ * rather than screen, and the one saturated thing on a page is the accent.
+ */
 :root {
   color-scheme: light;
 
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  --background: oklch(0.995 0.002 250);
-  --foreground: oklch(0.22 0.02 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 260);
-  --primary: oklch(0.48 0.16 268);
-  --primary-foreground: oklch(0.99 0.005 250);
-  --secondary: oklch(0.96 0.008 260);
-  --secondary-foreground: oklch(0.3 0.03 265);
-  --muted: oklch(0.965 0.006 260);
-  --muted-foreground: oklch(0.53 0.02 262);
-  --accent: oklch(0.95 0.02 268);
-  --accent-foreground: oklch(0.3 0.05 268);
-  --destructive: oklch(0.58 0.21 27);
-  --destructive-foreground: oklch(0.99 0.005 250);
-  --border: oklch(0.9 0.008 260);
-  --input: oklch(0.9 0.008 260);
-  --ring: oklch(0.62 0.12 268);
+  --background: oklch(0.988 0.004 75);
+  --foreground: oklch(0.21 0.012 60);
+  --card: oklch(1 0.002 80);
+  --card-foreground: oklch(0.21 0.012 60);
+  --popover: oklch(1 0.002 80);
+  --popover-foreground: oklch(0.21 0.012 60);
+  --primary: oklch(0.57 0.115 42);
+  --primary-foreground: oklch(0.99 0.005 80);
+  --secondary: oklch(0.955 0.008 70);
+  --secondary-foreground: oklch(0.31 0.018 55);
+  --muted: oklch(0.962 0.007 72);
+  --muted-foreground: oklch(0.52 0.016 58);
+  --accent: oklch(0.945 0.022 55);
+  --accent-foreground: oklch(0.37 0.062 42);
+  --destructive: oklch(0.55 0.185 27);
+  --destructive-foreground: oklch(0.99 0.005 80);
+  --border: oklch(0.905 0.008 68);
+  --input: oklch(0.905 0.008 68);
+  --ring: oklch(0.57 0.115 42);
 }
 
 @theme inline {
@@ -79,9 +85,46 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /**
+   * Headings are heavier and tighter than the body, which is the one typographic
+   * move that stops a page of muted labels reading as flat. Tracking closes as
+   * the size grows, because it has to: default tracking on a 30px weight-600
+   * line looks loose next to 15px prose.
+   */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    letter-spacing: -0.028em;
+  }
+
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+
+  /**
+   * A browser gives `button` and `select` an arrow cursor, not a pointer, and
+   * Tailwind's reset keeps it that way. Anything you can click says so here,
+   * and anything you cannot says that too.
+   */
+  button,
+  select,
+  summary,
+  label[for],
+  [role='button'],
+  [role='tab'],
+  [role='option'] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
   }
 }
 
@@ -111,17 +154,33 @@
   .md h3,
   .md h4 {
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
   }
 
   .md h1 {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
   }
   .md h2 {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
   }
   .md h3 {
-    font-size: 1rem;
+    font-size: 1.0625rem;
+  }
+
+  /* A section heading has to break the page, not just sit in it. Against a
+     30px title these were 18px and read as bold paragraphs. */
+  .md > h2 + *,
+  .md > h3 + * {
+    margin-top: 0.6rem;
+  }
+
+  .md > * + h2 {
+    margin-top: 2.25rem;
+  }
+
+  .md > * + h3 {
+    margin-top: 1.75rem;
   }
 
   .md strong {
@@ -173,8 +232,8 @@
    * and keeps its own horizontal scroll for whatever still does not fit.
    */
   .md pre {
-    background-color: oklch(0.21 0.02 262);
-    color: oklch(0.94 0.01 250);
+    background-color: oklch(0.19 0.012 58);
+    color: oklch(0.93 0.008 78);
     border-radius: var(--radius-md);
     padding: 0.85rem 1rem;
     overflow-x: auto;
