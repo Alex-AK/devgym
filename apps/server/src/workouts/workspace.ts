@@ -27,6 +27,9 @@ export function workspacePath(attemptId: number): string {
  *   <workspace>/tests        the checkpoint suites, read-only
  *   <workspace>/node_modules symlink to the workouts package
  *
+ * `tests/` is copied whole, which is how a `testRun.setupFile` arrives: the
+ * runner resolves it against the workspace at the path the manifest names.
+ *
  * The symlink is the whole trick. pnpm has already built that directory from
  * `packages/workouts/package.json`, so the workspace resolves the real
  * drizzle-orm, the real testing-library, without an install per attempt.

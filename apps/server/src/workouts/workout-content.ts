@@ -56,7 +56,7 @@ export function listManifests(): WorkoutManifest[] {
 export function readManifest(slug: string): WorkoutManifest {
   const raw = readFileSync(join(workoutDir(slug), 'workout.json'), 'utf8');
   const manifest = JSON.parse(raw) as WorkoutManifest;
-  assertValid(manifest, slug);
+  assertManifestValid(manifest, slug);
   return manifest;
 }
 
@@ -68,7 +68,7 @@ export function readBrief(slug: string): string {
  * Content is authored by hand, so the failure we care about is a typo that would
  * otherwise surface as a blank page or a checkpoint that can never pass.
  */
-function assertValid(manifest: WorkoutManifest, slug: string): void {
+export function assertManifestValid(manifest: WorkoutManifest, slug: string): void {
   const fail = (why: string): never => {
     throw new Error(`workouts: ${slug}/workout.json ${why}`);
   };
@@ -90,5 +90,54 @@ function assertValid(manifest: WorkoutManifest, slug: string): void {
     if (!existsSync(join(workoutDir(slug), checkpoint.testFile))) {
       fail(`points checkpoint "${checkpoint.id}" at a missing ${checkpoint.testFile}`);
     }
+  }
+
+  assertTestRunValid(manifest, slug, fail);
+}
+
+/**
+ * Both fields fail quietly when they are wrong, which is why they are checked
+ * here rather than left to the suite: a mis-spelled zone still produces dates,
+ * and a setup file that is not there still lets every checkpoint run.
+ */
+function assertTestRunValid(
+  manifest: WorkoutManifest,
+  slug: string,
+  fail: (why: string) => never
+): void {
+  const testRun = manifest.testRun;
+  if (testRun === undefined) return;
+
+  const { setupFile, timezone } = testRun;
+
+  if (timezone !== undefined) {
+    const canonical = canonicalZone(timezone);
+    if (canonical === null) fail(`declares an unknown timezone "${timezone}"`);
+    // `TZ` is matched against the zone database as spelled, where Intl is case
+    // insensitive. `America/New_york` therefore does not fail: it yields a fixed
+    // offset with no DST transition, deleting the boundary the workout is about.
+    if (canonical !== timezone) {
+      fail(`declares timezone "${timezone}", which TZ needs spelled "${canonical}"`);
+    }
+  }
+
+  if (setupFile !== undefined) {
+    if (!setupFile.startsWith('tests/') || setupFile.includes('..')) {
+      fail(`points setupFile at "${setupFile}", which is outside tests/`);
+    }
+    if (/\.test\.tsx?$/.test(setupFile)) {
+      fail(`names setupFile "${setupFile}", which would also be collected as a suite`);
+    }
+    if (!existsSync(join(workoutDir(slug), setupFile))) {
+      fail(`points setupFile at a missing ${setupFile}`);
+    }
+  }
+}
+
+function canonicalZone(zone: string): string | null {
+  try {
+    return new Intl.DateTimeFormat('en-US', { timeZone: zone }).resolvedOptions().timeZone;
+  } catch {
+    return null;
   }
 }

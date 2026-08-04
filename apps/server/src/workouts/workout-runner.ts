@@ -2,7 +2,13 @@ import { spawn } from 'node:child_process';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { WorkoutCheckpoint, WorkoutCheckpointResult, WorkoutRun } from '@hone/shared';
+import type {
+  WorkoutCheckpoint,
+  WorkoutCheckpointResult,
+  WorkoutManifest,
+  WorkoutRun,
+  WorkoutTestRun,
+} from '@hone/shared';
 
 import { RUNTIME_MODULES } from './workout-content';
 
@@ -31,6 +37,13 @@ export interface RunOptions {
 }
 
 /**
+ * All the runner wants of a manifest: what to run, and what the workout asked
+ * for in the way of a test run. Taken together rather than as an option, so a
+ * caller cannot run a dated workout and quietly lose its zone.
+ */
+export type RunnableWorkout = Pick<WorkoutManifest, 'checkpoints' | 'testRun'>;
+
+/**
  * Run the workspace's checkpoint suites and map them back onto the manifest.
  *
  * One suite per checkpoint, matched by file path, so a checkpoint's status is
@@ -44,15 +57,16 @@ export interface RunOptions {
  */
 export async function runCheckpoints(
   workspace: string,
-  checkpoints: WorkoutCheckpoint[],
+  workout: RunnableWorkout,
   options: RunOptions = {}
 ): Promise<WorkoutRun> {
+  const checkpoints = workout.checkpoints;
   const only = options.only ?? null;
   const target = only ? checkpoints.find((checkpoint) => checkpoint.id === only) : undefined;
   const startedAt = Date.now();
   rmSync(join(workspace, RESULTS_FILE), { force: true });
 
-  const outcome = await spawnVitest(workspace, target?.testFile);
+  const outcome = await spawnVitest(workspace, workout.testRun, target?.testFile);
   const durationMs = Date.now() - startedAt;
   const ranAt = new Date().toISOString();
 
@@ -94,8 +108,29 @@ export async function runCheckpoints(
   };
 }
 
+/**
+ * A workout's `testRun`, translated into the only two things the spawn carries
+ * on its behalf. Both are settled before the process starts, which is the point:
+ * `TZ` is process state, and a suite that assigned it mid-run would be handing
+ * whatever it set to the next file the pool gives that worker.
+ */
+function runEnv(workspace: string, testRun?: WorkoutTestRun): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    // CI keeps vitest non-interactive and stops it watching.
+    CI: 'true',
+    NO_COLOR: '1',
+    // Written every run, so an ambient value cannot reach a workout that asked
+    // for nothing. The scaffold config reads this and merges it into both
+    // projects; an absolute path saves it having to resolve one.
+    HONE_SETUP_FILE: testRun?.setupFile ? join(workspace, testRun.setupFile) : '',
+    ...(testRun?.timezone ? { TZ: testRun.timezone } : {}),
+  };
+}
+
 function spawnVitest(
   workspace: string,
+  testRun?: WorkoutTestRun,
   testFile?: string
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve) => {
@@ -110,8 +145,7 @@ function spawnVitest(
       ],
       {
         cwd: workspace,
-        // CI keeps vitest non-interactive and stops it watching.
-        env: { ...process.env, CI: 'true', NO_COLOR: '1' },
+        env: runEnv(workspace, testRun),
         stdio: ['ignore', 'pipe', 'pipe'],
       }
     );

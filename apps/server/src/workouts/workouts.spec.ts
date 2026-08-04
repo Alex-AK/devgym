@@ -66,11 +66,11 @@ describe('workout content', () => {
       const target = manifest.checkpoints[1] ?? manifest.checkpoints[0];
       if (!target) return;
 
-      const full = await runCheckpoints(workspace, manifest.checkpoints);
+      const full = await runCheckpoints(workspace, manifest);
       expect(full.only).toBeNull();
       expect(full.passedCount).toBe(manifest.checkpoints.length);
 
-      const one = await runCheckpoints(workspace, manifest.checkpoints, {
+      const one = await runCheckpoints(workspace, manifest, {
         only: target.id,
         previous: full,
       });
@@ -90,7 +90,7 @@ describe('workout content', () => {
       const target = manifest.checkpoints[0];
       if (!target) return;
 
-      const one = await runCheckpoints(build(manifest.slug, 'solution'), manifest.checkpoints, {
+      const one = await runCheckpoints(build(manifest.slug, 'solution'), manifest, {
         only: target.id,
       });
 
@@ -104,7 +104,7 @@ describe('workout content', () => {
 
   describe.each(manifests.map((m) => [m.slug, m] as const))('%s', (_slug, manifest) => {
     it('passes every checkpoint from its solution', async () => {
-      const result = await runCheckpoints(build(manifest.slug, 'solution'), manifest.checkpoints);
+      const result = await runCheckpoints(build(manifest.slug, 'solution'), manifest);
       expect(result.crashed, `${manifest.slug} crashed: ${result.crashed}`).toBeNull();
       const failed = result.checkpoints.filter((c) => c.status !== 'passed');
       expect(
@@ -114,7 +114,7 @@ describe('workout content', () => {
     }, 120_000);
 
     it('leaves at least one checkpoint failing from its starting files', async () => {
-      const result = await runCheckpoints(build(manifest.slug, 'files'), manifest.checkpoints);
+      const result = await runCheckpoints(build(manifest.slug, 'files'), manifest);
       expect(result.crashed, `${manifest.slug} starter crashed: ${result.crashed}`).toBeNull();
       expect(
         result.passedCount,

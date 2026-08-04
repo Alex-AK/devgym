@@ -14,6 +14,17 @@ import { defineConfig } from 'vitest/config';
  * silently resolves to undefined under it. The client project stays on esbuild,
  * which is faster and handles JSX without any of this.
  */
+
+/**
+ * The one opening a workout has onto its own test run, and it is deliberately a
+ * single value rather than a config file. The runner translates the manifest's
+ * `testRun` into `TZ` and into this, both on the spawned process; nothing here
+ * reads the workspace, so a workout cannot reach `include`, the timeouts or the
+ * reporter and cannot make a checkpoint pass by configuring the failure away.
+ * Empty when the workout declared nothing, which is the usual case.
+ */
+const setupFiles = process.env.HONE_SETUP_FILE ? [process.env.HONE_SETUP_FILE] : [];
+
 const shared = {
   // Testing Library only registers its auto-cleanup when a global afterEach
   // exists. Without this, one client test's DOM leaks into the next and
@@ -22,6 +33,9 @@ const shared = {
   // A workout is a timed exercise, not a build: fail fast rather than hang.
   testTimeout: 10_000,
   hookTimeout: 10_000,
+  // Both projects, because a stub assigned to globalThis is as valid in node as
+  // it is in jsdom and one entry is easier to author against than two.
+  setupFiles,
 };
 
 export default defineConfig({

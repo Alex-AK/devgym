@@ -122,7 +122,7 @@ export class WorkoutsService {
       throw new BadRequestException(`No checkpoint "${only}" in workout "${slug}"`);
     }
 
-    const result = await runCheckpoints(workspacePath(attempt.id), manifest.checkpoints, {
+    const result = await runCheckpoints(workspacePath(attempt.id), manifest, {
       ...(only ? { only } : {}),
       previous: attempt.lastRun ? (JSON.parse(attempt.lastRun) as WorkoutRun) : null,
     });
