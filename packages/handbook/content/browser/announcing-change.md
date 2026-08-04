@@ -7,6 +7,7 @@ practise:
   - a11y-form-error-association
   - a11y-contrast-ratio
   - a11y-reduced-motion
+  - form-errors-react
 sources:
   - author: MDN
     title: ARIA live regions

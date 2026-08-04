@@ -1,0 +1,40 @@
+{
+  "slug": "form-errors-react",
+  "title": "The form says nothing is wrong",
+  "kind": "bug-hunt",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "client": "react"
+  },
+  "summary": "A customer using a screen reader filled in the contact details form, pressed Save five times, and was never told what was wrong or whether it had worked. Her account now has five audit entries for the same change.",
+  "focus": ["aria", "forms", "focus management", "react state"],
+  "editable": ["src/client/ContactDetailsForm.tsx"],
+  "checkpoints": [
+    {
+      "id": "messages-reach-their-field",
+      "title": "Every message reaches the field it is about",
+      "testFile": "tests/checkpoints/01-every-message-reaches-its-field.test.tsx",
+      "hint": "Text drawn near a field is not attached to it. `aria-describedby` on the input, carrying the id of the element holding the message, is what makes the two one thing, and `aria-invalid` is what says the field itself is in a failed state. Both have to come off again once the field passes, or the field goes on claiming to be wrong."
+    },
+    {
+      "id": "says-what-happened",
+      "title": "The form says what happened",
+      "testFile": "tests/checkpoints/02-the-form-says-what-happened.test.tsx",
+      "hint": "A live region is announced when its contents change, so one that appears already carrying its text has not changed and says nothing. Keep an empty `role=\"status\"` element mounted from the first render and put only the message behind the condition."
+    },
+    {
+      "id": "keyboard-lands-on-the-problem",
+      "title": "A failed submit puts the keyboard on the first problem",
+      "testFile": "tests/checkpoints/03-the-keyboard-lands-on-the-problem.test.tsx",
+      "hint": "After a failed submit the keyboard is still on the button, so the only way to reach the failing field is to walk the form again. Call `.focus()` on the first field that failed, in document order. Do it in answer to the submit rather than on every render that has errors in it, or it pulls focus back out of the field being fixed."
+    },
+    {
+      "id": "one-press-one-save",
+      "title": "One press, one save",
+      "testFile": "tests/checkpoints/04-one-press-one-save.test.tsx",
+      "hint": "The second press lands before the first request has come back, and nothing in the component knows a save is already in flight. Track that and refuse the second one. Then give the form back when the request settles, on the path where it failed as well as the one where it worked."
+    }
+  ]
+}
