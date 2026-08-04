@@ -6,6 +6,7 @@ practise:
   - security-samesite-none-secure
   - security-token-storage
   - security-cookie-flags
+  - session-revocation-nestjs
 sources:
   - author: MDN
     title: Set-Cookie header

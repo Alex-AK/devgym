@@ -1,0 +1,41 @@
+{
+  "slug": "session-revocation-nestjs",
+  "title": "Logging out does not log anybody out",
+  "kind": "feature",
+  "minutes": 22,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "nestjs",
+    "database": "sqlite"
+  },
+  "summary": "Log out clears the client and the credentials it cleared go on working. Make it land on the next request: refreshing replaces the refresh token and leaves the old one worth nothing, logging out ends one session without touching the others, and a refresh token that turns up twice ends the session it came from.",
+  "focus": ["sessions", "revocation", "token rotation", "guards", "nestjs"],
+  "editable": ["src/server/sessions.service.ts", "src/server/session.guard.ts"],
+  "checkpoints": [
+    {
+      "id": "login-opens-a-session",
+      "title": "A login opens a session and its access token gets in",
+      "testFile": "tests/checkpoints/01-a-login-opens-a-session.test.ts",
+      "hint": "This half arrives working, so a failure here is something the rest of the work broke. The handlers read the caller off request.auth, and a Nest guard that returns false answers 403 where these want 401."
+    },
+    {
+      "id": "refresh-rotates",
+      "title": "Refreshing rotates the refresh token",
+      "testFile": "tests/checkpoints/02-refreshing-rotates-the-refresh-token.test.ts",
+      "hint": "Rotation is two writes rather than one: the token you were handed stops being the live one, and a new one takes its place against the same session. The session id inside the access token does not change, because refreshing is not a second login."
+    },
+    {
+      "id": "logout-takes-effect",
+      "title": "Logging out takes effect on the next request",
+      "testFile": "tests/checkpoints/03-logging-out-takes-effect-on-the-next-request.test.ts",
+      "hint": "A signature check consults nothing, so nothing you write can fail one. The guard has the session in claims.sessionId and the store has findSession; logging out everywhere is sessionsFor followed by revokeSession on each."
+    },
+    {
+      "id": "replayed-token-ends-the-session",
+      "title": "A refresh token that turns up twice ends the session",
+      "testFile": "tests/checkpoints/04-a-refresh-token-that-turns-up-twice.test.ts",
+      "hint": "Deleting the old row on rotation loses the difference between a value that was never issued and one that was spent, and both then look identical on the way in. markTokenUsed keeps that difference, and the answer to a spent one is to end the session rather than only to refuse the request."
+    }
+  ]
+}
