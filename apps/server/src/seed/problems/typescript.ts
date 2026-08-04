@@ -1,4 +1,4 @@
-import { code, md, type ProblemDraft } from './types';
+import { code, md, type ProblemDraft, typeProblem } from './types';
 
 export const typescriptProblems: ProblemDraft[] = [
   {
@@ -1945,4 +1945,190 @@ export const typescriptProblems: ProblemDraft[] = [
     explanation:
       '`readonly T[]` removes `push`, `sort`, `splice` and the rest from the array type, and stops there. The elements keep whatever types they already had, so one `readonly` protects exactly one level. TypeScript ships no deep version, so you either repeat it at each level you care about or reach for a recursive mapped type, which is what type-fest publishes as `ReadonlyDeep`. The direction is worth knowing too: a `number[]` is assignable to a `readonly number[]` parameter and not the other way round, which makes `readonly` cheap to add to a function that only reads and awkward to add to what one returns.',
   },
+
+  /* The reps below are `ts-type`: you write the type and the checker is asked
+     what you produced. Every one of them is a question the other four graders
+     can only ask *about*, which is why they are here rather than as prose. */
+
+  typeProblem({
+    slug: 'ts-mutable-mapped',
+    title: 'Take the readonly back off',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'A config loader hands back everything `readonly`, and the migration script has to edit a copy of it.',
+      '',
+      'Write `Mutable<T>`: the same properties, without the `readonly` modifier, and with optional properties still optional.'
+    ),
+    setup: md('interface Frozen {', '  readonly id: string;', '  readonly tags: string[];', '}'),
+    starter: 'type Mutable<T> = T;',
+    tests: [
+      {
+        name: 'drops readonly from every property',
+        type: 'Mutable<Frozen>',
+        equals: '{ id: string; tags: string[] }',
+      },
+      {
+        name: 'leaves an optional property optional',
+        type: 'Mutable<{ readonly a?: number }>',
+        equals: '{ a?: number }',
+      },
+      {
+        name: 'the result can actually be assigned to',
+        compiles: md("const draft: Mutable<Frozen> = { id: 'a', tags: [] };", "draft.id = 'b';"),
+      },
+    ],
+    reference: md('type Mutable<T> = {', '  -readonly [K in keyof T]: T[K];', '};'),
+    hints: [
+      'A mapped type rebuilds an object type key by key: `{ [K in keyof T]: T[K] }`.',
+      'That copy keeps every modifier it found. There is a syntax for removing one.',
+      'Put a minus in front of the modifier: `-readonly [K in keyof T]`. The same trick removes `?` with `-?`.',
+    ],
+    explanation:
+      'A mapped type copies `readonly` and `?` across by default, which is why the obvious `{ [K in keyof T]: T[K] }` changes nothing. `-readonly` and `-?` strip them, and a bare `readonly` or `?` adds them, which is all `Readonly<T>`, `Partial<T>` and `Required<T>` are. Getting this wrong is quiet: forgetting the minus leaves a type that is still assignable in both directions against the one you wanted, so nothing complains until the line that assigns to the property. Like every mapped type it is one level deep, and it is homomorphic, so it maps over an array or a tuple element by element rather than mangling it.',
+  }),
+
+  typeProblem({
+    slug: 'ts-assert-defined',
+    title: 'Narrow it once, for the rest of the function',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'The helper throws when the value is missing, and every call site still has to check afterwards:',
+      '',
+      code(
+        'ts',
+        'const total = rawTotal; // number | null',
+        'assertDefined(total);',
+        'const doubled = total * 2; // still an error'
+      ),
+      '',
+      'Fix the signature so the compiler treats reaching the next line as proof. Keep it generic: it should work for any type, not just numbers.'
+    ),
+    setup: md(
+      'declare const rawTotal: number | null;',
+      'declare const rawName: string | undefined;'
+    ),
+    starter: md(
+      'function assertDefined<T>(value: T | null | undefined): void {',
+      "  if (value == null) throw new Error('Expected a value');",
+      '}'
+    ),
+    tests: [
+      {
+        name: 'narrows away the null after the call',
+        compiles: md(
+          'const total = rawTotal;',
+          'assertDefined(total);',
+          'const doubled: number = total * 2;'
+        ),
+      },
+      {
+        name: 'narrows to the type it was given, not to any',
+        rejects: md(
+          'const total = rawTotal;',
+          'assertDefined(total);',
+          'const wrong: string = total;'
+        ),
+        errorCode: 2322,
+      },
+      {
+        name: 'works for a different type too',
+        compiles: md(
+          'const name = rawName;',
+          'assertDefined(name);',
+          'const upper: string = name.toUpperCase();'
+        ),
+      },
+    ],
+    reference: md(
+      'function assertDefined<T>(value: T | null | undefined): asserts value is T {',
+      "  if (value == null) throw new Error('Expected a value');",
+      '}'
+    ),
+    hints: [
+      'A return type can describe an effect on control flow rather than a value.',
+      'The predicate form is `value is T`. There is a sibling that applies from the call onward instead of inside an `if`.',
+      '`asserts value is T` as the return type. The body stays exactly as it is.',
+    ],
+    explanation:
+      '`asserts value is T` says that if the call returns at all, the argument has that type from there on, so the narrowing outlives the statement instead of living inside an `if`. Two things bite. The call target needs an explicit type annotation, so writing it as `const assertDefined = (v) => { … }` fails at every call site with TS2775 until you annotate the const, which is why these are function declarations. And the compiler takes the signature on trust exactly as it does a predicate: a body that checks the wrong thing narrows to a lie. Widening the return to `asserts value is any` looks like it works and quietly turns off checking for everything downstream.',
+  }),
+
+  typeProblem({
+    slug: 'ts-result-data-infer',
+    title: 'Pull the payload out of a result union',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    prompt: md(
+      'Every loader returns the same envelope, and each screen keeps restating the payload type by hand.',
+      '',
+      'Write `DataOf<R>`: the `data` type from the successful member, and `never` when there is no successful member.'
+    ),
+    setup: md(
+      'type Loaded<T> = { ok: true; data: T };',
+      'type Failed = { ok: false; error: string };',
+      'type Result<T> = Loaded<T> | Failed;'
+    ),
+    starter: 'type DataOf<R> = R;',
+    tests: [
+      {
+        name: 'reads the payload through the envelope',
+        type: 'DataOf<Result<{ id: string }>>',
+        equals: '{ id: string }',
+      },
+      { name: 'gives never when nothing succeeded', type: 'DataOf<Failed>', equals: 'never' },
+      {
+        name: 'handles a union of results one member at a time',
+        type: 'DataOf<Result<string> | Result<number>>',
+        equals: 'string | number',
+      },
+    ],
+    reference: 'type DataOf<R> = R extends { ok: true; data: infer D } ? D : never;',
+    hints: [
+      'A type can branch on a shape: `R extends Something ? X : Y`.',
+      'The payload has no name yet when the match happens, so it has to be captured during the match.',
+      '`R extends { ok: true; data: infer D } ? D : never`',
+    ],
+    explanation:
+      '`infer` binds whatever lands in that position and is in scope only in the true branch, which is how `ReturnType` and `Awaited` are written. The third check is the one that matters: a conditional whose left side is a bare type parameter distributes over unions, so it runs once per member and unions the results, which is why the failure branch contributes `never` and disappears. That is usually what you want and occasionally a trap, since `DataOf<never>` is `never` because distributing over an empty union produces nothing at all. Wrap both sides in a tuple, `[R] extends [X]`, when the union should be matched as one type.',
+  }),
+
+  typeProblem({
+    slug: 'ts-route-param-infer',
+    title: 'Read the parameter name off the path',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    prompt: md(
+      'The router knows every path at compile time, and the handler signatures are typed by hand from them.',
+      '',
+      'Write `ParamOf<P>`: the name after the colon as a literal type, and `never` for a path that has no parameter.'
+    ),
+    starter: 'type ParamOf<P> = P;',
+    tests: [
+      {
+        name: 'reads the name after the colon',
+        type: "ParamOf<'/orders/:orderId'>",
+        equals: "'orderId'",
+      },
+      {
+        name: 'gives never for a path with no parameter',
+        type: "ParamOf<'/orders'>",
+        equals: 'never',
+      },
+      {
+        name: 'handles a union of paths',
+        type: "ParamOf<'/users/:userId' | '/posts/:postId'>",
+        equals: "'userId' | 'postId'",
+      },
+    ],
+    reference: 'type ParamOf<P> = P extends `${string}:${infer Name}` ? Name : never;',
+    hints: [
+      'A string type can be written with template literal syntax, and it matches as a pattern on the right of `extends`.',
+      'The part before the colon can be anything. The part after it is what you want to capture.',
+      '``P extends `${string}:${infer Name}` ? Name : never``',
+    ],
+    explanation:
+      'A template literal type in the pattern position matches structurally, and `infer` captures the segment it lines up with, which is what makes typed route params possible without a code generator. `${string}` before the colon is the wildcard, and `${infer Prefix}` there would work identically while giving the discarded half a name. Two edges to know. Matching is not greedy in the regex sense: with two colons the first one wins, so a real router type recurses on the rest. And an unbounded `string` in the argument gets you nothing useful, because `ParamOf<string>` cannot resolve to one literal, which is the reason these types are paired with `as const` route tables.',
+  }),
 ];

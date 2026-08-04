@@ -40,16 +40,25 @@ const PLACEHOLDER = {
   'short-text': 'Type your answer…',
   explain: 'Explain in a sentence or two…',
   'js-code': 'Write your solution…',
+  'ts-type': 'Write the type…',
 } as const;
 
-const EDITOR_ROWS = { sql: 8, 'short-text': 4, explain: 4, 'js-code': 14 } as const;
+const EDITOR_ROWS = { sql: 8, 'short-text': 4, explain: 4, 'js-code': 14, 'ts-type': 12 } as const;
 
-/** The two types that get a real editor. Prose answers stay a plain textarea. */
-const CODE_SHAPED = ['sql', 'js-code'] as const;
-const EDITOR_MIN_HEIGHT = { sql: '11rem', 'js-code': '20rem' } as const;
+/** The types that get a real editor. Prose answers stay a plain textarea. */
+const CODE_SHAPED = ['sql', 'js-code', 'ts-type'] as const;
+const EDITOR_MIN_HEIGHT = { sql: '11rem', 'js-code': '20rem', 'ts-type': '14rem' } as const;
+const EDITOR_LANGUAGE = { sql: 'sql', 'js-code': 'javascript', 'ts-type': 'typescript' } as const;
+
+/** Both of the editor types prefill from a starter and can carry a setup block. */
+const PREFILLED = ['js-code', 'ts-type'] as const;
 
 function isCodeShaped(type: ProblemType): type is (typeof CODE_SHAPED)[number] {
   return (CODE_SHAPED as readonly ProblemType[]).includes(type);
+}
+
+function isPrefilled(type: ProblemType): boolean {
+  return (PREFILLED as readonly ProblemType[]).includes(type);
 }
 
 const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac');
@@ -100,7 +109,7 @@ export function ProblemPage(): React.ReactElement {
   // tests. Only prefill an untouched editor, never overwrite what you typed. The
   // starter arrives with the query, so there is no render-time value to derive from.
   React.useEffect(() => {
-    if (isPending || data?.type !== 'js-code' || !data.starter) return;
+    if (isPending || !data || !isPrefilled(data.type) || !data.starter) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnswer((current) => (current.length > 0 ? current : (data.starter ?? '')));
   }, [data, isPending]);
@@ -321,7 +330,9 @@ export function ProblemPage(): React.ReactElement {
             <p className="text-xs text-muted-foreground">
               Already defined. Your solution and the tests can both use it.
             </p>
-            <Markdown className="text-sm">{'```js\n' + data.setup + '\n```'}</Markdown>
+            <Markdown className="text-sm">
+              {'```' + (data.type === 'ts-type' ? 'ts' : 'js') + '\n' + data.setup + '\n```'}
+            </Markdown>
           </CardContent>
         </Card>
       )}
@@ -333,7 +344,7 @@ export function ProblemPage(): React.ReactElement {
               ref={editorRef}
               value={answer}
               onChange={setAnswer}
-              language={data.type === 'sql' ? 'sql' : 'javascript'}
+              language={EDITOR_LANGUAGE[data.type]}
               placeholder={PLACEHOLDER[data.type]}
               onSubmit={onSubmit}
               minHeight={EDITOR_MIN_HEIGHT[data.type]}
@@ -403,17 +414,33 @@ export function ProblemPage(): React.ReactElement {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1.5">
+            {/* A near miss is a failure that got the shape right, so it reads
+                amber: an answer that widened to `any` satisfies every
+                assignability check and is still the wrong answer. */}
             {attempt.tests.map((test) => (
               <div key={test.name} className="flex gap-2.5 rounded-md px-2 py-1.5 text-sm">
-                <span aria-hidden className={test.passed ? 'text-emerald-600' : 'text-rose-600'}>
-                  {test.passed ? '✓' : '✗'}
+                <span
+                  aria-hidden
+                  className={
+                    test.passed
+                      ? 'text-emerald-600'
+                      : test.near
+                        ? 'text-amber-600'
+                        : 'text-rose-600'
+                  }
+                >
+                  {test.passed ? '✓' : test.near ? '~' : '✗'}
                 </span>
                 <span className="flex-1">
                   <span className={test.passed ? 'text-muted-foreground' : 'font-medium'}>
                     {test.name}
                   </span>
                   {test.detail && (
-                    <span className="mt-0.5 block font-mono text-xs text-rose-700">
+                    <span
+                      className={`mt-0.5 block font-mono text-xs ${
+                        test.near ? 'text-amber-700' : 'text-rose-700'
+                      }`}
+                    >
                       {test.detail}
                     </span>
                   )}

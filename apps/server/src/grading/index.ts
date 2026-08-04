@@ -5,6 +5,7 @@ import { gradeCode } from './code-grader';
 import { gradeExplain } from './keyword-grader';
 import { gradeSql } from './sql-grader';
 import { gradeShortText } from './text-grader';
+import { gradeTypes } from './type-grader';
 import type {
   AnyGraderConfig,
   CodeGraderConfig,
@@ -12,6 +13,7 @@ import type {
   GradeResult,
   ShortTextGraderConfig,
   SqlGraderConfig,
+  TypeGraderConfig,
 } from './types';
 
 export { gradeCode } from './code-grader';
@@ -27,6 +29,9 @@ export {
 } from './normalize';
 export { gradeSql, ROW_CAP } from './sql-grader';
 export { gradeShortText } from './text-grader';
+export { checkTypes } from './type-checker';
+export type { CheckedProbe, Probe, ProbeReading, TypeCheckResult } from './type-checker';
+export { gradeTypes } from './type-grader';
 export * from './types';
 
 export class GraderConfigError extends Error {}
@@ -97,6 +102,39 @@ export function parseGraderConfig(
     } satisfies CodeGraderConfig;
   }
 
+  if (type === 'ts-type') {
+    if (!Array.isArray(record.tests) || record.tests.length === 0) {
+      throw new GraderConfigError(`grader_config.tests for "${slug}" must be a non-empty array`);
+    }
+    const tests = record.tests as TypeGraderConfig['tests'];
+    // One assertion form per test. Two would silently ignore one of them, and
+    // an authoring slip there is invisible: the test still passes.
+    for (const [index, test] of tests.entries()) {
+      const forms = [
+        test.equals !== undefined || test.type !== undefined,
+        test.compiles !== undefined,
+        test.rejects !== undefined,
+      ].filter(Boolean).length;
+      if (forms !== 1) {
+        throw new GraderConfigError(
+          `grader_config.tests[${index}] for "${slug}" needs exactly one of ` +
+            '`type`+`equals`, `compiles` or `rejects`'
+        );
+      }
+      if ((test.type === undefined) !== (test.equals === undefined)) {
+        throw new GraderConfigError(
+          `grader_config.tests[${index}] for "${slug}" needs both \`type\` and \`equals\``
+        );
+      }
+    }
+    return {
+      setup: typeof record.setup === 'string' ? record.setup : undefined,
+      starter: typeof record.starter === 'string' ? record.starter : undefined,
+      tests,
+      hints,
+    } satisfies TypeGraderConfig;
+  }
+
   const groups = record.groups;
   if (!Array.isArray(groups)) {
     throw new GraderConfigError(`grader_config.groups for "${slug}" must be an array`);
@@ -141,6 +179,9 @@ export async function gradeAnswer(
   }
   if (type === 'js-code') {
     return gradeCode(answer, config as CodeGraderConfig);
+  }
+  if (type === 'ts-type') {
+    return gradeTypes(answer, config as TypeGraderConfig);
   }
   return gradeExplain(answer, config as ExplainGraderConfig);
 }

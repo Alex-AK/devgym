@@ -23,6 +23,7 @@ import {
   gradeAnswer,
   parseGraderConfig,
   type SqlGraderConfig,
+  type TypeGraderConfig,
 } from '../grading';
 
 /** Failed attempts needed before the solution can be revealed. */
@@ -485,8 +486,13 @@ export class ProblemsService {
       orderMatters: problem.type === 'sql' ? (config as SqlGraderConfig).orderMatters : null,
       revealedHints: config.hints.slice(0, progress.hintsRevealed),
       hintsTotal: config.hints.length,
-      starter: problem.type === 'js-code' ? ((config as CodeGraderConfig).starter ?? null) : null,
-      setup: problem.type === 'js-code' ? ((config as CodeGraderConfig).setup ?? null) : null,
+      // Both editor types prefill from their config; only the two use the fields.
+      starter: hasEditorSource(problem.type)
+        ? ((config as CodeGraderConfig | TypeGraderConfig).starter ?? null)
+        : null,
+      setup: hasEditorSource(problem.type)
+        ? ((config as CodeGraderConfig | TypeGraderConfig).setup ?? null)
+        : null,
       solutionViewed: progress.solutionViewed,
       canRevealSolution: this.canReveal(progress),
       solution: showSolution ? problem.solution : null,
@@ -497,6 +503,11 @@ export class ProblemsService {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+/** The two types answered in an editor, and the only two carrying starter and setup. */
+function hasEditorSource(type: ProblemRow['type']): boolean {
+  return type === 'js-code' || type === 'ts-type';
 }
 
 /** Hold an index inside `[0, length - 1]` so stepping off either end stays put. */

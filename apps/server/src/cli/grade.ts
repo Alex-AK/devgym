@@ -23,6 +23,7 @@ import type {
   ExplainGraderConfig,
   ShortTextGraderConfig,
   SqlGraderConfig,
+  TypeGraderConfig,
 } from '../grading/types';
 import { buildPracticeDatabase, openPracticeDatabase } from '../seed/practice-db';
 import { problemSeeds } from '../seed/problems.seed';
@@ -76,6 +77,23 @@ function describeConfig(seed: (typeof problemSeeds)[number]): void {
     for (const test of config.tests) {
       console.log(`  test:         ${test.name}`);
       console.log(`                ${test.expression}`);
+    }
+    return;
+  }
+  if (seed.type === 'ts-type') {
+    const config = seed.graderConfig as TypeGraderConfig;
+    if (config.setup) console.log(`  setup:        ${indentBlock(config.setup)}`);
+    if (config.starter) console.log(`  starter:      ${indentBlock(config.starter)}`);
+    for (const test of config.tests) {
+      console.log(`  check:        ${test.name}`);
+      if (test.equals !== undefined) {
+        console.log(`                ${test.type}  ===  ${test.equals}`);
+      } else if (test.compiles !== undefined) {
+        console.log(`                compiles: ${indentBlock(test.compiles)}`);
+      } else {
+        const code = test.errorCode ? ` (TS${test.errorCode})` : '';
+        console.log(`                rejects${code}: ${indentBlock(test.rejects ?? '')}`);
+      }
     }
     return;
   }
@@ -136,9 +154,9 @@ async function main(): Promise<void> {
     console.log(`  verdict:  ${VERDICT_ICON[result.verdict]} ${result.verdict}`);
     console.log(`  feedback: ${result.feedback}`);
     for (const test of result.tests ?? []) {
-      console.log(
-        `    ${test.passed ? '✓' : '✗'} ${test.name}${test.detail ? ` — ${test.detail}` : ''}`
-      );
+      // `~` is a near miss: assignable both ways, and still not the answer.
+      const mark = test.passed ? '✓' : test.near ? '~' : '✗';
+      console.log(`    ${mark} ${test.name}${test.detail ? ` — ${test.detail}` : ''}`);
     }
     console.log('');
   } finally {

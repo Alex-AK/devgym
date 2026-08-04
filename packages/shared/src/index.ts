@@ -77,7 +77,14 @@ export const TAG_BLURBS: Record<Tag, string> = {
 export const RELEVANCES = ['daily', 'occasional', 'foundational'] as const;
 export type Relevance = (typeof RELEVANCES)[number];
 
-export const PROBLEM_TYPES = ['sql', 'short-text', 'explain', 'js-code'] as const;
+/**
+ * `ts-type` is the odd one out: the answer is a type rather than a value, and
+ * nothing runs. The submission is type-checked and the assertions are made
+ * against the type the checker inferred, which is the only way to examine
+ * conditional types, `infer`, mapped types and assertion functions by doing
+ * them rather than by asking about them.
+ */
+export const PROBLEM_TYPES = ['sql', 'short-text', 'explain', 'js-code', 'ts-type'] as const;
 export type ProblemType = (typeof PROBLEM_TYPES)[number];
 
 export const VERDICTS = ['correct', 'close', 'incorrect'] as const;
@@ -149,12 +156,13 @@ export interface ProblemDetail extends ProblemSummary {
   hintsTotal: number;
   solutionViewed: boolean;
   canRevealSolution: boolean;
-  /** Prefilled editor contents for `js-code` problems. */
+  /** Prefilled editor contents for `js-code` and `ts-type` problems. */
   starter: string | null;
   /**
-   * Fixtures a `js-code` problem's tests are written against, shown read-only
-   * above the editor. The tests name these values, so withholding them makes a
-   * failing assertion unreadable.
+   * What a `js-code` or `ts-type` problem's tests are written against, shown
+   * read-only above the editor: fixtures for the first, the declarations the
+   * answer builds on for the second. The tests name these, so withholding them
+   * makes a failing assertion unreadable.
    */
   setup: string | null;
   /** Present only when solved or the solution has been revealed. */
@@ -167,19 +175,26 @@ export interface AttemptRequest {
   answer: string;
 }
 
-/** One assertion from a `js-code` problem's test suite. */
+/** One assertion from a `js-code` or `ts-type` problem's test suite. */
 export interface CodeTestResult {
   name: string;
   passed: boolean;
   /** Why it failed: expected vs actual, or the thrown error. */
   detail?: string;
+  /**
+   * Failed, but only just: `ts-type` sets it when the answer's type is
+   * assignable to the expected type and back again without being identical.
+   * Returning `any` and dropping a `readonly` both land here, and both deserve
+   * amber rather than red.
+   */
+  near?: boolean;
 }
 
 /** `POST /api/problems/:slug/attempts` response. */
 export interface AttemptResponse {
   verdict: Verdict;
   feedback: string;
-  /** Per-test results for `js-code` problems. */
+  /** Per-test results for `js-code` and `ts-type` problems. */
   tests: CodeTestResult[];
   /** The hint unlocked by this attempt, if any. */
   newHint: string | null;
@@ -381,6 +396,27 @@ export interface WorkoutCheckpoint {
   hint?: string;
 }
 
+/**
+ * The two things a workout may say about how its own suites run. Both are
+ * optional and both are translated by the runner rather than handed over, so a
+ * workout never reaches the settings that decide whether a checkpoint can fail:
+ * `include`, the timeouts, the reporter.
+ */
+export interface WorkoutTestRun {
+  /**
+   * IANA zone name, applied as `TZ` to the process the suites run in. A fake
+   * clock moves `now` without moving the zone, so a workout about a DST
+   * boundary needs this and cannot get there any other way.
+   */
+  timezone?: string;
+  /**
+   * A file under the workout's own `tests/`, run before every suite. This is
+   * where a global the environment lacks gets registered: `ResizeObserver`,
+   * `IntersectionObserver`, `matchMedia`.
+   */
+  setupFile?: string;
+}
+
 export interface WorkoutManifest {
   slug: string;
   title: string;
@@ -395,6 +431,8 @@ export interface WorkoutManifest {
   /** Files the editor opens. Everything else in the workspace is read-only. */
   editable: string[];
   checkpoints: WorkoutCheckpoint[];
+  /** Absent on almost every workout, and absent means "run as the scaffold says". */
+  testRun?: WorkoutTestRun;
 }
 
 /** Row in the workout list (`GET /api/workouts`). */

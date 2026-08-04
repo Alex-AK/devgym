@@ -5,6 +5,7 @@ import type {
   ExplainGraderConfig,
   ShortTextGraderConfig,
   SqlGraderConfig,
+  TypeGraderConfig,
 } from '../../grading/types';
 
 export interface ProblemSeed {
@@ -29,7 +30,12 @@ export interface ProblemSeed {
   position: number;
   /** Markdown. */
   prompt: string;
-  graderConfig: SqlGraderConfig | ShortTextGraderConfig | ExplainGraderConfig | CodeGraderConfig;
+  graderConfig:
+    | SqlGraderConfig
+    | ShortTextGraderConfig
+    | ExplainGraderConfig
+    | CodeGraderConfig
+    | TypeGraderConfig;
   /**
    * A model answer in the form a user would actually type. Not persisted. The
    * smoke tests submit it to prove every seeded problem is solvable.
@@ -127,6 +133,50 @@ export function codeProblem(draft: {
     },
     canonicalAnswer: draft.reference,
     solution: code('js', draft.reference),
+    explanation: draft.explanation,
+  };
+}
+
+/**
+ * A "write the type" problem. Nothing runs: the answer is type-checked and the
+ * assertions are made against what the checker inferred. The reference doubles
+ * as the canonical answer and the displayed solution, so they cannot drift.
+ */
+export function typeProblem(draft: {
+  slug: string;
+  title: string;
+  category?: Category;
+  difficulty: Difficulty;
+  relevance: Relevance;
+  tags?: Tag[];
+  prompt: string;
+  /** Prefilled into the editor: the name the checks use has to be on screen. */
+  starter: string;
+  /** Declarations in scope before the answer. Shown read-only above the editor. */
+  setup?: string;
+  tests: TypeGraderConfig['tests'];
+  /** The reference answer. Must pass its own checks (asserted in the specs). */
+  reference: string;
+  hints: string[];
+  explanation: string;
+}): ProblemDraft {
+  return {
+    slug: draft.slug,
+    title: draft.title,
+    category: draft.category ?? 'typescript',
+    difficulty: draft.difficulty,
+    relevance: draft.relevance,
+    ...(draft.tags ? { tags: draft.tags } : {}),
+    type: 'ts-type',
+    prompt: draft.prompt,
+    graderConfig: {
+      ...(draft.setup ? { setup: draft.setup } : {}),
+      starter: draft.starter,
+      tests: draft.tests,
+      hints: draft.hints,
+    },
+    canonicalAnswer: draft.reference,
+    solution: code('ts', draft.reference),
     explanation: draft.explanation,
   };
 }

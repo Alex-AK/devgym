@@ -56,10 +56,10 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-function renderSolved(detail: ProblemDetail = SOLVED): void {
+function renderSolved(detail: ProblemDetail = SOLVED): ReturnType<typeof render> {
   vi.mocked(api.problem).mockResolvedValue(detail);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
+  return render(
     <QueryClientProvider client={client}>
       <MemoryRouter
         initialEntries={['/problems/js-find']}
@@ -127,5 +127,39 @@ describe('a coding problem with fixtures', () => {
 
     await screen.findByText(/Find the first match/);
     expect(screen.queryByText(/Already defined/)).toBeNull();
+  });
+});
+
+/**
+ * `ts-type` reaches the page through the same two fields as `js-code`, and the
+ * gate on both of them named one type for a while, so a type problem rendered
+ * with an empty editor and no declarations above it.
+ */
+describe('a type problem', () => {
+  it('shows the declarations its checks are written against', async () => {
+    renderSolved({
+      ...SOLVED,
+      type: 'ts-type',
+      starter: 'type Mutable<T> = T;',
+      setup: 'interface Frozen {\n  readonly id: string;\n}',
+    });
+
+    expect(await screen.findByText(/interface Frozen/)).toBeTruthy();
+    expect(screen.getByText(/Already defined/)).toBeTruthy();
+  });
+
+  // The answer goes into CodeMirror rather than the prose textarea. jsdom will
+  // not lay the editor out, so the assertion is that the textarea is gone.
+  it('answers in the code editor, not the prose box', async () => {
+    const { container } = renderSolved({
+      ...SOLVED,
+      type: 'ts-type',
+      starter: 'type Mutable<T> = T;',
+      setup: null,
+    });
+
+    await screen.findByText(/Find the first match/);
+    expect(container.querySelector('textarea')).toBeNull();
+    expect(container.querySelector('.cm-editor')).toBeTruthy();
   });
 });
