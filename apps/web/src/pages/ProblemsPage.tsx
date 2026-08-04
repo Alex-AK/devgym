@@ -4,20 +4,23 @@ import {
   CATEGORY_LABELS,
   DIFFICULTIES,
   type Difficulty,
+  inScope,
   PROBLEM_STATUSES,
   type ProblemStatus,
+  type ProblemSummary,
   RELEVANCE_LABELS,
+  RELEVANCES,
   type Tag,
   TAG_LABELS,
   TAGS,
 } from '@hone/shared';
 import { useQuery } from '@tanstack/react-query';
-import { Play, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Play, Search, X } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { STATUS_LABEL, StatusBadge } from '@/components/badges';
-import { FilterSelect } from '@/components/filters';
+import { FilterMultiSelect, FilterSelect } from '@/components/filters';
 import { ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,26 +32,37 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { api, queryKeys } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
-type CategoryFilter = Category | 'all';
 type StatusFilter = ProblemStatus | 'all';
-type DifficultyFilter = Difficulty | 'all';
 type TagFilter = Tag | 'all';
+
+type SortColumn = 'title' | 'category' | 'difficulty' | 'relevance' | 'status' | 'attempts';
+type SortDirection = 'asc' | 'desc';
+interface Sort {
+  column: SortColumn;
+  direction: SortDirection;
+}
 
 /**
  * A browse surface for 450 reps across 22 categories, which is why the search
- * box is the biggest control here and every axis is one select rather than a
- * row of chips: at this size the chips were a 350px wall you had to read past
- * before seeing a single problem, and a category you are looking for is faster
- * to pick from an alphabetical list than to find in three wrapped rows.
+ * box is the biggest control here and every axis is one collapsed control rather
+ * than a row of chips: at this size the chips were a 350px wall you had to read
+ * past before seeing a single problem, and a category you are looking for is
+ * faster to pick from an alphabetical list than to find in three wrapped rows.
+ *
+ * Category and difficulty take several values, because the question is usually
+ * "SQL and query params" rather than one subject. Status and focus stay single:
+ * one is a lifecycle you are either in or not, and there is one tag.
  */
 export function ProblemsPage(): React.ReactElement {
   const navigate = useNavigate();
-  const [category, setCategory] = React.useState<CategoryFilter>('all');
+  const [categories, setCategories] = React.useState<Category[]>([]);
   const [status, setStatus] = React.useState<StatusFilter>('all');
-  const [difficulty, setDifficulty] = React.useState<DifficultyFilter>('all');
+  const [difficulties, setDifficulties] = React.useState<Difficulty[]>([]);
   const [tag, setTag] = React.useState<TagFilter>('all');
   const [search, setSearch] = React.useState('');
+  const [sort, setSort] = React.useState<Sort | null>(null);
 
   const { data, isPending, error } = useQuery({
     queryKey: queryKeys.problems,
@@ -62,29 +76,32 @@ export function ProblemsPage(): React.ReactElement {
 
   // The three axes a session understands, kept separate from the two that only
   // narrow the table: the button below runs this set, not what you can see.
-  const inScope = data.filter(
+  const scoped = data.filter(
     (problem) =>
-      (category === 'all' || problem.category === category) &&
-      (difficulty === 'all' || problem.difficulty === difficulty) &&
+      inScope(categories, problem.category) &&
+      inScope(difficulties, problem.difficulty) &&
       (tag === 'all' || problem.tags.includes(tag))
   );
 
-  const rows = inScope.filter(
-    (problem) =>
-      (status === 'all' || problem.status === status) &&
-      (needle === '' ||
-        problem.title.toLowerCase().includes(needle) ||
-        problem.slug.includes(needle))
-  );
+  const rows = scoped
+    .filter(
+      (problem) =>
+        (status === 'all' || problem.status === status) &&
+        (needle === '' ||
+          problem.title.toLowerCase().includes(needle) ||
+          problem.slug.includes(needle))
+    )
+    .sort(comparator(sort));
 
   const solved = data.filter((problem) => problem.status === 'solved').length;
-  const unsolvedInScope = inScope.filter((problem) => problem.status !== 'solved').length;
+  const unsolvedInScope = scoped.filter((problem) => problem.status !== 'solved').length;
   const narrowed =
-    category !== 'all' ||
-    difficulty !== 'all' ||
+    categories.length > 0 ||
+    difficulties.length > 0 ||
     tag !== 'all' ||
     status !== 'all' ||
-    needle !== '';
+    needle !== '' ||
+    sort !== null;
 
   const counts = new Map<Category, number>();
   for (const problem of data) {
@@ -93,29 +110,27 @@ export function ProblemsPage(): React.ReactElement {
 
   // Alphabetical, because at 22 you are scanning for a name. Seed order carries
   // no meaning a reader can use.
-  const categoryOptions: Array<{ label: string; value: CategoryFilter }> = [
-    { label: `All categories (${data.length})`, value: 'all' },
-    ...CATEGORIES.filter((entry) => (counts.get(entry) ?? 0) > 0)
-      .slice()
-      .sort((a, b) => CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b]))
-      .map((entry) => ({
-        label: `${CATEGORY_LABELS[entry]} (${counts.get(entry) ?? 0})`,
-        value: entry,
-      })),
-  ];
+  const categoryOptions = CATEGORIES.filter((entry) => (counts.get(entry) ?? 0) > 0)
+    .slice()
+    .sort((a, b) => CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b]))
+    .map((entry) => ({
+      label: `${CATEGORY_LABELS[entry]} (${counts.get(entry) ?? 0})`,
+      value: entry,
+    }));
 
   const clear = (): void => {
-    setCategory('all');
-    setDifficulty('all');
+    setCategories([]);
+    setDifficulties([]);
     setTag('all');
     setStatus('all');
     setSearch('');
+    setSort(null);
   };
 
   const practiceThese = (): void => {
     const params = new URLSearchParams();
-    if (category !== 'all') params.set('category', category);
-    if (difficulty !== 'all') params.set('difficulty', difficulty);
+    for (const category of categories) params.append('category', category);
+    for (const difficulty of difficulties) params.append('difficulty', difficulty);
     if (tag !== 'all') params.set('tag', tag);
     const query = params.toString();
     navigate(`/practice${query ? `?${query}` : ''}`);
@@ -137,20 +152,19 @@ export function ProblemsPage(): React.ReactElement {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
+          <FilterMultiSelect
+            allLabel={`All categories (${data.length})`}
             label="Category"
-            onChange={setCategory}
+            onChange={setCategories}
             options={categoryOptions}
-            value={category}
+            selected={categories}
           />
-          <FilterSelect
+          <FilterMultiSelect
+            allLabel="Any difficulty"
             label="Difficulty"
-            onChange={setDifficulty}
-            options={[
-              { label: 'Any difficulty', value: 'all' },
-              ...DIFFICULTIES.map((entry) => ({ label: capitalise(entry), value: entry })),
-            ]}
-            value={difficulty}
+            onChange={setDifficulties}
+            options={DIFFICULTIES.map((entry) => ({ label: capitalise(entry), value: entry }))}
+            selected={difficulties}
           />
           {/* A tag is not a subject, so it stays its own axis rather than
               sitting among the categories it cuts across. */}
@@ -190,8 +204,8 @@ export function ProblemsPage(): React.ReactElement {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {unsolvedInScope} unsolved in the current category, difficulty and focus. A session
-          ignores the search box and the status filter.
+          {unsolvedInScope} unsolved in the current category, difficulty and focus. Search, status
+          and sort only change what you see.
         </p>
       </div>
 
@@ -204,12 +218,24 @@ export function ProblemsPage(): React.ReactElement {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Problem</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Difficulty</TableHead>
-              <TableHead>Relevance</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Attempts</TableHead>
+              <SortableHead column="title" onSort={setSort} sort={sort}>
+                Problem
+              </SortableHead>
+              <SortableHead column="category" onSort={setSort} sort={sort}>
+                Category
+              </SortableHead>
+              <SortableHead column="difficulty" onSort={setSort} sort={sort}>
+                Difficulty
+              </SortableHead>
+              <SortableHead column="relevance" onSort={setSort} sort={sort}>
+                Relevance
+              </SortableHead>
+              <SortableHead column="status" onSort={setSort} sort={sort}>
+                Status
+              </SortableHead>
+              <SortableHead align="right" column="attempts" onSort={setSort} sort={sort}>
+                Attempts
+              </SortableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -255,6 +281,100 @@ export function ProblemsPage(): React.ReactElement {
       </div>
     </div>
   );
+}
+
+/**
+ * A sortable column header. The control is a real button inside the `th`, and
+ * the `th` carries `aria-sort`, which is the pair a screen reader needs: one
+ * says the column can be re-ordered, the other says how it currently is.
+ *
+ * Clicking cycles ascending, descending, then off. The third state is not
+ * decoration: unsorted is the seeded `position`, an interleaved round robin that
+ * keeps the list from being twenty SQL rows in a row, and a page that could
+ * never get back to it would have lost its default for the session.
+ */
+function SortableHead({
+  align = 'left',
+  children,
+  column,
+  onSort,
+  sort,
+}: {
+  align?: 'left' | 'right';
+  children: React.ReactNode;
+  column: SortColumn;
+  onSort: (sort: Sort | null) => void;
+  sort: Sort | null;
+}): React.ReactElement {
+  const active = sort?.column === column ? sort.direction : null;
+  const Icon = active === 'asc' ? ArrowUp : active === 'desc' ? ArrowDown : ChevronsUpDown;
+
+  return (
+    <TableHead
+      aria-sort={active === 'asc' ? 'ascending' : active === 'desc' ? 'descending' : 'none'}
+      className={cn('p-0', align === 'right' && 'text-right')}
+    >
+      <button
+        className={cn(
+          'flex h-10 w-full items-center gap-1.5 px-3 hover:text-foreground',
+          align === 'right' && 'justify-end',
+          active && 'text-foreground'
+        )}
+        onClick={() =>
+          onSort(
+            active === null
+              ? { column, direction: 'asc' }
+              : active === 'asc'
+                ? { column, direction: 'desc' }
+                : null
+          )
+        }
+        type="button"
+      >
+        {children}
+        <Icon className={cn('size-3.5', !active && 'opacity-40')} />
+      </button>
+    </TableHead>
+  );
+}
+
+/**
+ * Sorting a table always ends up comparing something ordered, and two of these
+ * columns are: `easy, medium, hard` and `daily, occasional, foundational` both
+ * mean something in that order and nothing in alphabetical order, where hard
+ * would lead and occasional would sit in the middle. Both sort by their index in
+ * the tuple that defines them, and so does status, whose tuple is the lifecycle
+ * a rep moves through.
+ *
+ * Every comparison falls back to `position`, so the order is total and a re-sort
+ * of equal rows never shuffles them.
+ */
+function comparator(sort: Sort | null): (a: ProblemSummary, b: ProblemSummary) => number {
+  if (sort === null) return (a, b) => a.position - b.position;
+  const sign = sort.direction === 'asc' ? 1 : -1;
+
+  return (a, b) => {
+    const compared = compare(sort.column, a, b);
+    return compared === 0 ? a.position - b.position : compared * sign;
+  };
+}
+
+function compare(column: SortColumn, a: ProblemSummary, b: ProblemSummary): number {
+  switch (column) {
+    case 'title':
+      return a.title.localeCompare(b.title);
+    // By the label, because the label is what the row shows.
+    case 'category':
+      return CATEGORY_LABELS[a.category].localeCompare(CATEGORY_LABELS[b.category]);
+    case 'difficulty':
+      return DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty);
+    case 'relevance':
+      return RELEVANCES.indexOf(a.relevance) - RELEVANCES.indexOf(b.relevance);
+    case 'status':
+      return PROBLEM_STATUSES.indexOf(a.status) - PROBLEM_STATUSES.indexOf(b.status);
+    case 'attempts':
+      return a.attemptsCount - b.attemptsCount;
+  }
 }
 
 function capitalise(value: string): string {
