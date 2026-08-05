@@ -8,33 +8,63 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. The rest of the modules
+## 1. The on-ramp into a section
 
-The format ships and two are written, so everything here is content: a directory, no application
-code. Six left, and none of them arrives with the argument `url-and-searchparams` had. Ten
-`query-params` reps cited by nothing was a gap somebody would notice while working; what is below is
-a list of APIs, and the note recorded under `promises` in [decisions.md](./decisions.md) is evidence
-against writing it rather than for. Pick the next one when a rep or a page asks for it.
+Seventeen of the 133 handbook pages cite no easy rep, and 66 lead with a medium or hard one.
+[content.md](./content.md) already names this as the half of pairing nothing enforces, and it says
+why "has an easy problem" would be the wrong check: writing a definition passes it, and teaches that
+the definition was the point. So this is an audit with four different answers rather than a count to
+drive to zero.
 
-| Module              | The wrong model it corrects                                                          |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| `promises`          | That `await` in a loop and `Promise.all` differ only in style                        |
-| `json`              | That `JSON.stringify` round-trips your object                                        |
-| `js-errors`         | That `catch` catches what you think, and that a thrown thing is an `Error`           |
-| `regex`             | That a pattern that works is a pattern that terminates                               |
-| `tokens-and-crypto` | That a signed token is an encrypted one, and that comparing strings is safe          |
-| `node-fs`           | That reading a file is one call and writing one is atomic. Weakest of the six here   |
+**Four places want easy reps rather than pages.** `orms` is the worst in the library: three of its
+four pages have none, and all four lean on workouts, which is a twenty-minute commitment as the first
+thing a reader tries after reading. Then `server-runtime` in three places, `nexttick-and-setimmediate`,
+`backpressure` and `dependency-injection`, the last citing a single workout and nothing else. Then
+four singletons: `javascript/closures`, `react/the-main-thread`,
+`headers/conditional-requests-and-ranges` and `dependencies/peer-dependencies`.
 
-`tokens-and-crypto` is the one module where a wrong model is a vulnerability rather than a bug, so it
-stays on `node:crypto` and `jose` and invents no primitives of its own.
+**`systems` is the refusal, and it is the reason this section is an audit.** It looks like the
+largest gap, five pages of thirteen, and four of those cite exactly one rep of any difficulty:
+service discovery, sharding, consistent hashing, back-of-envelope. The easy rep for each would be
+"what is this called", which content.md routes to a deck card entered on purpose rather than a rep
+dealt to a morning. Leave it, and do not let the count in this paragraph pull it back onto the queue.
 
-**Two things `js-date` proved that the next author should not rediscover.** Assertions run on the
-reader's machine with no fake clock and no fixed timezone, so anything that depends on the host zone
-is a broken module for everybody except its author: `js-date`'s assertions were checked in five zones
-before it shipped. And a step's assertions are about the API rather than about the reader's edit, so
-they keep holding when the snippet is changed, which is what makes the editor safe to play in.
+## 2. Getting structured output out of a model
 
-## 2. The rest of the decks
+The clearest hole in the library, and it sits in the half of the subject that is still growing. You
+ask for JSON and it arrives inside a code fence, or with a trailing comma, or carrying a field you
+never defined. A schema handed to a provider is a request rather than a guarantee, and the validation
+is yours no matter which provider claims otherwise, which is the model to write down.
+
+**The tool-call loop is the same page or the one after it.** Two reps already exist,
+`ai-tool-schema-is-the-contract` and `ai-tool-authorization-boundary`, and they currently hang off
+`mcp-servers.md`, which teaches the protocol and not the mechanism underneath it. What no page says
+is that the model emits a request to call something and nothing has been called yet, that running it
+and feeding the result back is a loop you own, and that the tool boundary is a trust boundary because
+the arguments arrived from a model that was reading someone's input. Whether that separates from the
+parsing page cleanly is worth deciding while writing rather than now.
+
+Both want an easy rep each, and unlike the `systems` pages in section 1 the easy version here is real
+feature work rather than a definition: what to do with a response that parsed but failed the schema.
+
+## 3. Modelling for a document store
+
+The distributed half is already written: `systems/` covers replication, CAP, sharding and consistent
+hashing, and names document stores in all four. What no page covers is **modelling** — the decision a
+web engineer actually makes, which is whether the thing they are storing wants rows and joins or one
+document read whole.
+
+One or two pages in `databases/`, not a section and not a category. The territory: modelling for the
+access pattern rather than for the entities, which is the inversion people arrive unable to make;
+denormalisation, and that the write amplification it buys is the price rather than a mistake; and
+that "schemaless" means the schema moved into your code, unversioned, where nothing checks it.
+
+**This is a page before it is a workout, and a workout is not required to follow.** A document store
+is deferred until a brief needs one, and that bar is unchanged by these pages existing. What the
+pages need is a rep or two to cite, and the honest candidates are in `sql` or `databases` rather than
+a new category, because the decision is a database decision and not a Mongo decision.
+
+## 4. The rest of the decks
 
 Two decks suggest themselves and cannot be written, both for the same reason: `page` is mandatory and
 neither has one. No page owns the redirect codes, 301 against 302 against 307 against 308. Time
@@ -49,151 +79,6 @@ is worth re-reading for the contrast set it just made checkable.
 
 `packages/decks/content/` is the inventory, and a deck named there and not on disk is a name that
 changed, not a deck that is missing.
-
-## 3. The systems case-study shelf
-
-Curated further reading rather than pages, specified for the systems section and never built. It
-blocks nothing, which is why it has outlasted every page that used to sit above it here.
-
-## 4. The workout queue
-
-Ordered by what the library cannot practise today. Of the dependencies bought ahead of a workout,
-`graphql` and `react-window` have now been spent and `zustand` has not: `optimistic-save-react`
-looked at it and reported that a store would relocate the reconciliation rather than change it, which
-is the more useful answer than using it would have been. `zod` was added for `request-boundary-zod`
-because the schema was the lesson. `ws` and Hono are still absent, and adding one is a decision
-rather than a reflex.
-
-**"Runs on infrastructure that already exists" was overstated, and two rows leaned on it.** PGlite
-and testing-library are real dependencies, but the fake Redis, the driven clock and the fixture API
-are each one workout's own file: `materialise` copies `scaffold/` and then that workout's `files/`,
-so the next workout copies and adapts them rather than importing them. The fixture API injects a
-per-query delay and not a fault, which is why `retry-with-backoff-node` had to build its failing
-downstream as part of the work.
-
-**Two rows are new, and they exist because a capability turned out to already be there.** "The
-migration that locks up" was cut because PGlite serves one in-process connection, and that was read
-at the time as the workout set having no way to show contention at all. It has one: two
-`better-sqlite3` handles on the same file are two real connections with real locking, and it needed
-no dependency and no change to the runner. Measured, on the version already installed: a second
-writer against a held `BEGIN IMMEDIATE` gets `SQLITE_BUSY` rather than blocking forever; a reader in
-rollback-journal mode sees the old value; in WAL mode the reader is not blocked at all and still
-cannot see the uncommitted write; and a second writer is refused in WAL too, because WAL removes the
-reader-writer conflict and not the writer-writer one. That is an entire family of lessons, locking,
-isolation and the lost update, that the library could not reach yesterday. **The cut row stays cut**:
-its lesson was a long lock during a migration, which wants a second session held open across DDL, and
-these two rows are the nearer and more useful half of what it was reaching for.
-
-**The row that was blocked on tooling is now blocked on nothing but writing it.** A manifest may
-declare an optional `testRun` with a `timezone` and one `setupFile`, which the runner applies to the
-process the suites run in, so Timezone-correct booking can pin the zone its DST boundary needs. See
-the Workouts section of `docs/content.md` for what a workout may and may not say about its own test
-run.
-
-| Workout                        | Stack                              | Shape    | Pairs with     | The lesson                                                                                                                                                                |
-| ------------------------------ | ---------------------------------- | -------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Two clients in sync            | WebSocket (`ws`) + React           | feature  | moving data    | The direction a one-way stream cannot go: the client writes too, and two of them have to converge. Reconnect and replay are `live-dashboard-sse`, so this is not that     |
-| The write that waited          | two `better-sqlite3` connections   | bug-hunt | databases      | A lock is not a transaction: `SQLITE_BUSY`, what `busy_timeout` actually waits for, and why the second writer fails rather than queues. See the note below                |
-| The update that got lost       | two `better-sqlite3` connections   | bug-hunt | databases      | Read, decide, write, from two places at once. The read-modify-write race, and why a transaction around it is not enough without the write being conditional               |
-| Cache the expensive report     | Express + fake Redis               | feature  | caching        | Cache-aside around a route: the key derived from the request, and the invalidation on write. The dedupe is `one-recompute-not-fifty`. Needs a brief that is not a report  |
-| Context re-render bug-hunt     | React                              | bug-hunt | React          | One context redrawing consumers that do not read the part that changed; the split is the fix. Not a typing lag in a filtered list: see the note below                     |
-| Timezone-correct booking       | Node + fixed clock, pinned `TZ`    | bug-hunt | dates          | Store UTC, render local, survive the DST boundary. A fixed clock does not fix the zone, so the manifest declares it: see the note below                                   |
-| TypeORM relations bug-hunt     | TypeORM + SQLite, not the report   | bug-hunt | server runtime | `save` against `update`, and the nested-where trap. The write side, because `orders-report-typeorm` already owns the read side                                            |
-
-**All eighteen rows were audited against what is on disk, and ten of them shipped straight off that
-audit.** Eight had failed on their stated terms and three were cut outright; the survivors were
-narrowed in the lesson column, and every one written since has been written from the narrowed
-version. The cause of the drift is structural rather than careless: a row is written before the
-workouts it will sit beside, so its stack and its brief age into a collision nobody chose. Re-read a
-row against `packages/workouts/content/` before starting it, and treat what is left below as audited
-in a library four workouts smaller than the one it now describes.
-
-Three rows are cut, and the argument is here rather than in git history:
-
-- **The migration that locks up** cannot be checkpointed on the engine it names. PGlite serves one
-  in-process connection, and the Kysely dialect holds a single `DatabaseConnection` whose
-  `releaseConnection` does nothing, so there is no second session for a long lock to block. What is
-  left is reading the DDL back and asserting on its shape, which is a checklist rather than
-  behaviour, and the lesson is the blocking. A database in the workout set that serves two
-  connections would reverse it, and nothing else wants one.
-- **Accessible data table** is a rep and a citation, not twenty minutes.
-  `records-sorting-drizzle` already builds the sortable, paginated table with the header toggle and
-  a visible indicator, so this row adds `scope`, `caption` and `aria-sort` on top of somebody else's
-  work, and `html-table-caption-scope` is already a rep. Its keyboard half is
-  `autocomplete-react`'s fourth checkpoint. A grid where the a11y is the hard part rather than the
-  last attribute, with a roving tabindex and an interactive cell, would be a different row, and it
-  has no page yet.
-- **Search that ignores accents** was already the product-search brief a second time, on the same
-  Drizzle and PGlite as `product-search-drizzle`. The earlier audit left two exits open, and the
-  other one has stood empty since: no domain has presented itself where the accents are the bug
-  rather than a property of the search. `databases/search-past-like.md` and the five `sql-search-*`
-  reps own the territory, so this is a section on that page. A uniqueness constraint that lets José
-  and Jose both register is a real bug and a different brief, and would reverse it.
-
-Four rows failed on their stack or their brief rather than their lesson:
-
-- **Retry with backoff** specified React and pairs with server runtime, which is the tell: timeouts,
-  a retry budget and retry amplification are all server-side, and the row's stated justification is
-  wrong anyway. The only fixture API on disk belongs to `autocomplete-react` and injects a per-query
-  delay, not a fault. On the client it would also be that workout's stack and its race conditions
-  again. `server-runtime/failure-and-retries.md` has six reps and no workout, which is the argument
-  for the row; `circuit-breaker-node` counts failures across calls and leaves the per-call retry
-  untouched, which is the argument for the lesson.
-- **Cache the expensive report** would be the third report. `conditional-requests-express` polls
-  `GET /report`, `one-recompute-not-fifty` builds a dashboard report that takes four seconds, and
-  `orders-report-typeorm` is an orders report. Caching already has three workouts across five pages,
-  so this row is not buying a section its first one. Cache-aside around a route is genuinely
-  untaught, and the invalidation on write is the half no rep covers. Move it to something written
-  rather than read.
-- **Cursor pagination** would be the second Kysely-and-PGlite bug-hunt over an orders list, and
-  `slow-list-endpoint-kysely` already has pagination in its focus. It parks keyset in its own "if you
-  finish early", so offset drift is genuinely untaught, and the lesson stands. The stack does not:
-  breadth is a goal in itself, and this is the same tool on the same table. One thing the earlier
-  audit did not say is that the stack is completely free, because the drift needs no real
-  concurrency: an insert interleaved between two page fetches shows the skipped row on one
-  connection, so raw better-sqlite3 with no ORM at all would do.
-- **TypeORM relations** overlaps `orders-report-typeorm` on relations loading, which is the read form
-  of the same trap and is what that workout's first checkpoint is about. Its `save`-against-`update`
-  half and the nested-where trap are untouched, so the row survives narrowed to the write side. It
-  must not be the orders report again, since that is the file the read-side workout hands you.
-
-Four more are narrowed against a workout already on disk, and the lesson column says how:
-
-- **Two clients in sync** claims "reconnect, buffering, offset-and-replay for missed events", and
-  that is `live-dashboard-sse` checkpoints two and four, down to the capped buffer and the replay
-  from a last-seen id. That brief opens by saying it does not need a WebSocket, and parks the
-  over-the-buffer case in its own "if you finish early". `moving-data/websockets.md` has four reps
-  and no workout, so the row is worth keeping for the half SSE cannot reach: a second writer, and
-  what happens when both of them write.
-- **Context re-render** is the right lesson on the wrong symptom.
-  `react/context-and-rerender-scope.md` has four reps and no workout, so the gap is real, but
-  `invoice-panel-react`'s third complaint is already "the list is a character behind what I have
-  typed" and its third checkpoint already counts renders through React's `Profiler`. Same symptom,
-  same instrument, same filtered list. The mechanism differs, so change what the user reports.
-- **Job queue consumer** says the consumer must be idempotent, which is
-  `idempotent-payments-express` checkpoints two and three in a different envelope: record the claim
-  before doing the work and let the key settle the race. `moving-data/queues-and-background-jobs.md`
-  has five reps and no workout. What the HTTP boundary does not have is the ack, so that is the
-  workout: acking after the work rather than before, and where a message that will never succeed
-  goes. If the answer is "store the message id and skip it", the row has been written already.
-- **Timezone-correct booking** hit the trap section 1 records for modules, one layer down: assertions
-  ran in the reader's zone, and a fixed clock moves `now` without touching `TZ`. The manifest now
-  carries `testRun.timezone`, so the workout declares the zone and gets it. Declare it canonically,
-  because `America/New_york` is a fixed offset with no transition and the loader refuses that
-  spelling for exactly this row's sake.
-
-**Four sections have pages and no workout, and only two of them want one.** `security` gets its
-first from "Sessions, not just tokens" and `typescript` gets its first from the Zod row, which is
-worth more than the "first Hono workout" that row used to claim. The other two want a citation
-rather than a row: `json-parser` is cited by no page at all and is pure JavaScript, which closes the
-`javascript` hole from both sides at once, and the `sql` pages teach writing SELECTs, which is what
-forty-six `sql-*` reps are already for. The nearest workout shape there is
-`orders-report-typeorm`'s third checkpoint, and a link from `sql/grouping.md` is the honest answer.
-
-The build-your-own genre has spent its condition. `json-parser`, `circuit-breaker-node` and
-`one-recompute-not-fifty` have all landed, and the evidence they landed well is thin: the first is
-cited by no page and the other two by one each. A wire-protocol Redis clone or a tiny message broker
-waits on citing what is there, not on a fourth one.
 
 ## 5. Sections with no practice behind them yet
 
@@ -229,9 +114,15 @@ Node's `process` documentation.
 process on your laptop, which is the part a web engineer owns rather than a cloud certification.
 Pages: what a deploy actually is (artefact, config, and the swap); processes, containers and what
 the image is really doing; configuration and secrets, and where the environment stops being enough;
-health, readiness and the difference; logs, metrics and traces, and the cardinality trap;
-zero-downtime releases and the migration that has to go first. Credits: the Twelve-Factor App, the
-Docker and Kubernetes docs, OpenTelemetry.
+health, readiness and the difference; logs, metrics and traces, and the cardinality trap. Credits:
+the Twelve-Factor App, the Docker and Kubernetes docs, OpenTelemetry.
+
+**One bullet left this section rather than the section shipping**, and it is the first of these four
+to lose ground to work done elsewhere. "Zero-downtime releases and the migration that has to go
+first" is now `orms/migrations.md`, which owns the deploy-ordering half down to the three-deploy
+expand-then-contract, and it has `orders-migration-postgres` and two reps behind it. Worth reading
+before writing the deploy page, because the remaining question there is the artefact and the swap
+rather than the schema.
 
 **Trade-offs and architecture**, last of all, because it resists the page shape: trade-off thinking
 is learned in retrospectives, not reference pages. Four pages that can fill a traps section
@@ -242,24 +133,70 @@ already ship a fake one with a clock. The architecture reading list becomes this
 further-reading shelf, every book credited. Credits: refactoring.guru, Microsoft's strangler-fig
 page, Will Larson's migrations essay, the listed books.
 
+## The last pass, and what finishing means
+
+The five sections above are the whole content queue, and it is meant to run out. An empty roadmap is
+the intended end of this project rather than a failure to think of more work: the subject is
+practical knowledge for web engineering and AI engineering judged against a 15-minute morning, and
+that is a finite thing to cover. Everything past it is maintenance, which is a page going stale or a
+new API worth knowing, and neither is a queue.
+
+**One pass is deliberately held until then: reading every page's practise list against the whole
+problem set at once.** Thirty-one easy reps are currently cited by no page, and some of them close a
+gap in section 1 for free, `js-closure-per-call` sitting in `js-apis` while `javascript/closures`
+cites four reps of which none are easy. It is tempting to do that pass now and it would be the wrong
+order, because every section still to be written arrives with its own reps and moves the answer.
+Doing it once at the end costs less than doing it three times.
+
+What that pass is, when it comes: every uncited rep offered to the pages it actually serves, every
+page read for whether its first link is a way in, each section's `order` re-read now that the section
+is whole, and the pairing rule checked in the direction nothing enforces, which is practice volume
+with no page behind it. It is one sitting over finished content, not a rolling chore.
+
 ## Platform
 
 Content is the product, so this stays short. All of it is workout depth.
 
 - **Attempt history per workout**: second and third runs are the point, so the UI should show the
   trend in time-to-green.
-- **Multi-file tree** rather than a flat tab list, once a workout exceeds about five files.
-- **`pnpm workout <slug>`** to scaffold a workout directory, mirroring `pnpm grade`. Worth doing
-  once enough workouts exist to show what actually varies.
+- **Multi-file tree** rather than a flat tab list. **The condition it was waiting on has been met**:
+  `session-revocation-nestjs` ships eight files under `files/`, and a flat tab list stops being
+  readable somewhere around there. This is now the platform row with an actual workout behind it.
 
 ## Deferred
 
 Listed so they are decisions rather than oversights. The arguments live in
 [decisions.md](./decisions.md).
 
+- **The other six modules** — `promises`, `json`, `js-errors`, `regex`, `tokens-and-crypto`,
+  `node-fs` — until a rep or a page asks for one. They sat in the queue for a long time under a
+  preamble that argued against writing them, which is a refusal wearing a queue's clothes: the entry
+  said in its own words that they were a list of APIs, where `url-and-searchparams` had ten uncited
+  `query-params` reps behind it. Two modules is not a gap, and ADR-0091 is the sharpest evidence:
+  building the async hour on the essentials path wanted no API taught from scratch, which by the
+  module spec's own criterion demotes `promises`. Note which way that evidence runs — authoring a
+  path can demote a module and never promote one.
+- **The systems case-study shelf**, which is curated further reading rather than pages. It survived
+  every reordering of the queue by blocking nothing, which is the tell: a row that is never the next
+  thing to do is not queued, it is declined. Revisit if the systems section is ever read and found
+  to end where the reader wanted a worked example.
 - **A testing handbook section**, until the category grows past the JavaScript section's size or a
-  workout's checkpoints are about the tests themselves.
-- **Mongo and Mongoose**, which need a real server or a heavyweight memory-server dependency.
+  workout's checkpoints are about the tests themselves. Currently level rather than past: nine
+  `testing` reps against nine `javascript` pages, so the next few reps decide it.
+- **Mongo and Mongoose**, until a brief needs a document store. Needing a daemon is no longer the
+  reason: a workout may declare one in `requires` and skips cleanly where it is absent. What is left
+  is the ordinary bar, which is a lesson that cannot be taught without it.
+- **What the bundler does**, until a page needs it as more than a passing reference or reps arrive
+  that want it. Two pages already lean on the bundle existing without explaining it,
+  `security/secrets-and-the-bundle` and `react/code-splitting`, and the territory is real: why one
+  import pulls in a library, why a dynamic import did not split, what a source map gives away. It is
+  deferred rather than queued because nothing practises it today, and a page whose reps have to be
+  invented alongside it is the shape that produces trivia. Those two pages leaning on it is the
+  signal to watch, not a third one doing the same.
+- **Git**, which is daily and still declined. The graders have no shape for a merge conflict or a
+  rebase, the knowledge is muscle memory rather than a model that people get wrong, and a page on it
+  would restate documentation the reader can already reach. Recorded because its absence is
+  conspicuous enough to look like an oversight.
 - **A FastAPI workout**, which would put a Python runtime in the workout runner.
 - **React Native and desktop**, until the web map is substantially built.
 - **Interactive diagrams**, which are application code per diagram.
