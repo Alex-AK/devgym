@@ -1,7 +1,7 @@
 ---
 title: What inference costs you
 question: What does one call to a model actually cost me, in money and in seconds?
-order: 6
+order: 1
 practise:
   - ai-context-window-budget
   - ai-time-to-first-token

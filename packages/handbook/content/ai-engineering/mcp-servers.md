@@ -1,7 +1,7 @@
 ---
 title: MCP servers
 question: I am exposing my API to a model. What does an MCP server actually owe its caller?
-order: 4
+order: 5
 practise:
   - ai-tool-schema-is-the-contract
   - ai-tool-authorization-boundary

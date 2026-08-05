@@ -1,7 +1,7 @@
 ---
 title: Streaming a model response
 question: The tokens arrive one at a time. What has to happen between the model and the browser?
-order: 1
+order: 2
 practise:
   - ai-stream-partial-chunk
   - ai-stream-error-after-200

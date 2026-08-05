@@ -1,7 +1,7 @@
 ---
 title: Evals as tests
 question: How do I test something that answers differently every time I run it?
-order: 5
+order: 6
 practise:
   - ai-eval-assert-invariants
   - testing-implementation-details
