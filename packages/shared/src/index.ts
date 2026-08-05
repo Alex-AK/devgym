@@ -450,6 +450,53 @@ export interface WorkoutTestRun {
   setupFile?: string;
 }
 
+/**
+ * What a requirement names, which is a binary, a port, or both, and never
+ * neither. Which of the three depends on the dependency rather than on taste: a
+ * command line tool is a binary, and a daemon you connect to is a port, because
+ * a container and an app bundle both serve the port with nothing on `PATH`.
+ *
+ * - `binary` is an executable that has to resolve on `PATH`. A bare name, never
+ *   a path: the check scans `PATH`, and a path would let a workout point at a
+ *   file in the repo and declare a requirement that is always met.
+ * - `port` is a loopback port something has to accept a connection on. It is
+ *   also the port the suites are handed, so what was checked and what gets
+ *   connected to are one value.
+ */
+export type WorkoutRequirementNeed =
+  { binary: string; port?: number } | { binary?: undefined; port: number };
+
+/**
+ * Something the workout needs that this repo does not ship: a real Postgres, a
+ * Mongo daemon, Docker. Declaring one is what makes it safe to need one, because
+ * everything that runs the workout checks first and skips rather than fails.
+ * A local process is not the network, but a daemon is not on every laptop.
+ */
+export type WorkoutRequirement = WorkoutRequirementNeed & {
+  /** One line the reader can run: how to install it, and how to start it. */
+  install: string;
+  /** One line: what the workout does with it that a fake could not. */
+  reason: string;
+};
+
+/** A requirement the machine did not meet, as the reader is told about it. */
+export interface UnmetRequirement {
+  /** Absent when the requirement named a port and nothing else. */
+  binary?: string;
+  /** Absent when the requirement named a binary and nothing else. */
+  port?: number;
+  /**
+   * Nothing on `PATH`, or nothing answering on the port. The second covers both
+   * a binary that is installed and not started and a port nobody claims, which
+   * are the same sentence to a reader with a port to fix.
+   */
+  state: 'not-installed' | 'not-running';
+  /** One line, ready to display: what is missing, and which of the two it is. */
+  message: string;
+  install: string;
+  reason: string;
+}
+
 export interface WorkoutManifest {
   slug: string;
   title: string;
@@ -466,6 +513,12 @@ export interface WorkoutManifest {
   checkpoints: WorkoutCheckpoint[];
   /** Absent on almost every workout, and absent means "run as the scaffold says". */
   testRun?: WorkoutTestRun;
+  /**
+   * Absent on almost every workout, and absent means "runs anywhere the repo
+   * runs". Naming something here cannot make a checkpoint pass: it can only
+   * stop the workout running at all, on every machine that lacks it.
+   */
+  requires?: WorkoutRequirement[];
 }
 
 /** Row in the workout list (`GET /api/workouts`). */
@@ -530,6 +583,12 @@ export interface WorkoutRun {
   only: string | null;
   /** Set when the suite could not run at all: a syntax error, a bad import. */
   crashed: string | null;
+  /**
+   * Set when the suites were never started, because the machine is missing
+   * something the workout declared. Nothing ran, so nothing passed: this says so
+   * rather than letting an all-green-by-default panel imply otherwise.
+   */
+  skipped: string | null;
 }
 
 /* ------------------------------------------------------------------ handbook */
@@ -596,6 +655,12 @@ export interface WorkoutDetail extends WorkoutSummary {
   attempt: WorkoutAttempt | null;
   /** Revealed once every checkpoint passes, or on request. */
   solution: WorkoutFile[] | null;
+  /**
+   * Checked when the page is read, not when the workout was authored: a daemon
+   * stops between one visit and the next. Empty means the workout runs here, and
+   * it is empty for every workout that declares nothing.
+   */
+  unmet: UnmetRequirement[];
 }
 
 /* ------------------------------------------------------------------- modules */

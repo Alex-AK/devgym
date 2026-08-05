@@ -6,13 +6,20 @@ import type {
   WorkoutRun,
   WorkoutSummary,
 } from '@hone/shared';
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 
 import { CurrentUserService } from '../common/current-user.service';
 import type { AppDb } from '../db/client';
 import { APP_DB } from '../db/db.module';
 import { workoutAttempts } from '../db/schema';
+import { skipReason, unmetRequirements } from './requirements';
 import { listManifests, readBrief, readManifest } from './workout-content';
 import { runCheckpoints } from './workout-runner';
 import {
@@ -56,7 +63,13 @@ export class WorkoutsService {
     });
   }
 
-  detail(slug: string): WorkoutDetail {
+  /**
+   * `unmet` is resolved here rather than in `list`, because this is the page the
+   * clock starts from: the reader finds out what is missing where the decision
+   * to install it gets made, and a list of two dozen workouts does not open a
+   * socket per row.
+   */
+  async detail(slug: string): Promise<WorkoutDetail> {
     const manifest = this.requireManifest(slug);
     const summary = this.list().find((entry) => entry.slug === slug);
     const attempt = this.activeAttempt(slug);
@@ -72,13 +85,20 @@ export class WorkoutsService {
       checkpoints: manifest.checkpoints,
       attempt,
       solution: this.solutionIfEarned(manifest, attempt),
+      unmet: await unmetRequirements(manifest.requires),
     };
   }
 
   /** Start the clock: materialise a fresh workspace and pin the start time. */
-  start(slug: string): WorkoutDetail {
+  async start(slug: string): Promise<WorkoutDetail> {
     const manifest = this.requireManifest(slug);
     const userId = this.currentUser.getUserId();
+
+    // Checked before the workspace exists, so a workout nobody can run leaves
+    // nothing behind: no attempt row, no directory on disk, no clock running on
+    // an exercise that cannot reach its first checkpoint.
+    const missing = skipReason(await unmetRequirements(manifest.requires));
+    if (missing) throw new ConflictException(missing);
 
     // One attempt at a time per workout, mirroring how sessions work.
     this.finishActive(slug);
@@ -139,7 +159,7 @@ export class WorkoutsService {
     return result;
   }
 
-  finish(slug: string): WorkoutDetail {
+  finish(slug: string): Promise<WorkoutDetail> {
     this.requireManifest(slug);
     this.finishActive(slug);
     return this.detail(slug);

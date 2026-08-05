@@ -14,13 +14,14 @@ export class WorkoutsController {
   }
 
   @Get(':slug')
-  detail(@Param('slug') slug: string): WorkoutDetail {
+  detail(@Param('slug') slug: string): Promise<WorkoutDetail> {
     return this.workouts.detail(slug);
   }
 
+  /** 409 when the workout needs something this machine does not have. */
   @Post(':slug/start')
   @HttpCode(200)
-  start(@Param('slug') slug: string): WorkoutDetail {
+  start(@Param('slug') slug: string): Promise<WorkoutDetail> {
     return this.workouts.start(slug);
   }
 
@@ -44,7 +45,7 @@ export class WorkoutsController {
 
   @Post(':slug/finish')
   @HttpCode(200)
-  finish(@Param('slug') slug: string): WorkoutDetail {
+  finish(@Param('slug') slug: string): Promise<WorkoutDetail> {
     return this.workouts.finish(slug);
   }
 

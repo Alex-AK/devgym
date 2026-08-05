@@ -1,0 +1,41 @@
+{
+  "slug": "stock-lookup-express",
+  "title": "Cache the stock lookup",
+  "kind": "feature",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "express",
+    "database": "redis (in-repo fake)"
+  },
+  "summary": "The in-stock line on a product page asks one branch about one item, and every one of those asks adds it up from that branch's stock movements again. Cache the answers in Redis: an entry per lookup, a delivery the next lookup sees, and a deadline on everything you store.",
+  "focus": ["cache-aside", "cache keys", "invalidation", "redis"],
+  "editable": ["src/server/availability.ts"],
+  "checkpoints": [
+    {
+      "id": "the-second-lookup-does-not-count-again",
+      "title": "The second lookup does not count again",
+      "testFile": "tests/checkpoints/01-the-second-lookup-does-not-count-again.test.ts",
+      "hint": "Redis first: get the key, answer with whatever comes back, and count only when nothing does. What you counted has to go back in with set before you answer, or every request is a miss. A Map would be a different cache on every instance of the service, so a checkpoint reads what is actually in Redis."
+    },
+    {
+      "id": "two-lookups-do-not-share-an-answer",
+      "title": "Two lookups do not share an answer",
+      "testFile": "tests/checkpoints/02-two-lookups-do-not-share-an-answer.test.ts",
+      "hint": "The key has to carry everything the answer depends on, which is the branch and the item. A key missing either one hands somebody another branch's count, and no deadline makes that better."
+    },
+    {
+      "id": "a-delivery-clears-what-it-changed",
+      "title": "A delivery clears what it changed",
+      "testFile": "tests/checkpoints/03-a-delivery-clears-what-it-changed.test.ts",
+      "hint": "The delivery has to build the same key the lookup built, out of the branch and item in its own body, and del that one. Both handlers deriving it from one function is what keeps them agreeing. Clearing the lot also passes the first assertion and throws away every answer the delivery did not change."
+    },
+    {
+      "id": "an-entry-nobody-cleared-still-expires",
+      "title": "An entry nobody cleared still expires",
+      "testFile": "tests/checkpoints/04-an-entry-nobody-cleared-still-expires.test.ts",
+      "hint": "set with no ttlSeconds stores the answer with no deadline at all, and ttl on the key says -1 rather than a number. Pass options.ttlSeconds when you store it."
+    }
+  ]
+}

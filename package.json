@@ -12,6 +12,7 @@
     "test": "pnpm --filter @hone/shared build && pnpm --filter @hone/server test",
     "seed": "pnpm --filter @hone/server seed",
     "grade": "pnpm --filter @hone/server grade",
+    "workout": "pnpm --filter @hone/server workout",
     "verify": "bash scripts/verify.sh",
     "typecheck": "pnpm --filter @hone/shared build && pnpm -r typecheck",
     "lint": "eslint .",

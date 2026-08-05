@@ -1,0 +1,48 @@
+{
+  "slug": "orders-migration-postgres",
+  "title": "One column, two minutes of timeouts",
+  "kind": "bug-hunt",
+  "minutes": 25,
+  "difficulty": "hard",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no framework",
+    "database": "postgres 17 via pg, three connections"
+  },
+  "summary": "Tuesday's release added one column to orders. For the two minutes and forty seconds it ran, every request that touched the table timed out, and the ones piling up behind them took the rest of the API with them. The column is right. Ship it again on Thursday without the outage.",
+  "focus": ["migrations", "ddl", "locking", "concurrency"],
+  "editable": ["src/server/migrate.ts"],
+  "requires": [
+    {
+      "port": 5432,
+      "install": "brew install postgresql@17 && brew services start postgresql@17",
+      "reason": "Three connections on one table: one holds a read open, one runs the migration into it, and a checkpoint asserts which of them was refused."
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "every-order-gets-a-reference",
+      "title": "Every order ends up with a reference of its own",
+      "testFile": "tests/checkpoints/01-every-order-gets-a-reference.test.ts",
+      "hint": "The column is `public_ref uuid NOT NULL`, a distinct value on every order that was already there, and a default so a new order gets one without asking. `gen_random_uuid()` is built into Postgres 13 and later; you need no extension for it."
+    },
+    {
+      "id": "the-table-is-not-rewritten",
+      "title": "The table is still in the file it was in",
+      "testFile": "tests/checkpoints/02-the-table-is-not-rewritten.test.ts",
+      "hint": "`ADD COLUMN ... NOT NULL DEFAULT` stopped rewriting the table in Postgres 11, but only for a default that can be worked out once and remembered. `gen_random_uuid()` is volatile: it has to be evaluated per row, so 17 copies every row into a new file and holds ACCESS EXCLUSIVE for the whole copy. Add the column with no default at all, then set the default, then fill the rows in yourself."
+    },
+    {
+      "id": "the-backfill-goes-in-batches",
+      "title": "No statement writes more than a batch of rows",
+      "testFile": "tests/checkpoints/03-the-backfill-goes-in-batches.test.ts",
+      "hint": "One UPDATE over four million rows is one transaction holding four million row locks and leaving a dead version of every row behind at once. Loop instead: update the rows still missing a reference, at most 1,000 at a time, each pass its own transaction, and stop when a pass changes nothing."
+    },
+    {
+      "id": "readers-keep-being-served",
+      "title": "A page still loads while the migration is waiting",
+      "testFile": "tests/checkpoints/04-readers-keep-being-served.test.ts",
+      "hint": "ACCESS EXCLUSIVE conflicts with everything, including a plain SELECT, and a request for it that has to queue puts every reader arriving afterwards in the queue behind it. `SET lock_timeout` first, before any of the DDL: a statement that cannot have its lock now is refused with SQLSTATE 55P03 instead of waiting, and the queue behind it never forms. `statement_timeout` bounds the wrong thing here, because it also kills the work."
+    }
+  ]
+}

@@ -93,6 +93,48 @@ export function assertManifestValid(manifest: WorkoutManifest, slug: string): vo
   }
 
   assertTestRunValid(manifest, slug, fail);
+  assertRequiresValid(manifest, fail);
+}
+
+/**
+ * A requirement is the one field that can stop a workout running, so what is
+ * checked here is that it names something a machine can actually be missing.
+ * A binary with a path in it would be the way to fake this: it would resolve
+ * against the repo rather than against `PATH`, and declare a requirement that
+ * is always met or never met regardless of what is installed.
+ *
+ * Either half is enough on its own and neither is optional in the sense that
+ * matters: a requirement naming nothing is a workout declaring it needs
+ * something and never saying what, which is the one shape that could not be
+ * checked at all.
+ */
+function assertRequiresValid(manifest: WorkoutManifest, fail: (why: string) => never): void {
+  const requires = manifest.requires;
+  if (requires === undefined) return;
+
+  if (!Array.isArray(requires) || requires.length === 0) {
+    fail('declares an empty requires, which is what leaving it out means');
+  }
+
+  for (const requirement of requires) {
+    const { binary, install, port, reason } = requirement;
+    const named = binary === undefined ? 'a port-only requirement' : `requirement "${binary}"`;
+
+    if (binary === undefined && port === undefined) {
+      fail('declares a requirement naming neither a binary nor a port, so nothing can be missing');
+    }
+    if (binary !== undefined) {
+      if (!binary.trim()) fail('declares a requirement with an empty binary');
+      if (/[\\/]/.test(binary) || binary.includes('..')) {
+        fail(`declares requirement binary "${binary}", which has to be a bare name on PATH`);
+      }
+    }
+    if (!install?.trim()) fail(`declares ${named} with no install line`);
+    if (!reason?.trim()) fail(`declares ${named} with no reason`);
+    if (port !== undefined && (!Number.isInteger(port) || port < 1 || port > 65535)) {
+      fail(`declares ${named} on port ${String(port)}, which is not a port`);
+    }
+  }
 }
 
 /**

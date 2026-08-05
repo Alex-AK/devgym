@@ -3,9 +3,11 @@ import { symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { WorkoutRun } from '@hone/shared';
+import type { WorkoutManifest, WorkoutRun } from '@hone/shared';
 import { afterAll, describe, expect, it } from 'vitest';
+import type { TestContext } from 'vitest';
 
+import { skipReason, unmetRequirements } from './requirements';
 import { listManifests, workoutDir } from './workout-content';
 import { RUNTIME_MODULES, SCAFFOLD_DIR } from './workout-content';
 import { runCheckpoints } from './workout-runner';
@@ -49,6 +51,23 @@ function testsExecuted(run: WorkoutRun): number {
     .reduce((total, checkpoint) => total + checkpoint.testsTotal, 0);
 }
 
+/**
+ * A workout may need a binary this repo does not ship, and one of those must not
+ * turn this suite red on a machine that has never installed it. Skipping is the
+ * whole enabling requirement, so it is reported as a skip with the missing
+ * binary named, never as a pass: vitest prints the note, and a workout that is
+ * quietly never verified is visible in the run rather than hidden in it.
+ *
+ * This cannot be used to dodge a failure. Absence is what skips, so a workout
+ * that declared something it does not need would be skipped everywhere,
+ * including on the machine of whoever wrote it, and could not be practised
+ * either: the runner refuses to start it for the same reason.
+ */
+async function skipIfUnavailable(manifest: WorkoutManifest, ctx: TestContext): Promise<void> {
+  const missing = skipReason(await unmetRequirements(manifest.requires));
+  if (missing) ctx.skip(`${manifest.slug}: ${missing}`);
+}
+
 describe('workout content', () => {
   it('finds at least one workout', () => {
     expect(manifests.length).toBeGreaterThan(0);
@@ -70,8 +89,12 @@ describe('workout content', () => {
   describe('a single checkpoint', () => {
     // The most checkpoints available, so there is the most for a one-checkpoint
     // run to leave alone: the stale count and the tests-executed gap both get
-    // their widest margin from it.
-    const manifest = [...manifests].sort((a, b) => b.checkpoints.length - a.checkpoints.length)[0];
+    // their widest margin from it. Only from the workouts that need nothing
+    // installed, because this is a test of the mechanism and it has to run on
+    // every machine.
+    const manifest = manifests
+      .filter((candidate) => candidate.requires === undefined)
+      .sort((a, b) => b.checkpoints.length - a.checkpoints.length)[0];
 
     it('runs alone, and carries the rest forward marked stale', async () => {
       if (!manifest) return;
@@ -120,7 +143,8 @@ describe('workout content', () => {
   });
 
   describe.each(manifests.map((m) => [m.slug, m] as const))('%s', (_slug, manifest) => {
-    it('passes every checkpoint from its solution', async () => {
+    it('passes every checkpoint from its solution', async (ctx) => {
+      await skipIfUnavailable(manifest, ctx);
       const result = await runCheckpoints(build(manifest.slug, 'solution'), manifest);
       expect(result.crashed, `${manifest.slug} crashed: ${result.crashed}`).toBeNull();
       const failed = result.checkpoints.filter((c) => c.status !== 'passed');
@@ -130,7 +154,8 @@ describe('workout content', () => {
       ).toBe('');
     }, 120_000);
 
-    it('leaves at least one checkpoint failing from its starting files', async () => {
+    it('leaves at least one checkpoint failing from its starting files', async (ctx) => {
+      await skipIfUnavailable(manifest, ctx);
       const result = await runCheckpoints(build(manifest.slug, 'files'), manifest);
       expect(result.crashed, `${manifest.slug} starter crashed: ${result.crashed}`).toBeNull();
       expect(

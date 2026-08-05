@@ -7,6 +7,7 @@ practise:
   - react-context-read-scope
   - react-context-dispatch-split
   - react-context-memo-consumer
+  - now-playing-react
 sources:
   - author: React
     title: useContext

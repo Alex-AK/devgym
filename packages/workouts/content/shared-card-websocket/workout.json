@@ -1,0 +1,41 @@
+{
+  "slug": "shared-card-websocket",
+  "title": "Two people, one card",
+  "kind": "feature",
+  "minutes": 25,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, a fake WebSocket",
+    "client": "react"
+  },
+  "summary": "Two people had the same card open in the planner. Ana set the status to Blocked and a second later it said Done, with nothing anywhere to say why; Raj opened the card after her and spent ten minutes on a title she had already changed. Both of them write, and both of them have to end up on the same card.",
+  "focus": ["websockets", "concurrent edits", "conflict resolution", "optimistic ui"],
+  "editable": ["src/server/room.ts", "src/client/CardEditor.tsx"],
+  "checkpoints": [
+    {
+      "id": "everyone-sees-the-same-card",
+      "title": "Everyone connected sees the card, and everyone sees every edit",
+      "testFile": "tests/checkpoints/01-everyone-sees-the-same-card.test.ts",
+      "hint": "A client that has just connected knows nothing, so connect is where you tell it: the card and the version, as they stand rather than as they started. It is also where onclose goes, because nothing else takes a client that has gone out of the set. The sender gets the broadcast too, since the version on it is what its next edit is based on."
+    },
+    {
+      "id": "edits-to-different-fields-both-stick",
+      "title": "Two edits to different fields both stick",
+      "testFile": "tests/checkpoints/02-edits-to-different-fields-both-stick.test.ts",
+      "hint": "The check is against the version at which that field last changed, not against the room's version. Comparing to the room's version refuses a rename because somebody moved the status, which is a conflict nobody had."
+    },
+    {
+      "id": "the-first-edit-to-a-field-wins",
+      "title": "The first edit to reach a field wins, and the other one is told",
+      "testFile": "tests/checkpoints/03-the-first-edit-to-a-field-wins.test.ts",
+      "hint": "A refused edit changes nothing: not the card, not the version, and nobody else hears about it. It goes back down the connection it arrived on, which is the connection receive was called for, and it carries what the field holds now so the loser has a version to try again from."
+    },
+    {
+      "id": "the-editor-shows-the-verdict",
+      "title": "The editor shows your change, and says when it did not stick",
+      "testFile": "tests/checkpoints/04-the-editor-shows-the-verdict.test.tsx",
+      "hint": "The box shows what you picked rather than what the room last said, and it goes on showing it until a message arrives carrying your own editId. Keep the two apart: the card the room has told you about, and the one change of yours it has not answered yet."
+    }
+  ]
+}

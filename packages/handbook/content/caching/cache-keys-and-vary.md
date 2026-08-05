@@ -6,6 +6,7 @@ practise:
   - http-preflight-cache
   - http-cache-control
   - security-authorization-caching
+  - stock-lookup-express
 sources:
   - author: IETF
     title: 'RFC 9111: HTTP Caching'

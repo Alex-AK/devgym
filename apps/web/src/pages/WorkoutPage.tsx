@@ -1,4 +1,9 @@
-import type { WorkoutCheckpointResult, WorkoutDetail, WorkoutFile } from '@hone/shared';
+import type {
+  UnmetRequirement,
+  WorkoutCheckpointResult,
+  WorkoutDetail,
+  WorkoutFile,
+} from '@hone/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Circle, Play, RotateCcw, Square, XCircle } from 'lucide-react';
 import * as React from 'react';
@@ -50,6 +55,7 @@ function WorkoutIntro({
   onStart: () => Promise<void>;
 }): React.ReactElement {
   const [starting, setStarting] = React.useState(false);
+  const blocked = detail.unmet.length > 0;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -74,9 +80,11 @@ function WorkoutIntro({
         </CardContent>
       </Card>
 
+      {blocked && <MissingRequirements unmet={detail.unmet} />}
+
       <div className="flex items-center gap-3">
         <Button
-          disabled={starting}
+          disabled={starting || blocked}
           onClick={() => {
             setStarting(true);
             void onStart().finally(() => setStarting(false));
@@ -90,6 +98,31 @@ function WorkoutIntro({
         </span>
       </div>
     </div>
+  );
+}
+
+/**
+ * The workout is fine and this machine is not, so this reads as a shopping list
+ * rather than an error: what is missing, what it is for, and the line to run.
+ */
+function MissingRequirements({ unmet }: { unmet: UnmetRequirement[] }): React.ReactElement {
+  return (
+    <Card className="border-amber-200 bg-amber-50">
+      <CardContent className="space-y-3 p-5 text-sm text-amber-900">
+        <p className="font-medium">
+          This workout needs something your machine does not have, so it cannot start here.
+        </p>
+        {unmet.map((requirement) => (
+          <div key={`${requirement.binary ?? ''}:${requirement.port ?? ''}`} className="space-y-1">
+            <p>{requirement.message}</p>
+            <p className="text-amber-800">{requirement.reason}</p>
+            <pre className="overflow-x-auto rounded bg-amber-100 p-2 text-xs">
+              {requirement.install}
+            </pre>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -256,6 +289,7 @@ function WorkoutIde({ slug, detail }: { slug: string; detail: WorkoutDetail }): 
           <CheckpointPanel
             results={run?.checkpoints ?? notRunYet(detail)}
             crashed={run?.crashed ?? null}
+            skipped={run?.skipped ?? null}
             running={runMutation.isPending}
             onRun={(checkpoint) => runMutation.mutate(checkpoint)}
           />
@@ -319,11 +353,13 @@ function ViewSwitch({
 function CheckpointPanel({
   results,
   crashed,
+  skipped,
   running,
   onRun,
 }: {
   results: WorkoutCheckpointResult[];
   crashed: string | null;
+  skipped: string | null;
   running: boolean;
   onRun: (checkpoint: string) => void;
 }): React.ReactElement {
@@ -343,6 +379,15 @@ function CheckpointPanel({
           <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
             <p className="font-medium">The suite could not run.</p>
             <pre className="mt-1 break-words whitespace-pre-wrap">{crashed}</pre>
+          </div>
+        )}
+
+        {/* Amber, not red, and never silence: nothing ran, so every checkpoint
+            below is not-run rather than failed. */}
+        {skipped && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            <p className="font-medium">Nothing ran.</p>
+            <p className="mt-1">{skipped}</p>
           </div>
         )}
 

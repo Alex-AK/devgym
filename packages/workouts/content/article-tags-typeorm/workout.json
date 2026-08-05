@@ -1,0 +1,41 @@
+{
+  "slug": "article-tags-typeorm",
+  "title": "Retiring one tag took the rest with it",
+  "kind": "bug-hunt",
+  "minutes": 22,
+  "difficulty": "hard",
+  "relevance": "daily",
+  "stack": {
+    "orm": "typeorm",
+    "database": "sqlite"
+  },
+  "summary": "One tag was retired across the docs catalogue, and the articles that carried it came back with no tags at all. Three more complaints arrived the same afternoon, all about the same four functions.",
+  "focus": ["typeorm", "orm", "writes", "relations"],
+  "editable": ["src/server/catalogue.ts"],
+  "checkpoints": [
+    {
+      "id": "the-change-log-records-it",
+      "title": "A status change leaves a row in the change log",
+      "testFile": "tests/checkpoints/01-the-change-log-records-it.test.ts",
+      "hint": "The subscriber that keeps the log is handed the row as it was and the list of columns that moved. Neither of those exists if nothing read the row before writing over it."
+    },
+    {
+      "id": "adding-a-tag-keeps-the-others",
+      "title": "Adding a tag keeps the ones already there",
+      "testFile": "tests/checkpoints/02-adding-a-tag-keeps-the-others.test.ts",
+      "hint": "The array you hand `save` is the article's whole tag set, not an addition to it. Every tag missing from it is a join row to delete."
+    },
+    {
+      "id": "retiring-a-tag-leaves-the-rest",
+      "title": "Retiring a tag takes that tag and no other",
+      "testFile": "tests/checkpoints/03-retiring-a-tag-leaves-the-rest.test.ts",
+      "hint": "Print `article.tags` for the first article that comes back. A nested `where` on a relation filters the relation it loads as well as the rows it matches, so that array is not the article's tag set."
+    },
+    {
+      "id": "archiving-clears-the-review-date",
+      "title": "Archiving an article clears its review date",
+      "testFile": "tests/checkpoints/04-archiving-clears-the-review-date.test.ts",
+      "hint": "`save` merges what you give it onto the row it read, and a property set to undefined is one it was never asked about. Clearing a column takes a value."
+    }
+  ]
+}

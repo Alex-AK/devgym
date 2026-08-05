@@ -1,0 +1,40 @@
+{
+  "slug": "now-playing-react",
+  "title": "Dragging the scrubber is jerky",
+  "kind": "bug-hunt",
+  "minutes": 18,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "client": "react"
+  },
+  "summary": "Dragging the scrubber on the episode page is jerky on an older laptop. A profile of it says every part of the player is rebuilt on every tick of the clock, including the parts with nothing on them that changes.",
+  "focus": ["react context", "rendering", "react effects", "component structure"],
+  "editable": ["src/client/PlayerProvider.tsx"],
+  "checkpoints": [
+    {
+      "id": "nothing-outside-the-panel-redraws-it",
+      "title": "Nothing outside the panel redraws it",
+      "testFile": "tests/checkpoints/01-nothing-outside-the-panel-redraws-it.test.tsx",
+      "hint": "Following the show re-renders the page and the provider with it, and nothing the panel reads is different afterwards. React compares the new value with the old one using Object.is, and an object built during a render is never equal to the last one, so the context announces a change that did not happen."
+    },
+    {
+      "id": "the-clock-redraws-only-what-reads-it",
+      "title": "The clock redraws only what reads it",
+      "testFile": "tests/checkpoints/02-the-clock-redraws-only-what-reads-it.test.tsx",
+      "hint": "A component that calls useContext subscribes to the whole value, and picking one field out of it afterwards is a property read rather than a narrower subscription. The clock really does change, so nothing done to the identity of a value the clock is part of will save the components that do not read it."
+    },
+    {
+      "id": "the-shortcuts-are-set-up-once",
+      "title": "The shortcuts are set up once",
+      "testFile": "tests/checkpoints/03-the-shortcuts-are-set-up-once.test.tsx",
+      "hint": "The effect lists what it closes over, so it tears the listener down and binds it again whenever the controls it was handed are a different object. These three functions do the same thing for the life of the page: work out what has to be true for the shortcuts to be handed the same object twice."
+    },
+    {
+      "id": "the-chapter-list-follows-the-clock",
+      "title": "The chapter list follows the clock",
+      "testFile": "tests/checkpoints/04-the-chapter-list-follows-the-clock.test.tsx",
+      "hint": "The chapter list is the one part that needs the episode and the clock together. Whatever it subscribes to now, it still has to be rebuilt when the clock crosses into a new chapter."
+    }
+  ]
+}

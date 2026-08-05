@@ -12,7 +12,8 @@
     "dates-days-between",
     "dates-format-locale",
     "dates-duration-storage",
-    "debug-json-date"
+    "debug-json-date",
+    "booking-times-node"
   ],
   "sources": [
     {

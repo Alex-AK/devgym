@@ -1,0 +1,43 @@
+{
+  "slug": "booking-times-node",
+  "title": "The car came at the wrong hour",
+  "kind": "bug-hunt",
+  "minutes": 22,
+  "difficulty": "medium",
+  "relevance": "daily",
+  "stack": {
+    "server": "node, no dependencies"
+  },
+  "summary": "Three complaints in a week. A rider in Los Angeles read 9:00 am off her confirmation and the car had been and gone at 6:00; every reminder for Sunday 8 March went out an hour early; and the 2:30 am pickup that morning sits in the system as 3:30, which nobody set. Four functions, and the times have to be right.",
+  "focus": ["timezones", "utc", "daylight saving", "intl"],
+  "editable": ["src/lib/booking.ts"],
+  "testRun": {
+    "timezone": "America/New_York"
+  },
+  "checkpoints": [
+    {
+      "id": "stored-as-an-instant",
+      "title": "A pickup is stored as an instant",
+      "testFile": "tests/checkpoints/01-a-pickup-is-stored-as-an-instant.test.ts",
+      "hint": "`pickupAt` is a wall clock with no zone on it, so it means whatever the clock of whoever reads it says. `new Date(year, month - 1, day, hour, minute)` builds the instant instead: it applies the offset that was actually in force that morning, and `toISOString()` is what you store."
+    },
+    {
+      "id": "riders-own-clock",
+      "title": "Every rider reads their own clock",
+      "testFile": "tests/checkpoints/02-every-rider-reads-their-own-clock.test.ts",
+      "hint": "The zone argument is never read. `getHours` and `getFullYear` answer in the process's zone, which is dispatch's rather than the rider's. `Intl.DateTimeFormat` with `timeZone` set is the one thing here that answers for somebody else's zone, and `formatToParts` hands you the fields already padded."
+    },
+    {
+      "id": "reminder-a-day-before",
+      "title": "The reminder goes a day before, on the clock",
+      "testFile": "tests/checkpoints/03-the-reminder-goes-a-day-before.test.ts",
+      "hint": "Subtracting 24 hours subtracts an exact duration. The day before a spring-forward Sunday is 25 hours back and the day before the autumn one is 23. Move the calendar date instead: `at.setDate(at.getDate() - 1)` holds the time on the clock."
+    },
+    {
+      "id": "the-clocks-move",
+      "title": "The two mornings the clocks move",
+      "testFile": "tests/checkpoints/04-the-two-mornings-the-clocks-move.test.ts",
+      "hint": "The clock will tell you itself. Read the local time back off the instant you just built: if it is not the time that was asked for, that time never happened. If an hour later reads as the same time again, the time comes round twice, and the instant you already have is the first of the two."
+    }
+  ]
+}

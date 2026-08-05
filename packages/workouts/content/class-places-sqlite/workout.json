@@ -1,0 +1,41 @@
+{
+  "slug": "class-places-sqlite",
+  "title": "Thirteen people, twelve places",
+  "kind": "bug-hunt",
+  "minutes": 20,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no framework",
+    "database": "sqlite via better-sqlite3, two connections"
+  },
+  "summary": "Two classes this term have had one more person on the register than the room has places, and both had been showing as full for days beforehand. A separate report has a cancelled place never coming back. Nothing is in the logs for any of it.",
+  "focus": ["sqlite", "concurrency", "transactions", "isolation"],
+  "editable": ["src/server/bookings.ts"],
+  "checkpoints": [
+    {
+      "id": "a-booking-and-a-cancellation",
+      "title": "A booking takes a place and a cancellation gives it back",
+      "testFile": "tests/checkpoints/01-a-booking-takes-a-place.test.ts",
+      "hint": "A booking writes one row in state `booked` and takes one place off the class. A cancellation puts that row in state `cancelled` and gives the place back, and cancelling the same booking twice gives back one place rather than two. `NotFound` for a class or a booking that is not there, `NotAMember` and `ClassFull` before anything is written."
+    },
+    {
+      "id": "two-bookings-both-count",
+      "title": "Two bookings taken at the same moment both come off the places left",
+      "testFile": "tests/checkpoints/02-two-bookings-at-the-same-moment.test.ts",
+      "hint": "`places_left` is read before the membership check and written after it, and the other channel booked and committed in between. The number written down was worked out in this process from a row that has since moved on, and the transaction around the writes does not contradict it: a transaction promises all-or-nothing, not that a row you read is still what you read. Let the database do the arithmetic on the row it is writing, with `SET places_left = places_left - 1`."
+    },
+    {
+      "id": "last-place-goes-to-one-person",
+      "title": "The last place in a class goes to one person, and the other is refused",
+      "testFile": "tests/checkpoints/03-the-last-place-in-a-class.test.ts",
+      "hint": "Deciding there is a place and taking it are two separate steps here, so both callers can decide yes and both can write. Make the write the decision: put the condition in the statement, `WHERE id = ? AND places_left > 0`, and read `changes` off the result. Nought rows changed is the caller who has to be told the class is full, and throwing inside `db.transaction(fn)` is what takes their booking row back out."
+    },
+    {
+      "id": "cancellation-during-a-booking",
+      "title": "A cancellation taken during a booking keeps the place it gave back",
+      "testFile": "tests/checkpoints/04-a-cancellation-during-a-booking.test.ts",
+      "hint": "It is not only about two bookings. Anything that commits between a read and the write built on it is lost the same way, and a lost cancellation is lost in silence: the place comes back and then goes again. `places_left` has to equal `capacity` minus the bookings still in state `booked` whatever landed in between, which it does once every write moves the count relative to itself rather than to a number from earlier."
+    }
+  ]
+}

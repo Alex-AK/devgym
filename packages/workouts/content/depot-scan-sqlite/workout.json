@@ -1,0 +1,41 @@
+{
+  "slug": "depot-scan-sqlite",
+  "title": "One parcel in two hundred",
+  "kind": "bug-hunt",
+  "minutes": 22,
+  "difficulty": "medium",
+  "relevance": "occasional",
+  "stack": {
+    "server": "node, no framework",
+    "database": "sqlite via better-sqlite3, two connections"
+  },
+  "summary": "The depot takes four thousand scans on a weekday morning and refuses about one in two hundred. Scanning the parcel again works. Once a handheld has been refused, every scan on it fails until the app is restarted.",
+  "focus": ["sqlite", "concurrency", "locking", "transactions"],
+  "editable": ["src/server/scanning.ts", "src/server/manifests.ts"],
+  "checkpoints": [
+    {
+      "id": "run-builds-the-manifest",
+      "title": "A manifest run lists the van's parcels in drop order",
+      "testFile": "tests/checkpoints/01-a-run-builds-the-vans-manifest.test.ts",
+      "hint": "A manifest is every parcel with status `at-depot` on that van, in the order `planRunOrder` returns, numbered from 1. A rebuild replaces the lines rather than adding to them, and a van with a `dispatched_at` is not rebuilt at all."
+    },
+    {
+      "id": "scan-during-planning-is-accepted",
+      "title": "A scan taken while a run is planning is accepted, and so is the run",
+      "testFile": "tests/checkpoints/02-a-scan-taken-while-a-run-is-planning.test.ts",
+      "hint": "Working out a drop order needs no database, and a transaction held open across it holds the depot's write lock across it too. SQLite runs one writer at a time: while one connection is inside a write transaction, a write on the other is refused rather than queued, and a read that started before that transaction cannot be written on top of afterwards. Read and plan first; open the transaction for the writes only."
+    },
+    {
+      "id": "refused-scan-is-reported",
+      "title": "A scan the depot cannot take is reported and leaves nothing behind",
+      "testFile": "tests/checkpoints/03-a-scan-the-depot-cannot-take.test.ts",
+      "hint": "A short write transaction is still a write transaction, so a scan can still arrive inside one, and one day it will. better-sqlite3 throws a `SqliteError` carrying `code` `SQLITE_BUSY` or `SQLITE_BUSY_SNAPSHOT`, which is nothing a handheld can act on. Catch that one, throw `DepotBusy`, and let every other error through."
+    },
+    {
+      "id": "refused-scan-can-be-retaken",
+      "title": "A handheld that has been refused takes the next scan",
+      "testFile": "tests/checkpoints/04-a-refused-scan-can-be-taken-again.test.ts",
+      "hint": "The refused scan wrote nothing, so the retry is a first attempt. What blocks it is the transaction the failed attempt left open on that connection: `db.inTransaction` is still true and the next `BEGIN` fails with \"cannot start a transaction within a transaction\". `db.transaction(fn)` unwinds on the way out; a hand-written `BEGIN` does not."
+    }
+  ]
+}

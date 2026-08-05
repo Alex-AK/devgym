@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "grade": "tsx src/cli/grade.ts",
+    "workout": "tsx src/cli/workout.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

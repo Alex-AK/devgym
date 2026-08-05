@@ -7,6 +7,7 @@ practise:
   - http-websocket-upgrade
   - http-sse-vs-websocket
   - security-token-storage
+  - shared-card-websocket
 sources:
   - author: IETF
     title: 'RFC 6455: The WebSocket Protocol'
