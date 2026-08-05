@@ -31,8 +31,13 @@ const LIBRARY: CardLibrary = {
     {
       page: { section: 'sql', slug: 'what-a-join-does', title: 'What a join actually does' },
       practiseLinks: [
-        { kind: 'problem', slug: 'sql-anti-join', title: 'Rows with no match' },
-        { kind: 'problem', slug: 'shared-rep', title: 'Cited by both decks' },
+        {
+          difficulty: 'medium',
+          kind: 'problem',
+          slug: 'sql-anti-join',
+          title: 'Rows with no match',
+        },
+        { difficulty: 'easy', kind: 'problem', slug: 'shared-rep', title: 'Cited by both decks' },
       ],
       slug: 'joins',
       sources: [
@@ -43,8 +48,8 @@ const LIBRARY: CardLibrary = {
     {
       page: { section: 'javascript', slug: 'equality', title: 'The four equalities' },
       practiseLinks: [
-        { kind: 'workout', slug: 'nan-hunt', title: 'The NaN hunt' },
-        { kind: 'problem', slug: 'shared-rep', title: 'Cited by both decks' },
+        { difficulty: 'hard', kind: 'workout', slug: 'nan-hunt', title: 'The NaN hunt' },
+        { difficulty: 'easy', kind: 'problem', slug: 'shared-rep', title: 'Cited by both decks' },
       ],
       slug: 'equality',
       sources: [

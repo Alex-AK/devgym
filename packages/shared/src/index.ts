@@ -614,6 +614,12 @@ export interface HandbookPractiseLink {
   kind: 'problem' | 'workout';
   slug: string;
   title: string;
+  /**
+   * Shown on the link, and what the list is sorted by. A page can be fully
+   * paired and still offer nothing but the hard version, which is an on-ramp
+   * the reader cannot see from the authored order alone.
+   */
+  difficulty: Difficulty;
 }
 
 export interface HandbookPageSummary {

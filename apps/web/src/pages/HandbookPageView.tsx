@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Dumbbell, Target } from 'lucide-react';
 import * as React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { DifficultyBadge } from '@/components/badges';
 import { Markdown } from '@/components/Markdown';
 import { ErrorState, LoadingState } from '@/components/states';
 import { api, queryKeys } from '@/lib/api';
@@ -65,6 +66,7 @@ function Practise({ links }: { links: HandbookPractiseLink[] }): React.ReactElem
                 <Target className="size-3.5 shrink-0 text-muted-foreground" />
               )}
               <span className="group-hover:underline">{link.title}</span>
+              <DifficultyBadge difficulty={link.difficulty} />
             </Link>
           </li>
         ))}
