@@ -48,7 +48,10 @@ them rather than quietly closing them.
 - Stack is fixed: pnpm workspaces, Vite + React + TS + Tailwind + shadcn/ui, NestJS + Drizzle +
   better-sqlite3, Vitest. Don't substitute.
 - Fully offline at runtime: no external API calls, no keys, no telemetry. Grading is deterministic;
-  there is no LLM in the loop.
+  there is no LLM in the loop. **A local process is not the network**: workouts already bind a port,
+  and one may require something this repo does not ship when the lesson needs it, provided it is
+  declared in the manifest's `requires` and so skips cleanly when absent. See the "offline is three
+  questions" entry in `docs/decisions.md`.
 - User SQL runs only against `practice.db` opened readonly, never `app.db`. `ATTACH` is refused.
 - TypeScript strict everywhere. Shared API types live in `packages/shared`, which builds to both
   CJS and ESM so Nest and Vite can each resolve named exports.
@@ -134,6 +137,10 @@ apps/web/src/
 - **Adding a workout** is a new directory under `packages/workouts/content/`. No application code
   changes. `workouts.spec.ts` then asserts the solution passes every checkpoint and the starter does
   not, which is what makes workout content as safe to edit as problem content.
+- **`pnpm workout <slug> [--stack node|express|nestjs|react]` scaffolds that directory**, mirroring
+  `pnpm grade`. It emits the layout, the manifest and the suite wiring that every workout shares,
+  including the supertest binding that has bitten twice, and leaves everything that varies as a
+  marked gap. A fresh one deliberately fails its own spec until you write it.
 - **A brief states the symptom, never the cause.** Working out what is wrong is the exercise, so
   `brief.md` and the manifest `summary` describe what someone would report ("9 seconds in
   production"), not the diagnosis ("a query per row, and no index"). Constraints and unguessable
@@ -141,6 +148,13 @@ apps/web/src/
   they appear only after that checkpoint has failed. See `WRITING.md`.
 - **A workout needs a new library?** Add it to `packages/workouts/package.json`. Workspaces symlink
   their `node_modules` at that package, which is how a workout imports the real drizzle-orm.
+- **A workout needs a daemon this repo does not ship?** Declare it in the manifest's `requires`
+  (a binary, a loopback port, or both, plus an install line and a reason), and everything degrades on
+  a machine without it: the runner skips before spawning vitest, `start` is a 409, the page says what
+  to install, and `workouts.spec.ts` skips that workout instead of failing. A declared port is also
+  the port the suites are handed, as `HONE_REQUIRED_PORTS`, so nothing reads `PGPORT` for itself.
+  `pnpm workout --requires postgres:5432` scaffolds the block. Reach for a fake first, and read the
+  bar in `docs/content.md`.
 
 ## Conventions
 

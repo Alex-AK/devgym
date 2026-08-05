@@ -7,43 +7,102 @@ file the same questions get reopened and the same deliberate gaps get "fixed".
 Nothing here is status: the code is the source of truth for what exists. `docs/content.md` holds
 the rules for writing content, and `docs/roadmap.md` holds what is not built yet.
 
+**Cite the number, never the headline.** Every entry carries a permanent `ADR-NNNN`, assigned in the
+order it was written and never reused. Headlines get reworded and a citation to one rots silently; a
+number does not. New entries take the next number at the end of their section.
+
+**A decision that changes gets a new entry, and the old one keeps its number.** Add
+`Superseded by ADR-NNNN` to the old one rather than editing it, because the reasoning that was
+overturned is usually the more useful half of the story: three refusals were reversed in a single day
+here, and in each case what mattered was which part of the original argument had stopped being true.
+Correcting a fact inside an entry is an edit; changing the decision is a new record.
+
 ## The product and its scope
 
-- **This is practice, not interview prep.** Interviews are one thing the practice is good for, and
+- **ADR-0001 — This is practice, not interview prep.** Interviews are one thing the practice is good for, and
   naming the project after them would narrow what gets built. The vocabulary in the UI and the
   content stays "workout", "checkpoint" and "run", never "candidate", "grade" or "score".
 
-- **The short-problem queue was kept when workouts arrived, not replaced.** The queue is good at
+- **ADR-0002 — The short-problem queue was kept when workouts arrived, not replaced.** The queue is good at
   recall and bad at everything recall is not. Reading an unfamiliar codebase and making it do
   something new under a timer is the other half, and it needed a second mode rather than a redesign
   of the first.
 
-- **Features are judged against a 15-minute morning session.** That is the session the app is built
+- **ADR-0003 — Features are judged against a 15-minute morning session.** That is the session the app is built
   around, and it is the reason material that only pays off over an hour keeps losing to material
   that fits a morning.
 
-- **Fully offline at runtime, with no convenience exceptions.** No network calls, no API keys, no
+- **ADR-0004 — Fully offline at runtime, with no convenience exceptions.** No network calls, no API keys, no
   telemetry ever, including telemetry for "understanding usage". This is a content review rule as
   much as a code one: a workout that reaches a live API breaks it as surely as a fetch on the server
   would.
 
-- **No LLM in the grading loop.** An optional LLM feedback pass behind an API key was on the
+- **ADR-0005 — "Offline" is three questions, and they have three different answers.** The rule above was read
+  for a long time as one rule, which quietly refused things it never named. Split, and settled:
+
+  1. **May a workout reach the network? No, and this is not negotiable.** No live API, no key, no
+     telemetry, no package fetched at attempt time. This is the rule the entry above is about.
+  2. **May a workout run a local process? Yes, and it always could.** Seven bind `app.listen(0)` and
+     drive it with supertest, and Nest boots a whole application. A process on loopback reaches
+     nothing. Nobody ever refused this; it just sounded like the same sentence.
+  3. **May a workout require a binary this repo does not ship — a real Postgres, a Mongo daemon,
+     Docker? Yes, when a lesson needs one.** This was never actually decided. The nearest thing was
+     Mongo's deferral, and reading it back, its operative half is "no brief so far demands a document
+     store", which is the ordinary dependency bar rather than a principle.
+
+  What the third answer costs is real and is accepted: a workout needing a daemon cannot run on a
+  laptop that does not have it, which is the first crack in "no install per attempt"; startup goes
+  from milliseconds to seconds inside a twelve-minute exercise; and `pnpm verify` runs every workout
+  in one pass. **So the enabling requirement is graceful absence, not permission**: a workout
+  declares what it needs, and both the runner and the safety net skip it with a message naming the
+  missing binary rather than failing. One Mongo workout must never turn the suite red for somebody
+  who does not have Mongo.
+
+- **ADR-0006 — Graceful absence shipped before any workout used it**, as a manifest `requires` listing a
+  binary, an optional loopback port, an install line and a reason. Its first bullet is superseded by
+  ADR-0147; the other two stand. Three choices in it were not obvious:
+
+  - **Presence is two questions, not one.** A binary on `PATH` and, when a port is named, something
+    answering it on `127.0.0.1`. Installed months ago and not running today is the case that will
+    actually happen, and "install it" is the wrong sentence to read when the thing is installed.
+    The check goes no deeper: it answers "could this run", not "will it work", and a Postgres of the
+    wrong major version is left for the workout's own checkpoints to discover. A wrong answer here
+    is worse than a failed checkpoint, because this is the answer that decides whether a checkpoint
+    runs at all.
+  - **The binary is a bare name, and the loader refuses a path.** A path would resolve against the
+    repo rather than against `PATH`, which is the one way this field could be made to lie about what
+    a machine has.
+  - **A declaration cannot dodge a suite.** What skips is decided by what the machine has, not by
+    anything the workout says at run time, so a requirement that is met leaves the safety net
+    exactly as strict. A requirement nobody can satisfy skips that workout everywhere, including for
+    whoever wrote it, and the runner refuses to start it for the same reason: what it buys is a
+    workout nobody can practise, not a suite nobody checks.
+
+  `unmet` is resolved on the workout's own page rather than in the list, because that is where the
+  clock starts and where the decision to install something gets made. A list of two dozen rows does
+  not open a socket each to say so.
+
+  What it unlocks is why it is worth the cost: a second real connection, and with it the
+  migration-lock workout that was cut, isolation levels, `SELECT FOR UPDATE` and deadlocks;
+  a document store; replication lag you can observe rather than describe.
+
+- **ADR-0007 — No LLM in the grading loop.** An optional LLM feedback pass behind an API key was on the
   original roadmap and was never taken. Deterministic grading is what makes a verdict reproducible
   and inspectable from the terminal, and it is what keeps the offline constraint from being
   negotiable.
 
-- **One user, no auth, but every user-owned row carries a `user_id`.** A single service resolves the
+- **ADR-0008 — One user, no auth, but every user-owned row carries a `user_id`.** A single service resolves the
   current user, so adding auth later replaces that service rather than the schema. Building the UI
   for it now would be paying up front for something nobody has asked for.
 
-- **A non-goal is a statement about the current build, not a permanent refusal.** Executing
+- **ADR-0009 — A non-goal is a statement about the current build, not a permanent refusal.** Executing
   user-submitted code and spaced repetition were both ruled out of the first build and both were
   pulled forward later, deliberately. Reversals are recorded here with the rule they produced,
   because the rule outlives both positions.
 
 ## Content
 
-- **Four queued items were dropped on the merits rather than because they shipped**, and they are
+- **ADR-0010 — Four queued items were dropped on the merits rather than because they shipped**, and they are
   recorded here so they are not re-added by someone reading the old tables in git history. **Infinite
   scroll with retry** and **drag-and-drop ordering** overlapped the retry and windowing workouts, and
   the giveaway was that their entire lesson column read "carried from the v2 backlog": a row that
@@ -51,25 +110,25 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   brief a third time and cost a dependency, which the stack-breadth rule did not justify on its own.
   **gRPC and WebRTC pages** are not met in the feature work this project targets, and the transport
   decision page already covers when you would reach for them; tRPC keeps its page.
-- **`node-fs` stays in the module list, marked as the weakest one on it.** Recording the doubt in
+- **ADR-0011 — `node-fs` stays in the module list, marked as the weakest one on it.** Recording the doubt in
   the roadmap beats dropping it and beats silence, because the next person to read the list will
   otherwise have the same reservation and no way to know it was already considered. The count it was
   originally the weakest of is not the point and has changed twice since.
 
-- **Every content type is a directory or a seed entry, never application code.** Content grows
+- **ADR-0012 — Every content type is a directory or a seed entry, never application code.** Content grows
   indefinitely, so anything that makes adding a problem, workout or page require an application
   change is a bug in the design. That is also why there is no authoring UI and should not be one.
 
-- **The safety net is what makes volume safe.** Every canonical answer grades correct, every
+- **ADR-0013 — The safety net is what makes volume safe.** Every canonical answer grades correct, every
   near-miss grades close, every workout solution passes and every starter fails, and it all runs in
   `pnpm verify` rather than by inspection. Content can be edited in bulk only because a machine
   checks it.
 
-- **Breadth of stack is a goal in itself, not a side effect.** Two workouts on the same tool are
+- **ADR-0014 — Breadth of stack is a goal in itself, not a side effect.** Two workouts on the same tool are
   worth less than the same two spread across tools, even when the second brief is weaker, because
   the thing being practised is reading an unfamiliar codebase under time pressure.
 
-- **A queued workout's stack is judged against what shipped, not against the rest of the queue.** A
+- **ADR-0015 — A queued workout's stack is judged against what shipped, not against the rest of the queue.** A
   row is written before the workouts it will sit beside, so its stack column ages into a collision
   nobody chose: an audit of three rows found one that would have been the second Kysely-and-PGlite
   bug-hunt over an orders list, and one that was the product-search brief a second time on the same
@@ -78,16 +137,36 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   against `packages/workouts/content/` before starting it, which is the same habit the deck table
   earned the hard way.
 
-- **The gate for shipping a page or a workout is the safety net and the citation policy, never
+- **ADR-0016 — All eighteen queued rows were then audited at once, and the numbers are the argument for doing
+  it again.** Eight failed on their stated terms, three were cut outright, and the rest were narrowed
+  in the lesson column; every one written afterwards was written from the narrowed version, and each
+  of those authors found something further wrong once they ran it. **The drift is structural, not
+  careless.** Nothing decays except by comparison, and a queue is a list of comparisons that were
+  true when written. Audit the queue against the library whenever the library has grown a lot, and
+  expect the lesson to survive where the stack and the brief do not.
+
+- **ADR-0017 — Two `better-sqlite3` handles on one file are two real connections, which is a capability the
+  workout set had and did not know it had.** "The migration that locks up" was cut because PGlite
+  serves one in-process connection, and that was read at the time as there being no way to show
+  contention anywhere. Measured on the installed version: a second writer against a held
+  `BEGIN IMMEDIATE` gets `SQLITE_BUSY` rather than blocking; a rollback-journal reader sees the old
+  value; a WAL reader is not blocked and still cannot see the uncommitted write; and a second writer
+  is refused under WAL too, **because WAL removes the reader-writer conflict and not the
+  writer-writer one**. That asymmetry is the teachable thing and it cost no dependency. It shipped as
+  `depot-scan-sqlite` and `class-places-sqlite`, one for the error you get and one for the wrong
+  answer you get with no error at all. The general form: before concluding a lesson is unreachable,
+  check what the tools already on disk actually do rather than what they are usually used for.
+
+- **ADR-0018 — The gate for shipping a page or a workout is the safety net and the citation policy, never
   completeness of its section.** A section is never finished, and a page at a time is a fine pace.
   Waiting for a section to be whole would mean nothing ships.
 
-- **Non-executable material is graded by keyword groups on the existing explain grader.** System
+- **ADR-0019 — Non-executable material is graded by keyword groups on the existing explain grader.** System
   design and behavioural questions do not fit checkpoints, and the alternatives were a self-review
   rubric or leaving them as reading with prompts. The explain grader already existed and still gives
   a verdict, which is what makes the material a rep rather than an article.
 
-- **Hints are earned per attempt cycle, not owned for good.** Solving clears them, so the review
+- **ADR-0020 — Hints are earned per attempt cycle, not owned for good.** Solving clears them, so the review
   weeks later opens with none showing. Keeping them made the ladder decorative: a problem you had to
   unlock three hints for came back with those three hints on screen, which is a reading rather than a
   review. Two details decided where the clearing goes. It is not on open, because `solved` is sticky
@@ -96,7 +175,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   the moment you got it right looks like a bug. Re-earning works the same way it did the first time,
   by getting the attempt wrong.
 
-- **`dsa-patterns` stays out of the daily queue.** DSA is a separate track you enter on purpose,
+- **ADR-0021 — `dsa-patterns` stays out of the daily queue.** DSA is a separate track you enter on purpose,
   through focused practice or a scoped session, not something the morning round-robin deals you. The
   mechanism is `OPT_IN_CATEGORIES` in `packages/shared` and one filter in `queue()`, and what it
   holds back is only what you have never touched: name the category in a scope and you get the whole
@@ -110,7 +189,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   The due queue needed no filter at all for the same reason: everything in it was solved, so every
   row is a rep you already chose.
 
-- **`api-design` was cut as a category because four fifths of it had already shipped inside
+- **ADR-0022 — `api-design` was cut as a category because four fifths of it had already shipped inside
   `http`.** The row asked for twelve reps on offset against cursor, idempotency keys, versioning,
   rate limit algorithms and status codes. An audit before writing any of them found three pagination
   reps, four idempotency reps and four rate-limit reps already live, spread across `http`, `systems`
@@ -121,7 +200,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   in a different one.** A category is only worth creating when the reps have nowhere they already
   belong, which is what made `logic` worth creating the same afternoon.
 
-- **A posture is a tag, not a category, and the twelve reading reps are why.** A rep about what a
+- **ADR-0023 — A posture is a tag, not a category, and the twelve reading reps are why.** A rep about what a
   `LEFT JOIN` condition does belongs in the SQL queue whatever shape the question takes, so a
   `reading` category would have moved twelve reps out of the queues that should deal them. The axis a
   category cannot express is the one that cuts across categories, and that is what a tag is: the
@@ -129,37 +208,37 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   wrong hat. The essentials path was the other candidate vehicle and was refused on the format's own
   rules; that argument is under the path below.
 
-- **Tags do not change the morning, and that is the point.** The unscoped queue keeps dealing tagged
+- **ADR-0024 — Tags do not change the morning, and that is the point.** The unscoped queue keeps dealing tagged
   reps in their categories, because interleaving is what retention wants. A tag is an entrance, so
   what shipped is a scope the queue, the session builder and focused practice all respect, plus one
   tile that enters it. The rule that keeps tags from becoming keywords is whether somebody would
   deliberately spend fifteen minutes on one; the suite enforces the weaker half of that by refusing a
   tag with no reps behind it, because an entrance to nothing is worse than no entrance.
 
-- **Tags and the `dsa-patterns` flag stayed two mechanisms after being designed together.** They look
+- **ADR-0025 — Tags and the `dsa-patterns` flag stayed two mechanisms after being designed together.** They look
   alike and are opposites: a tag is opt-in, naming a slice you enter deliberately, and the category
   flag is opt-out, removing a category from a round robin that would otherwise deal it. Collapsing
   them would mean either every category becomes a tag, which is a rename, or the opt-out rides on a
   tag nobody would ever scope a session to. What they do share is the filter chain in `queue()`,
   which is where the second one went.
 
-- **One JSON column, not a join table.** Every query that reads tags already loads the whole problem
+- **ADR-0026 — One JSON column, not a join table.** Every query that reads tags already loads the whole problem
   set into memory and filters there, so a join table would have bought nothing and cost a table, a
   migration and two more inserts per seed. The column is parsed defensively: a tag this build does
   not know is dropped rather than crashing the queue that contains it, so an older binary can read a
   newer seed.
 
-- **No model runs anywhere in the AI engineering material.** Every problem is about the code around
+- **ADR-0027 — No model runs anywhere in the AI engineering material.** Every problem is about the code around
   the dependency, which is the part that fails in production and the only part that can be graded
   deterministically offline. A problem that needs an inference call to grade is a problem this
   project will not have.
 
-- **Pairing between reading and reps is a floor, not a scoreboard.** The target is that no page is
+- **ADR-0028 — Pairing between reading and reps is a floor, not a scoreboard.** The target is that no page is
   unpractised and no substantial category unexplained, not a matching count on either side. A
   problem carries its own lesson in its explanation, so an uncited problem is not a debt, and the
   queue should never be reordered to drive a number to zero.
 
-- **`node` and `sql-performance` became categories rather than more `systems` and `sql` reps.** Both
+- **ADR-0029 — `node` and `sql-performance` became categories rather than more `systems` and `sql` reps.** Both
   were already named as categories on the roadmap, but the cheaper option was real and was declined:
   `sql` had forty-six reps and could have absorbed nine more. What the split buys is the round robin.
   A category is the unit the daily queue deals from, so material folded into `sql` competes with
@@ -168,7 +247,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   it: `systems` is about the shape of a system and `node` is about the process running it, and a
   reader wanting one is not asking for the other.
 
-- **"Filter before joining" was specified as a `sql-performance` rewrite and cut, because it is not
+- **ADR-0030 — "Filter before joining" was specified as a `sql-performance` rewrite and cut, because it is not
   one.** The roadmap named it alongside `EXISTS` against `COUNT` and keyset pagination, and it turns
   out to be folk advice: on SQLite, filtering inside a CTE and filtering after the join produce
   byte-identical plans, because the planner pushes a plain predicate down without being asked.
@@ -179,7 +258,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   the one worth keeping: a rewrite earns a rep only once the two plans have been captured side by
   side.** A rewrite that everybody repeats is exactly the kind that has stopped being true.
 
-- **A graph in `dsa-patterns` is a plain object of named nodes to arrays of named nodes**, and every
+- **ADR-0031 — A graph in `dsa-patterns` is a plain object of named nodes to arrays of named nodes**, and every
   node is a key, leaves included: `{ home: ['docs', 'blog'], docs: ['api'], api: [], blog: [] }`.
   This was settled before the BFS and DFS wave was written rather than by it, because a `js-code`
   starter has to commit to one shape and the wave would otherwise have decided for everything after
@@ -206,7 +285,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   ones with no edges, keeps "has no neighbours" and "is not in the graph" from being the same
   lookup, and a rep that wants that distinction has to say so.
 
-- **Bytes against characters was audited for a page and refused.** Two `node` reps share the model,
+- **ADR-0032 — Bytes against characters was audited for a page and refused.** Two `node` reps share the model,
   which is normally what earns one. The half that costs you in production is already written and
   written well: `ai-engineering/streaming-a-model-response.md` opens on "a stream is bytes, and you
   have to put the message boundaries back", its worked example is the `{ stream: true }` decoder, and
@@ -216,7 +295,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   mentions in the handbook are passing references in service of another subject and none of them is
   failing for want of this page. The reps are cited from the pages that own their halves instead.
 
-- **The memoisation wave was written after the roadmap predicted it would be written badly, and the
+- **ADR-0033 — The memoisation wave was written after the roadmap predicted it would be written badly, and the
   prediction is what shaped it.** The row warned that climbing stairs and house robber teach a `dp`
   array that appears from nowhere, and authorised cutting the wave. What shipped instead clears the
   bar mechanically rather than by assertion: for each of the three reps the plain unmemoised
@@ -229,7 +308,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   were each rejected by name, the first three because the recursion is not anybody's first answer and
   the last because it is a second two-dimensional rep beside `dsa-grid-routes`.
 
-- **The BFS queue discipline is not gradeable by a distance test, which decides where that bug can
+- **ADR-0034 — The BFS queue discipline is not gradeable by a distance test, which decides where that bug can
   live.** Marking a node visited on dequeue rather than on enqueue is the classic mistake and it does
   not change a single shortest-path answer: it queues a node twice, wastes work, and still
   terminates with the right number. It becomes an observable wrong answer only where the output is
@@ -237,7 +316,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   `dsa-shortest-hops` carries a depth-first bug instead. Worth knowing before writing the next graph
   rep, because the natural assumption is that a distance test covers it.
 
-- **Grids stay out of the graph reps, and trees are not graph reps.** A grid's only real difference
+- **ADR-0035 — Grids stay out of the graph reps, and trees are not graph reps.** A grid's only real difference
   is that neighbours are computed rather than looked up, which teaches bounds-checking rather than
   traversal, and islands and flood fill are the two problems that make this category look like
   interview prep rather than practice. The one thing that would reverse it is a rep whose lesson is
@@ -246,7 +325,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   separate shape on purpose: no visited set, because the thing that makes a graph traversal a graph
   traversal is the cycle it has to survive.
 
-- **`EXISTS` against `COUNT(*) > 0` is a real rep whose lesson the plan cannot show.** Both forms
+- **ADR-0036 — `EXISTS` against `COUNT(*) > 0` is a real rep whose lesson the plan cannot show.** Both forms
   plan as the same correlated subquery, so the rep would have been unteachable on its stated terms.
   It survives because the difference is visible one level down, in the bytecode: `EXISTS` jumps out
   of the inner loop on the first match where the count aggregates every row and then compares. The
@@ -255,24 +334,24 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 
 ## Workouts
 
-- **Workouts run server-side against the real toolchain.** A browser sandbox cannot run a real ORM,
+- **ADR-0037 — Workouts run server-side against the real toolchain.** A browser sandbox cannot run a real ORM,
   which defeats the purpose. Each workspace symlinks its `node_modules` at `packages/workouts`, so a
   workout imports the real drizzle-orm with no install per attempt and no network.
 
-- **A workout declares its stack as free text in the manifest.** That is what lets the same brief
+- **ADR-0038 — A workout declares its stack as free text in the manifest.** That is what lets the same brief
   ship against four different ORMs as four separate workouts, which is the case the format exists
   for.
 
-- **Checkpoints are one test file each and are not gated on each other.** Status is "did every
+- **ADR-0039 — Checkpoints are one test file each and are not gated on each other.** Status is "did every
   assertion in that file pass", which is what makes a 20-minute exercise honest: at ten minutes, two
   of four green tells you something real. A strict mode that gates later checkpoints on earlier ones
   has been raised and not taken.
 
-- **A brief states the symptom and never the cause.** Working out what is wrong is the exercise, so
+- **ADR-0040 — A brief states the symptom and never the cause.** Working out what is wrong is the exercise, so
   naming the diagnosis deletes the part worth doing. It is the easiest mistake to make, because by
   the time you write the brief you know the answer.
 
-- **The flaky checkpoint suite was fixed in the content, not by slowing the runner.** One workout
+- **ADR-0041 — The flaky checkpoint suite was fixed in the content, not by slowing the runner.** One workout
   failed `pnpm verify` roughly one run in three, on a different checkpoint each time and never in
   isolation, which is the signature of load rather than a bad assertion. The cause was `request(app)`:
   supertest binds a fresh ephemeral port per call, and the suite looped ten revalidations, so the
@@ -283,7 +362,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   suites now bind one listener per test. The same shape was applied to the rate-limit workout, which
   loops a request per unit of allowance and had the same exposure without having failed yet.
 
-- **The diff is hand-written, and it is a third view rather than a replacement for the reference.**
+- **ADR-0042 — The diff is hand-written, and it is a third view rather than a replacement for the reference.**
   Fifty lines of LCS over lines, because a diff library would sit in the runtime bundle forever to
   compare two files of a few hundred lines, and the shadcn components are already hand-written on the
   same reasoning. Three views and not two: Mine, Diff, Reference. The toggle it replaces was a reveal,
@@ -291,7 +370,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   when the diff is large enough to be noise. The reference ships only the files it changes, so a file
   it leaves alone says exactly that instead of rendering as an empty side.
 
-- **A single-checkpoint run says what it did not check, rather than quietly keeping the old ticks.**
+- **ADR-0043 — A single-checkpoint run says what it did not check, rather than quietly keeping the old ticks.**
   Running one suite while iterating on it is the point of the feature, and the trap is what happens to
   the other three rows in the panel. Blanking them to not-run throws away the picture you were working
   from; leaving them green claims a verification nobody performed, which is the one lie a checkpoint
@@ -301,24 +380,24 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   only on a full green run of the whole suite. That last rule is why `WorkoutRun` records which
   checkpoint it ran rather than inferring it from the counts.
 
-- **The two systems workouts stayed two.** They were queued with permission to merge if writing them
+- **ADR-0044 — The two systems workouts stayed two.** They were queued with permission to merge if writing them
   proved they were one, and they are not: a circuit breaker is a state machine over failures, and
   single-flight is deduplication over concurrency. They share a fake clock and nothing else. The
   overlap that remains is with the queued "Cache the expensive report", which is cache-aside in an
   Express handler; the dedupe primitive underneath it is now `one-recompute-not-fifty`, so that
   workout is about where the pattern goes wrong around a route rather than about the primitive.
 
-- **A checkpoint never waits out the suite timeout to learn a call is stuck.** Both clock-driven
+- **ADR-0045 — A checkpoint never waits out the suite timeout to learn a call is stuck.** Both clock-driven
   workouts assert on "has this settled by now" through a helper that races the call against a few
   macrotask ticks. Without it, a starter that never times out anything spends ten seconds per
   assertion, and a 25-minute exercise pays half a minute for every run of its checkpoints.
 
-- **Performance is judged by what the code asked the database for, never by a stopwatch.** A timed
+- **ADR-0046 — Performance is judged by what the code asked the database for, never by a stopwatch.** A timed
   assertion would be flaky. Asserting on statement counts, rows returned and the `EXPLAIN` of the
   query actually sent makes the failure message the teaching, and it separates an index that exists
   from an index the planner chooses, which is the distinction the exercise is about.
 
-- **That rule binds this repo's own suite too, and `workouts.spec.ts` was breaking it.** The proof
+- **ADR-0047 — That rule binds this repo's own suite too, and `workouts.spec.ts` was breaking it.** The proof
   that running one checkpoint beats running all four was `one.durationMs < full.durationMs`: two
   wall-clock measurements taken minutes apart, on a machine also running the rest of `pnpm verify`.
   It inverted repeatedly (4000 against 3583, 4275 against 3155) on whichever workout happened to sort
@@ -330,63 +409,83 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   suite. **Nothing in this repo asserts on elapsed time**, and a contract that seems to need it is a
   contract with a countable version nobody has looked for yet.
 
-- **Fakes keep the awkward semantics of the real thing.** The fake Redis is worth having because
+- **ADR-0048 — Fakes keep the awkward semantics of the real thing.** The fake Redis is worth having because
   `incr` creates a key with no deadline, and because `ttl` answers -1 for "no deadline" against -2
   for "no key". A fake that smoothed those over would teach an API that does not exist.
 
-- **Anything time-dependent gets a fake clock rather than vitest's fake timers**, which fight
+- **ADR-0049 — Anything time-dependent gets a fake clock rather than vitest's fake timers**, which fight
   supertest's sockets and `userEvent`. The fake Redis carries an `advanceTime` the real thing has
   not, which is how a checkpoint waits out a sixty-second window for free.
 
-- **The offline constraint forced three substitutions, and all three improved the exercise.** A
+- **ADR-0050 — The offline constraint forced three substitutions, and all three improved the exercise.** A
   local fixture endpoint replaced a public JSON API and gained fault injection and a per-query
   delay, which is what turns a race into something a checkpoint can assert on. PGlite replaced
   Postgres and gives real `ILIKE` and real `EXPLAIN` in-process. The Redis fake replaced Redis.
 
-- **The scaffold's server project transforms with SWC, not esbuild.** Nest and TypeORM read
+- **ADR-0051 — The scaffold's server project transforms with SWC, not esbuild.** Nest and TypeORM read
   constructor parameter types back at runtime through `design:paramtypes`, and esbuild emits no
   decorator metadata at all, so injection silently resolves to `undefined`. The failure is a
   confusing null rather than a build error. The client project stays on esbuild, which is faster and
   needs none of it.
 
-- **The scaffold picks a test environment with two vitest projects, not `environmentMatchGlobs`**,
+- **ADR-0052 — The scaffold picks a test environment with two vitest projects, not `environmentMatchGlobs`**,
   which vitest deprecated in 3.2.
 
-- **Prisma is not a workout stack.** `prisma generate` is a build step in a package that
+- **ADR-0053 — Prisma is not a workout stack.** `prisma generate` is a build step in a package that
   deliberately has none, and there is no PGlite driver adapter for it, so one would have to be
   written against Prisma's adapter API. Both are solvable and neither is worth it for one workout.
   TypeORM and Sequelize connect without codegen.
 
-- **Mongo and Mongoose are deferred.** They need a real server or a heavyweight memory-server
-  dependency, and no brief so far demands a document store. Revisit if one genuinely does.
+- **ADR-0054 — Mongo and Mongoose were deferred, and half that argument has since been dropped.** The entry
+  read "they need a real server or a heavyweight memory-server dependency, and no brief so far
+  demands a document store". The first half no longer disqualifies anything: a workout may require a
+  binary this repo does not ship, provided it declares it and skips cleanly when absent. **The second
+  half stands and is now the whole test** — a document store waits for a lesson that needs one,
+  which is the same bar `ws` is still waiting on and `zod` cleared. Modelling for access patterns is
+  the candidate, and it is a page before it is a workout.
 
-- **A GraphQL server workout was deferred until the transport pages existed**, so its brief would
+- **ADR-0055 — A GraphQL server workout was deferred until the transport pages existed**, so its brief would
   have somewhere to link. The N+1 that GraphQL invites makes a good bug-hunt, and the dependency is
   now in place.
 
-- **React Native and desktop workouts are refused.** Web is the stated priority, and the platform
+- **ADR-0056 — React Native and desktop workouts are refused.** Web is the stated priority, and the platform
   cannot checkpoint native targets. That machinery does not get grown speculatively.
 
-- **New dependencies are raised as a batch and taken as decisions.** `graphql`, `react-window` and
+- **ADR-0057 — New dependencies are raised as a batch and taken as decisions.** `graphql`, `react-window` and
   `zustand` were decided together rather than one at a time, precisely so the question got answered
   once. A dependency is the one part of a workout that is not just a directory, so adding one stays
   a decision rather than a reflex.
 
-- **Shared workout helpers wait until the variation is visible.** Two workouts each log the
+- **ADR-0058 — Shared workout helpers wait until the variation is visible.** Two workouts each log the
   statements their ORM runs, and the shapes differ enough that folding them into one helper at n=2
   would be guessing. Anything shared has to live in `scaffold/`, which is copied into every
-  workspace, so it becomes part of the authoring contract rather than an implementation detail. The
-  same reasoning holds back a `pnpm workout <slug>` generator.
+  workspace, so it becomes part of the authoring contract rather than an implementation detail.
 
-- **Workspaces are disposable.** The directory for an attempt is deleted when the attempt finishes,
+- **ADR-0059 — The same reasoning released `pnpm workout <slug>` once the variation was visible, and reading 26
+  workouts is what decided its shape.** At n=15 a generator would have been guessing; at 26 the
+  invariants are countable. All 26 share the five-part layout, a `solution/` holding exactly the
+  `editable` set, checkpoint suites numbered in manifest order, and a brief whose h1 matches the
+  manifest title byte for byte. Two of those are enforced nowhere and are exactly what a generator
+  gets right for free. **What varies is one axis**, where the code lives, which decides the starter
+  shape and whether the suite drives HTTP; everything else, five databases and four fake clocks
+  between them, is per-workout and templating it would be a wrong guess wearing the authority of a
+  decision. So the tool takes a stack and a file name and emits the skeleton, and stops.
+
+  **A freshly scaffolded workout fails `workouts.spec.ts`, once, naming itself.** Its solution is its
+  starter, so the safety net says a workout with no content in it is not finished. A green stub would
+  buy a green suite by making the net say something untrue, and a half-written workout would then
+  ship without a word.
+
+- **ADR-0060 — Workspaces are disposable.** The directory for an attempt is deleted when the attempt finishes,
   and anything worth keeping goes in the database.
 
-- **Easy workouts are their own shape, not shortened medium ones.** The library reached ten workouts
+- **ADR-0061 — Easy workouts are their own shape, not shortened medium ones.** The library reached ten workouts
   with nothing under twenty minutes, so nothing fitted the session the rest of the app is built
   around and the whole content type sat behind a wall. A medium workout asks you to build a thing;
   an easy one asks you to get one thing right.
 
-- **Three queued workouts were cut on audit rather than written.** **The migration that locks up**
+- **ADR-0062 — Three queued workouts were cut on audit rather than written.** Its first row is
+  superseded by ADR-0146; the other two stand. **The migration that locks up**
   named a lesson the engine cannot show: PGlite serves one in-process connection and the Kysely
   dialect holds a single `DatabaseConnection`, so there is no second session for a long lock to
   block, and what is left is asserting on the shape of the DDL rather than on behaviour. A database
@@ -401,7 +500,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   `databases/search-past-like.md`. A uniqueness constraint that lets José and Jose both register is a
   real bug and a different brief.
 
-- **A queued row's infrastructure claim ages the same way its stack does.** The workout queue said
+- **ADR-0063 — A queued row's infrastructure claim ages the same way its stack does.** The workout queue said
   its rows ran on infrastructure that already exists, and two of them leaned on that. The fake Redis,
   the driven clock and the fixture API are each one workout's own file: `materialise` copies
   `scaffold/` and then that workout's `files/`, so the next workout copies and adapts them. The
@@ -409,7 +508,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   would have needed. Check what a row assumes exists, not only what it assumes is available as a
   dependency.
 
-- **A workout declares two things about its test run and is handed neither a config file nor a
+- **ADR-0064 — A workout declares two things about its test run and is handed neither a config file nor a
   default.** It used to declare nothing: `scaffold/vitest.config.ts` was the only config a workspace
   had, so assertions ran in the reader's zone and a dated workout could not reach the DST boundary
   that is usually its lesson. The obvious fix, letting a workout ship its own `vitest.config.ts`,
@@ -421,7 +520,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   it into both projects. A workout still cannot name a suite, widen a timeout or change how results
   are reported.
 
-- **The zone is set before the vitest process starts, not from inside the run.** Assigning
+- **ADR-0065 — The zone is set before the vitest process starts, not from inside the run.** Assigning
   `process.env.TZ` in a setup file was measured and does move `Date` immediately on macOS and Node
   24, so it looked like it would collapse the surface to one field. It is process state, and the
   reason not to rely on it is what happens when a worker is reused: with `--no-isolate` and one
@@ -430,81 +529,164 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   then be depending on an isolation setting it does not own and cannot see. Setting `TZ` on the spawn
   is correct whatever the pool does later.
 
-- **A mis-spelled zone is refused rather than run.** `Intl` matches a zone name case insensitively
+- **ADR-0066 — A mis-spelled zone is refused rather than run.** `Intl` matches a zone name case insensitively
   and `TZ` matches the zone database as spelled, so `America/New_york` does not fail: it yields a
   fixed offset with no DST transition, and a workout about the boundary loses the boundary without
   anything going red. The loader canonicalises the declared name and refuses it if the spelling
   changed, which costs a legitimate alias like `Etc/UTC` its name and is worth it.
 
+- **ADR-0146 — The migration workout is back, and what PGlite could not show turned out to be two
+  facts rather than one.** Supersedes the first row of ADR-0062, which cut it and named its own
+  reversal condition: a database in the workout set that serves two connections. `requires` and a
+  real Postgres met it, and `orders-migration-postgres` shipped.
+
+  The reversal is worth more than the row. The cut assumed the missing thing was a second session to
+  block, so a checkpoint would have to time a wait. Neither half held. **The rewrite is visible
+  without a clock**, in `pg_class.relfilenode` before and against after, which is the fact a
+  stopwatch was only ever a proxy for. **And the lock queue refuses a reader whose own lock
+  conflicts with nothing held**: a plain `SELECT` needing `ACCESS SHARE` is turned away with `55P03`
+  because the migration's ungranted `ACCESS EXCLUSIVE` request sits in front of it. That is the
+  lesson, it is a state rather than a duration, and a checkpoint asserts it by polling `pg_locks`
+  until the queue exists rather than by waiting a measured number of milliseconds.
+
+  Measured on 17.10 over 200,000 rows, and the reason the row is worth a workout at all: the PG 11
+  fast path covers a default that can be evaluated once and stored in `attmissingval`, so
+  `DEFAULT 'GBP'` and `DEFAULT now()` are catalog-only at under a millisecond, while a **volatile**
+  default like `gen_random_uuid()` still rewrites the whole table. "Postgres fixed that years ago" is
+  what everyone remembers, and it is half true, which is the trap.
+
+  **The general form, and the reason this entry exists rather than a quiet edit:** a cut that names
+  its reversal condition is worth far more than one that does not, and the condition being met is not
+  the same as the original reasoning having been right. Re-derive the lesson when the condition
+  arrives.
+
+- **ADR-0147 — A requirement names a binary, a port, or both, and never neither.** Supersedes the first
+  bullet of ADR-0006, which made `binary` required and `port` optional. That shape was written with
+  no workout using it, and the first one that did found it backwards within an hour: what
+  `orders-migration-postgres` needs is something speaking the Postgres protocol on 5432, and
+  `postgres` on `PATH` is neither necessary nor sufficient for that. Postgres.app and a container
+  both serve the port with nothing on `PATH`, and the declaration passed here only because Homebrew
+  symlinks the binary. **The rule that replaces it is that the field follows the dependency**: a tool
+  you shell out to is a binary, and a daemon you connect to is a port.
+
+  Making both optional would have been the smaller change and is not enough, because it admits a
+  requirement naming nothing, which is met on every machine and means nothing on any of them. So the
+  loader refuses that shape and the shared type refuses it at compile time, as a union of "binary
+  with an optional port" and "port alone".
+
+  The messages are the reason this is not a one-line loosening. There were two, distinguishing "not
+  on your PATH" from "installed, but nothing is listening", and that distinction is the whole value
+  of asking two questions rather than one. A port-only requirement needed a third sentence of its
+  own, and what it must not do is mention `PATH`: telling somebody whose Postgres runs in a container
+  to install it sends them after a second copy of what they are already running. **A check that can
+  answer "missing" in more than one way owes each answer a sentence somebody can act on**, and adding
+  a case to the check means adding a case to the prose.
+
+- **ADR-0148 — The declared port is the port the suites connect to, and the runner joins them up without
+  knowing what a Postgres is.** `requires` said 5432 while the workout's `db.ts` honoured `PGPORT`,
+  so a shell with `PGPORT=5433` in it proved presence on one port and connected to another, and the
+  failure read as the exercise being wrong. Three ways out were considered. Making the workout stop
+  reading the environment fixes this workout and leaves the next one to rediscover it. Teaching the
+  runner to set `PGPORT` puts a Postgres-shaped special case in the one file that runs every workout,
+  and the second daemon would want `MONGODB_URI` beside it. What shipped is the same translation
+  `testRun` already gets: the runner writes every declared port onto the spawned process, in
+  declaration order, as `HONE_REQUIRED_PORTS`, and the workout decides what to do with a number.
+
+  Written every run and empty when nothing is declared, exactly as `HONE_SETUP_FILE` is, because the
+  bug being fixed is an ambient value reaching a run that never asked for one. The host needed no
+  variable: presence is checked on loopback and only on loopback, so a workout reaching anywhere else
+  is reaching the network. **What the environment still answers is who you connect as**, which no
+  requirement speaks to, so `PGUSER`, `PGDATABASE` and `PGPASSWORD` are still read.
+
+  The general form is worth more than the variable: **where a declaration is checked in one process
+  and used in another, the value has to travel, or the two drift apart silently and the drift looks
+  like the content being wrong.**
+
+- **ADR-0149 — `pnpm workout` emits `requires` only when asked, and that is the same principle as the four
+  mandatory flags rather than an exception to it.** `kind`, `minutes`, `difficulty` and `relevance`
+  are arguments because JSON cannot hold a TODO and a median would ship as an answer nobody gave.
+  `requires` decides whether the workout runs at all, which sounds like the same case and is not: its
+  usual answer is "nothing", and an absent field is exactly how a manifest says that. A mandatory
+  flag would ask 34 authors to say "no daemon" so that one could say "Postgres", and an emitted stub
+  would be the plausible guess the scaffolder exists not to make.
+
+  So `--requires postgres:5432`, `--requires 5432` or `--requires postgres`, repeatable, and nothing
+  at all otherwise. The flag carries the half a machine can check and the loader is what validates
+  it; `install` and `reason` are prose and come out as TODOs, which puts them in the count and in
+  `grep -rn TODO` with every other decision left to the author. The tool also says out loud that a
+  declared requirement skips rather than fails, because that is the one way a fresh scaffold's
+  deliberate red goes quiet: ADR-0059's failure that names the slug never appears if the machine
+  cannot meet what the manifest just declared.
+
 ## The handbook
 
-- **Pages are markdown that reads fine on GitHub.** The repo is public and that reach costs nothing.
+- **ADR-0067 — Pages are markdown that reads fine on GitHub.** The repo is public and that reach costs nothing.
   The app adds what GitHub cannot: section navigation, and practise links resolved to live problems
   and workouts.
 
-- **The systems section teaches concepts before case studies.** You fail a system design
+- **ADR-0068 — The systems section teaches concepts before case studies.** You fail a system design
   conversation on fundamentals, not on not having read enough architectures. The case-study shelf
   hangs off the section as further reading rather than as pages.
 
-- **Interactive diagrams are deferred.** A diagram you can drag a node around in is application code
+- **ADR-0069 — Interactive diagrams are deferred.** A diagram you can drag a node around in is application code
   per diagram, which breaks the rule the whole library rests on. Revisit only if a specific concept
   proves it cannot be taught any other way, and then build that one thing rather than a framework
   for it.
 
-- **Fenced ASCII is the floor for diagrams and Mermaid is the step up, and the dependency is the
+- **ADR-0070 — Fenced ASCII is the floor for diagrams and Mermaid is the step up, and the dependency is the
   decision.** Mermaid keeps a diagram as diffable text and renders on GitHub, at the cost of a
   not-small dependency in the app bundle rather than in a workout workspace. Committed SVG needs no
   dependency and gives up diffability and easy authoring; ASCII needs nothing at all and caps what
   can be drawn.
 
-- **Pages say which engine they mean.** The source material teaches Postgres and Hone runs SQLite
+- **ADR-0071 — Pages say which engine they mean.** The source material teaches Postgres and Hone runs SQLite
   and PGlite, so a page names its engine and notes where SQLite differs. This is not pedantry:
   writing the SQL section against `practice.db` rather than from memory contradicted three claims
   that would otherwise have shipped as fact, including that SQLite accepts a select-list alias in
   `WHERE` where Postgres refuses, and silently resolves it to the table column when the alias
   shadows one.
 
-- **Databases and writing SQL are two sections on purpose.** Databases is where a query goes wrong:
+- **ADR-0072 — Databases and writing SQL are two sections on purpose.** Databases is where a query goes wrong:
   indexes, plans, N+1 and pagination, all of which assume you can already write the query being made
   slow. Writing SQL is where the query gets written.
 
-- **Reading order is the reader's order, not the build order.** The section manifest owns what a
+- **ADR-0073 — Reading order is the reader's order, not the build order.** The section manifest owns what a
   reader sees, which is why writing SQL sits before databases (writing a query comes before making
   it fast) and security sits directly after headers.
 
-- **Some pages keep no easy problem behind them, and that is a refusal rather than debt.** An easy
+- **ADR-0074 — Some pages keep no easy problem behind them, and that is a refusal rather than debt.** An easy
   rep is a real thing met in ordinary feature work, answered in under two minutes by someone who has
   just read the page. Back-of-envelope estimation is performed out loud, consistent hashing is
   consumed rather than configured, and a rep written to fill the row would teach that the
   definition was the point.
 
-- **The easy-rep bar is deliberately not enforced mechanically.** "Has an easy problem" is checkable
+- **ADR-0075 — The easy-rep bar is deliberately not enforced mechanically.** "Has an easy problem" is checkable
   and would be the wrong thing to check, because passing it by writing trivia is easier than passing
   it honestly.
 
-- **No page-level progress tracking, no streaks, no completion states.** Problems and workouts
+- **ADR-0076 — No page-level progress tracking, no streaks, no completion states.** Problems and workouts
   measure progress; pages are reference.
 
-- **No search until the page count demands it.** The section list and the practise links are how you
+- **ADR-0077 — No search until the page count demands it.** The section list and the practise links are how you
   arrive at a page, and search would be machinery ahead of the need.
 
-- **Not a wiki, not exhaustive, and never a mirror of someone else's course.** Exhaustiveness is the
+- **ADR-0078 — Not a wiki, not exhaustive, and never a mirror of someone else's course.** Exhaustiveness is the
   failure mode that turns reference into something nobody opens.
 
-- **Testing is deferred, and its threshold is written down so it stays a decision rather than an
+- **ADR-0079 — Testing is deferred, and its threshold is written down so it stays a decision rather than an
   oversight.** Its problems are a small cluster, all about testing-library and React, which is the
   thinnest case in the library. It earns a section when the category grows past the JavaScript
   section's size, or when a workout's checkpoints are about the tests themselves, whichever lands
   first.
 
-- **Deliberately absent: mobile and desktop, machine learning proper, a Python workout runtime.**
+- **ADR-0080 — Deliberately absent: mobile and desktop, machine learning proper, a Python workout runtime.**
   Web is the stated priority, so React Native and Flutter wait until the web map is substantially
   built. Shipping against a model is web work and has a section; training one is not. FastAPI earns
   one comparison page, because seeing a third framework name the same seams is what makes them
   visible as seams, but a FastAPI workout would put a Python runtime in the workout runner, which is
   a far larger decision than a dependency line.
 
-- **TypeScript and data structures both left "deliberately absent", and the rule those reversals
+- **ADR-0081 — TypeScript and data structures both left "deliberately absent", and the rule those reversals
   produced matters more than either.** TypeScript was excluded because the source material was thin,
   and DSA
   because patterns are better practised than read. Both came back when practice volume said so: the
@@ -516,7 +698,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   patterns themselves stay in `dsa-patterns` as graded implementations, because a page about sliding
   window teaches less than three of those.
 
-- **"Nothing to practise" is a reason to write reps, not a reason to defer a page.** The B-tree page
+- **ADR-0082 — "Nothing to practise" is a reason to write reps, not a reason to defer a page.** The B-tree page
   was deferred on exactly that ground and the deferral was reversed the same day, which is the more
   useful half of the story. The gap was real and measured: the term appeared six times across
   `databases`, `sql` and `ai-engineering` and was defined nowhere, while
@@ -529,7 +711,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   **The rule to carry forward: defer a page when the material cannot be verified or when the reader
   would not notice its absence, not when the practice behind it merely has not been written yet.**
 
-- **Index reps cannot be `sql` reps, and that constraint is load-bearing.** The SQL practice database
+- **ADR-0083 — Index reps cannot be `sql` reps, and that constraint is load-bearing.** The SQL practice database
   carries no indexes on purpose, so a live query can never demonstrate one being used. Everything
   about index behaviour and full-text search is therefore authored as `short-text` and `explain`
   against output captured from a real engine, which is the same shape `sql-performance` took when it
@@ -540,47 +722,47 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   index and reports `Index Searches: 1`; and a page and its rep disagreed about how many lexemes
   `to_tsvector` returns for one sentence. Both were caught by re-running rather than by review.
 
-- **AI engineering is in scope, and the scope moved once, deliberately.** What a web engineer is
+- **ADR-0084 — AI engineering is in scope, and the scope moved once, deliberately.** What a web engineer is
   asked to build now includes an endpoint that streams tokens and a tool server another program
   drives. That is web engineering with an unfamiliar dependency on the end of it, and it fails in
   web-engineering ways: timeouts, backpressure, idempotency, cost per request. Training and model
   architectures stay out.
 
-- **Security covers what a web engineer builds and reviews, not offensive security.** No
+- **ADR-0085 — Security covers what a web engineer builds and reviews, not offensive security.** No
   exploitation technique gets a page it does not need for the defence to make sense.
 
-- **An API is a module, not a page.** The query-params and dates categories were both carried as
+- **ADR-0086 — An API is a module, not a page.** The query-params and dates categories were both carried as
   handbook debt until it became clear the handbook was never their home. Repeated keys, `set`
   against `append` and the plus-sign space trap are the edges of one API met one at a time, not a
   mental model to explain. A model is a page; an API is a module.
 
 ## The essentials path
 
-- **It is a second entrance, not a setting on the daily session.** Everything else here is judged
+- **ADR-0087 — It is a second entrance, not a setting on the daily session.** Everything else here is judged
   against a 15-minute morning, and the path is deliberately not: it is the weekend-or-evening mode.
   The morning queue stays interleaved and spaced because that is what retention wants; an hour on
   the path is blocked and ordered because that is what building a model the first time wants. Making
   either one a mode of the other would blur two jobs that are correct at different stages.
 
-- **Where you left off is derived from the reps, and nothing is stored.** A step whose problem is
+- **ADR-0088 — Where you left off is derived from the reps, and nothing is stored.** A step whose problem is
   solved is done, and the first step that is not done is where you are. That keeps page-level
   completion a standing non-goal, and it means the feature shipped with no schema change and no
   migration. If a path ever wants its own progress model, that is the signal it has drifted from
   being an ordering into being a second app.
 
-- **The subset rule is enforced mechanically, because it is the one that will get broken.** The path
+- **ADR-0089 — The subset rule is enforced mechanically, because it is the one that will get broken.** The path
   is a recommendation, and a recommendation that eventually names every page is an index. Good
   intentions do not survive seven more sessions, so `paths.spec.ts` fails if the sessions between
   them cite three quarters of the handbook. The number is a tripwire rather than a target: it should
   fire as a conversation about what to cut, long before anyone notices the path has stopped
   recommending anything.
 
-- **Read, then prove, then build is enforced by the loader, not left to authors.** The reps come
+- **ADR-0090 — Read, then prove, then build is enforced by the loader, not left to authors.** The reps come
   after the pages that explain them, which is the exact opposite of the daily queue's job, and it is
   the only structural rule the format has. A rule that is the whole point of a format is worth a
   check rather than a sentence in a README.
 
-- **Seven hours shipped, and the test the path was meant to run for modules came back split.** The
+- **ADR-0091 — Seven hours shipped, and the test the path was meant to run for modules came back split.** The
   async hour was built entirely from existing pages and reps, without once wanting to teach an API
   from scratch, which by the stated criterion is evidence that the `promises` module matters less
   than assumed. But `query-params` and `dates`, the two areas the module list targets hardest,
@@ -590,11 +772,11 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   demote a module, never promote one, because a slice that fits an hour is model-shaped by
   construction.
 
-- **A session with no fitting workout is 45 minutes, not an hour padded with one.** Two of the seven
+- **ADR-0092 — A session with no fitting workout is 45 minutes, not an hour padded with one.** Two of the seven
   end on reps, because reaching for a workout that half-fits would cost the hour its coherence and
   teach the wrong lesson about what the path is for.
 
-- **The reading reps are not a session, and reading is not a category.** Twelve reps that hand you
+- **ADR-0093 — The reading reps are not a session, and reading is not a category.** Twelve reps that hand you
   unfamiliar code and ask what it does now sit in the categories their snippets belong to, and the
   obvious next move, an hour on the path, does not survive the format's own rules. A session is named
   by the question its hour answers, and "what does this code do" is a posture rather than a slice of
@@ -603,14 +785,14 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   touch. The order would carry no meaning either, since no reading rep builds on the one before it.
   What is missing is an entrance rather than an ordering, and that is application code: roadmap §1.
 
-- **The reader sees "Essentials"; the code says "path".** The route is `/essentials` because that is
+- **ADR-0094 — The reader sees "Essentials"; the code says "path".** The route is `/essentials` because that is
   what the thing is to someone deciding how to spend an hour, and everything behind it, the package,
   the API and the types, is `path`, because that is the word the spec and the docs use. One
   translation, at the boundary, written down here so it is a decision rather than a drift.
 
 ## Modules
 
-- **Modules and the essentials path stay separate, and the reason is what you arrive knowing.**
+- **ADR-0095 — Modules and the essentials path stay separate, and the reason is what you arrive knowing.**
   They look alike from outside: both are guided sequences longer than one rep, both need a route, and
   both refuse progress tracking. But a path is assembled from pages, reps and workouts, and all three
   assume you already know the thing. A module is the only format for the API you use constantly and
@@ -618,93 +800,93 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   point it no longer just orders what exists, or modules lose their steps and become a page plus reps,
   which the handbook already is. They differ on every axis that matters: 15 to 25 minutes on one API
   against an hour across a slice, and creating content against ordering it.
-- **What they do share is machinery, and that gets consolidated instead.** One sequence viewer, where
+- **ADR-0096 — What they do share is machinery, and that gets consolidated instead.** One sequence viewer, where
   a module is a sequence of predict-run-correct steps and a session is a sequence of steps that may be
   pages, reps, workouts or a whole module. The shared non-goal is stated once: neither introduces
   progress tracking.
-- **The path shipped first, and was the test of how many modules are needed.** It adds no content;
+- **ADR-0097 — The path shipped first, and was the test of how many modules are needed.** It adds no content;
   modules are eight of them at 10 to 20 authored steps each, plus a content type and app code. What
   the test returned is recorded above: the async hour worked from existing pages and reps, and
   `query-params` and `dates` produced no hour at all. Read the module list with that in mind rather
   than as eight equal entries.
 
-- **The format shipped as specified, and the two rules experience added are in `content.md`.**
+- **ADR-0098 — The format shipped as specified, and the two rules experience added are in `content.md`.**
   Building `js-date` found both: assertions run on the reader's machine with no fake clock and no
   fixed timezone, so a module that depends on its author's zone is broken for everybody else; and a
   step's assertions are about the API rather than about the reader's edit, which is what makes the
   snippet safe to change and explore. Neither was in the spec, and neither is discoverable from a
   module that happens to have been written in UTC.
 
-- **The run endpoint takes the code and looks the assertions up itself.** The client sends what is in
+- **ADR-0099 — The run endpoint takes the code and looks the assertions up itself.** The client sends what is in
   the editor; the assertions come from the step on disk. That is the split the format needs: the
   snippet is yours to change and the check does not move when you change it.
 
-- **A `module` step on the essentials path became legal the day modules existed**, which cost the one
+- **ADR-0100 — A `module` step on the essentials path became legal the day modules existed**, which cost the one
   case in a switch it was reserved to cost. It counts as a read step, because it is what a session
   about an API has instead of a page.
 
-- **A fourth content type was accepted even though it costs application code.** The other three all
+- **ADR-0101 — A fourth content type was accepted even though it costs application code.** The other three all
   assume you already know the thing you are practising. The gap they miss is the handful of APIs
   used constantly and understood shallowly, where the problem is not being stuck but holding a wrong
   model that has never cost enough to notice. Predicting, running and being corrected is what fixes
   that, and no existing format does it.
 
-- **A step that cannot pose a question with a definite answer is a handbook page and belongs
+- **ADR-0102 — A step that cannot pose a question with a definite answer is a handbook page and belongs
   there.** That is the whole boundary between the two formats, and it is what stops a module turning
   into prose with a run button.
 
-- **Module code lives in tagged fences, not in frontmatter.** The handbook's YAML parser takes
+- **ADR-0103 — Module code lives in tagged fences, not in frontmatter.** The handbook's YAML parser takes
   strings, lists of strings and lists of flat objects, and teaching it block scalars so it could
   hold source would be the wrong trade. A tagged fence is already valid markdown and renders on
   GitHub.
 
-- **Modules get no progress tracking and do not touch the review ladder.** The problems are the
+- **ADR-0104 — Modules get no progress tracking and do not touch the review ladder.** The problems are the
   progress tracking, as with pages. A wrong prediction is exactly the signal the ladder wants, which
   makes wiring it in worth revisiting with real data and a migration rather than building
   speculatively.
 
-- **Not a course platform.** No enrolment, no certificates, no percentage complete, no streaks, no
+- **ADR-0105 — Not a course platform.** No enrolment, no certificates, no percentage complete, no streaks, no
   video or audio. No branching either: steps are linear, and a module that needs a decision tree is
   two modules.
 
 ## Navigation, and what the first page asks
 
-- **The nav carries four entries and none of them is a content format.** It had grown to nine, one
+- **ADR-0106 — The nav carries four entries and none of them is a content format.** It had grown to nine, one
   per format plus the dashboard, which is what a nav does when every shipped thing is added to it:
   a morning opened on nine choices, of which one was the one worth making. The four are the four
   questions somebody actually arrives with. Today is what to do now, Library is where everything is,
   Handbook is what to read, Progress is how it is going. The rule that keeps it at four is that a
   new format earns a slot only by being a different question, and no format has been.
 
-- **Today asks one thing, and it starts the session rather than linking to a page that asks more.**
+- **ADR-0107 — Today asks one thing, and it starts the session rather than linking to a page that asks more.**
   The old dashboard led with a scoreboard and put the session behind a card that then wanted a size,
   a category and a difficulty before anything began. That is three decisions and a report in front of
   fifteen minutes. The scoped form still exists on `/session` for when the scoping is the point; it
   is the second button, not the first.
 
-- **The other formats are ranked by what they cost you, not by what they are.** On a morning the
+- **ADR-0108 — The other formats are ranked by what they cost you, not by what they are.** On a morning the
   question is never "module or workout", it is how long there is, so each tile carries the duration
   the content itself declares and nothing rounds or estimates. Cards show a count instead, because a
   run has no authored length and inventing one would be the first invented number in the app.
 
-- **Progress is a page you visit, not a page you land on.** Every number that was on the dashboard is
+- **ADR-0109 — Progress is a page you visit, not a page you land on.** Every number that was on the dashboard is
   still there and several that were computed and never shown now are, including the difficulty split.
   Moving them was the point: coverage is worth reading weekly and is worth nothing at the moment you
   sit down to work, and a reset button belongs nowhere near a page opened every morning.
 
-- **The library is one page with tabs, and the list routes moved into it.** `/problems`,
+- **ADR-0110 — The library is one page with tabs, and the list routes moved into it.** `/problems`,
   `/workouts`, `/modules` and `/essentials` redirect to their tab; the detail routes keep their
   top-level URLs, because a link to a workout is the workout and not a position in a browse surface.
   A menu of menus was the alternative and is what a library page usually degrades into: this one
   shows the content, and each tab is one click from the others rather than one click from an index.
 
-- **Cards are not a library tab.** There is nothing to list, since choosing a deck was refused for
+- **ADR-0111 — Cards are not a library tab.** There is nothing to list, since choosing a deck was refused for
   the reason in the next section, so cards stay an entrance on Today. This is the same rule the decks
   decision made, applied to the page that would otherwise quietly reintroduce the choice.
 
 ## Decks
 
-- **Decks are never surfaced in the UI, and the reason is the count of entrances rather than
+- **ADR-0112 — Decks are never surfaced in the UI, and the reason is the count of entrances rather than
   anything about decks.** The app already offers problems, essentials, the handbook, workouts and
   modules. Landing on a list of decks would put a second decision in front of someone with fifteen
   minutes, before they have answered anything. So `/cards` is the run itself, over every card there
@@ -716,14 +898,14 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   is a few minutes; somewhere past a few hundred cards it stops being a sitting, and bounding it is a
   real change to make then rather than now.
 
-- **Cards are self-graded.** You flip, you say whether you had it, and the app takes your word.
+- **ADR-0113 — Cards are self-graded.** You flip, you say whether you had it, and the app takes your word.
   Reusing the `short-text` matcher was considered and declined: free recall of a phrase is exactly
   where a matcher is wrong often enough to matter, and being marked wrong on an answer you knew is
   the fastest way to stop opening a deck. Auto-grading is not foreclosed by this. A deck whose
   answers really are single strings could take one optional field per card later, and nothing about
   the format stands in the way.
 
-- **v1 persists nothing: no table, no migration, no write path.** The reps a deck cites are the
+- **ADR-0114 — v1 persists nothing: no table, no migration, no write path.** The reps a deck cites are the
   progress tracking, as they are for modules and pages. The binding precedent is in the section
   above: modules get no progress tracking and do not touch the review ladder, and wiring the ladder
   in waits for real data and a migration rather than being built speculatively. A self-graded card is
@@ -731,7 +913,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   Revisit when a deck has been in use for a few weeks and its owner can either name the cards they
   keep missing or is annoyed that the app cannot.
 
-- **The roadmap's deck table went stale for two commits, and the fix is a habit rather than a
+- **ADR-0115 — The roadmap's deck table went stale for two commits, and the fix is a habit rather than a
   process.** Four decks shipped in one commit; the table lost one row and kept two whose decks had
   shipped under different slugs, `the-four-equalities` and `the-cache-directives`, while
   `freshness-and-validation` was never listed at all. Nothing caught it, and nothing can: the suite
@@ -741,17 +923,17 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   name.** Read `packages/decks/content/` before believing a row, and the same for
   `packages/modules/content/`, `packages/handbook/content/` and the seed files.
 
-- **A deck is one JSON file, not one markdown file per card.** A module step is prose plus a runnable
+- **ADR-0116 — A deck is one JSON file, not one markdown file per card.** A module step is prose plus a runnable
   snippet and genuinely needs a file; a card is two sentences, and eight files with frontmatter for
   sixteen lines of text is ceremony. The size caps then do authorial work rather than merely bounding
   a field: a back that does not fit on one line is a card that has become a page, and the page is
   already cited.
 
-- **The reader sees "Cards"; the code, the package and the API say "deck".** The same boundary
+- **ADR-0117 — The reader sees "Cards"; the code, the package and the API say "deck".** The same boundary
   translation as Essentials and `path`, for the same reason. "Cards" is what the thing is to someone
   deciding how to spend ten minutes, and "deck" is the word the content and the types use.
 
-- **The suite cannot check whether a card is true, and the format is built around that gap.** A
+- **ADR-0118 — The suite cannot check whether a card is true, and the format is built around that gap.** A
   module's assertions run against its own snippet, so a module that teaches something untrue fails
   the build. A card has nothing to run. That is why `page` and `sources` are required rather than
   optional, and why the review rule is that every claim on a card must be checkable against the page
@@ -759,29 +941,29 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 
 ## Grading and safety
 
-- **The expected result is executed at grade time, never stored.** Storing expected rows would make
+- **ADR-0119 — The expected result is executed at grade time, never stored.** Storing expected rows would make
   grading quietly wrong the moment the seed data changed, and the seed data is meant to keep
   changing.
 
-- **SQL answers compare raw row values, so column names and aliases never matter.** Column count
+- **ADR-0120 — SQL answers compare raw row values, so column names and aliases never matter.** Column count
   does, numbers compare numerically and everything else by string equality. The exercise is the
   query, and failing someone for naming a column differently would grade the wrong thing.
 
-- **The practice dataset is literal and deterministic, and its shape is a requirement.** No
+- **ADR-0121 — The practice dataset is literal and deterministic, and its shape is a requirement.** No
   randomness, because stable data makes debugging sane. Constraints on the values themselves, such
   as distinct prices where a problem asks for the most expensive rows, are what give a question
   exactly one right answer.
 
-- **User SQL runs against `practice.db` opened readonly, and `ATTACH` is refused**, so `app.db` is
+- **ADR-0122 — User SQL runs against `practice.db` opened readonly, and `ATTACH` is refused**, so `app.db` is
   unreachable from an answer. This is the one boundary in the app that is real rather than
   conventional, and it stays that way.
 
-- **`node:vm` in the code runner is an isolation convenience, not a security boundary.** Determined
+- **ADR-0123 — `node:vm` in the code runner is an isolation convenience, not a security boundary.** Determined
   code reaches the host realm through constructor chains. That is acceptable because Hone runs
   locally and executes only code the user typed, which is the same trust level as `pnpm dev`. Do not
   reuse `grading/code-runner.ts` to run code from anyone else.
 
-- **The code runner's realm has no Node in it, and that caps what a `node` rep can be.** The vm
+- **ADR-0124 — The code runner's realm has no Node in it, and that caps what a `node` rep can be.** The vm
   context exposes `console`, the timer pair, `queueMicrotask`, `structuredClone`, `URL`,
   `URLSearchParams`, the text encoders and `AbortController`, and nothing else: no `require`, no
   `Buffer`, no `process`, no `setImmediate`, no streams. So nine of the ten reps about the runtime
@@ -792,7 +974,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   observes no better than a reader does. **A rep about a Node API that must actually execute belongs
   in a workout**, where the real runtime is already there.
 
-- **The code runner has two budgets, because a script holding the thread and a test waiting on a
+- **ADR-0125 — The code runner has two budgets, because a script holding the thread and a test waiting on a
   timer are not the same problem.** `CODE_TIMEOUT_MS` is one second and bounds synchronous
   execution, which is what stops `while (true) {}`. `SETTLE_TIMEOUT_MS` is three seconds, bounds an
   awaited test, and caps any delay the submission asks a timer for, so nothing it schedules can
@@ -800,7 +982,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   spent a tenth of the guard against endless loops simply doing its job: it sleeps around 110ms on
   purpose, because a debounce that cannot use real timers is not a debounce.
 
-- **Those sleeps were suspected of being the flake and are not, and the reasoning is the rule for
+- **ADR-0126 — Those sleeps were suspected of being the flake and are not, and the reasoning is the rule for
   the next rep about timers.** Node runs expired timers in expiry order and drains microtasks after
   each callback, so a starved loop delays every timer and reorders none. Each sleep therefore sits
   on the settled side of the delay it waits out or waits through, and no pair of them is a race.
@@ -811,7 +993,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   timer**, and a rep that would need one to win a race is asking for a fake clock and therefore for
   a workout.
 
-- **`ts-type` asserts on type identity, not on assignability, and the gap between them is the
+- **ADR-0127 — `ts-type` asserts on type identity, not on assignability, and the gap between them is the
   `close` verdict.** Two types being assignable in both directions is a weaker claim than being the
   same type, and the two ways to land in that gap are the two ways to write a type that looks right:
   reaching for `any`, and writing a mapped type that forgot to strip a modifier. Grading either
@@ -822,7 +1004,7 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   microsoft/TypeScript#27024, which is the only way to reach the checker's internal identity
   relation from type syntax.
 
-- **The type grader never runs the submission, so its boundary is the filesystem instead.** Nothing
+- **ADR-0128 — The type grader never runs the submission, so its boundary is the filesystem instead.** Nothing
   executes, which makes it a stronger boundary than the code runner rather than the same one
   restated. What replaces it is that `tsc` will happily follow an import, a `/// <reference path>`
   or a `@types` lookup. A `CompilerHost` is the compiler's only door to a disk, and this one answers
@@ -830,11 +1012,11 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   `resolveModuleNameLiterals` returns nothing for every import. A test points a reference directive
   at a file it has just read itself and asserts the compiler reports it missing.
 
-- **The lib is ES2022, and that caps what a `ts-type` rep can be**, exactly as the bare vm realm
+- **ADR-0129 — The lib is ES2022, and that caps what a `ts-type` rep can be**, exactly as the bare vm realm
   caps a `node` rep. No DOM, no `@types/node`, no imports. A rep that needs a real library type is
   asking for a workout.
 
-- **There is no timeout on a type check, and one was tried.** The compiler API takes a
+- **ADR-0130 — There is no timeout on a type check, and one was tried.** The compiler API takes a
   `CancellationToken` on `getSemanticDiagnostics`, but it is not polled finely enough to interrupt
   the pathological case: a token already past its deadline never fired. It does not need to.
   TypeScript's own instantiation-depth, recursion and union-size limits bound the work themselves,
@@ -844,10 +1026,10 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   to single-digit milliseconds. Sharing them is safe only because a compilation is synchronous end
   to end, so two programs never hold the same file at once.
 
-- **The workout workspace is not a security boundary either.** The path-escape guards exist to catch
+- **ADR-0131 — The workout workspace is not a security boundary either.** The path-escape guards exist to catch
   mistakes, not attackers.
 
-- **`streaming-export-express` listens on no port at all, and that is the pattern to copy.** The
+- **ADR-0132 — `streaming-export-express` listens on no port at all, and that is the pattern to copy.** The
   recorded gotcha about handing supertest a listening server solves the `TIME_WAIT` failure; this
   workout avoids the question by wiring an in-memory duplex pair into a real `http.Server` through
   `server.emit('connection', …)`. Two things fall out. The socket failure mode has no surface, rather
@@ -856,47 +1038,47 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
   system running it. **Where a checkpoint asserts on a number the network can move, take the network
   out** rather than picking a threshold loose enough to survive it.
 
-- **The solution is held back until the problem is solved or three attempts have gone in**, and
+- **ADR-0133 — The solution is held back until the problem is solved or three attempts have gone in**, and
   revealing it marks the problem skipped rather than solved. Answering before you see the answer is
   the mechanism, and a reveal that cost nothing would remove it. Checkpoint hints appear only after
   that checkpoint has failed, for the same reason.
 
 ## Attribution and sources
 
-- **Every handbook page cites at least one source, enforced in `pnpm verify`.** The material traces
+- **ADR-0134 — Every handbook page cites at least one source, enforced in `pnpm verify`.** The material traces
   to other people's teaching, and some of it traces to nothing at all: machine-written guides, and
   years of shortlinks with the original authors stripped off. Republishing that silently would take
   credit the project has not earned, so the fix is structural rather than a matter of good
   intentions.
 
-- **Paywalled sources shape a page and never carry a claim.** A paid course gets credited for the
+- **ADR-0135 — Paywalled sources shape a page and never carry a claim.** A paid course gets credited for the
   material it shaped, but every claim has to be checkable against an open reference, and a claim
   with no open reference does not ship. In use this went one step further: paywalled courses ended
   up not credited on pages at all, because no claim ever rested on one.
 
-- **LLM-generated source material does not count as a source.** Pages built from a machine-written
+- **ADR-0136 — LLM-generated source material does not count as a source.** Pages built from a machine-written
   guide verify each claim against primary references and cite those. The note itself is never the
   citation, however useful it was to write from.
 
-- **No link shorteners, ever.** A shortlink is resolved to its canonical target before it can be
+- **ADR-0137 — No link shorteners, ever.** A shortlink is resolved to its canonical target before it can be
   cited, and if it is dead or its author cannot be identified, the claim is re-sourced or dropped.
   Links rot faster than expected: two of the learning-techniques citations had already gone by the
   time they were checked, which is why every paper citation carries its DOI in plain text.
 
-- **The about page says plainly that the content is largely machine-written and reviewed
+- **ADR-0138 — The about page says plainly that the content is largely machine-written and reviewed
   progressively.** The test suite guarantees that every canonical answer grades correctly and every
   workout solution passes its checkpoints. It cannot guarantee that an explanation or a page is
   true, and implying otherwise would be the same failure the citation policy exists to prevent. This
   is why accuracy is a writing rule and not only a research one.
 
-- **Claims about the app get checked against the file that implements them.** Writing the
+- **ADR-0139 — Claims about the app get checked against the file that implements them.** Writing the
   learning-techniques page contradicted several descriptions of the app that had read as harmless
   summaries. The review ladder does not widen on any correct answer and reset on any wrong one: it
   widens only on a review of a problem already solved, resets only when a review is failed, and does
   nothing to a problem never solved. Interleaving is not in the queue builder at all; the
   round-robin across categories is baked into `position` at seed time.
 
-- **Expanding review intervals are not evidence-based, and the project says so.** Spacing has the
+- **ADR-0140 — Expanding review intervals are not evidence-based, and the project says so.** Spacing has the
   evidence, the expanding shape is a choice, and the 1, 3, 7, 21, 60 ladder is a guess. Karpicke and
   Roediger tested expanding intervals against equally spaced ones and found expanding better ten
   minutes after learning and worse two days later, which is the direction that matters for a review
@@ -907,18 +1089,18 @@ the rules for writing content, and `docs/roadmap.md` holds what is not built yet
 
 ## Open-sourcing
 
-- **The repo is public and MIT licensed, prose included.** One licence is simpler than two, and the
+- **ADR-0141 — The repo is public and MIT licensed, prose included.** One licence is simpler than two, and the
   crediting culture this project cares about lives in the citation policy rather than in licence
   text.
 
-- **No CLA and no governance apparatus.** It is a personal project that accepts patches.
+- **ADR-0142 — No CLA and no governance apparatus.** It is a personal project that accepts patches.
 
-- **No hosted docs site.** The app and the repo are the artifacts.
+- **ADR-0143 — No hosted docs site.** The app and the repo are the artifacts.
 
-- **The about and learning-techniques pages are hand-written React, not content.** They are two
+- **ADR-0144 — The about and learning-techniques pages are hand-written React, not content.** They are two
   pages; a content pipeline for them would be machinery for its own sake.
 
-- **Self-hosting was raised and declined.** The workout runner executes submitted code and `node:vm`
+- **ADR-0145 — Self-hosting was raised and declined.** The workout runner executes submitted code and `node:vm`
   is not a security boundary, which is fine on a laptop and a different proposition on a box with a
   public interface. Making it safe means real sandboxing, which is a project rather than a
   deployment, so Hone is not exposed on a network interface. If self-hosting returns it returns

@@ -161,6 +161,22 @@ else: no DOM, no Node types, and no imports, for the same reason the code runner
 And a type error anywhere in the answer means no check runs, so the feedback is the compiler error
 against the user's own line numbers.
 
+**Declarations go in `setup`, never in a snippet.** A `compiles` or `rejects` snippet is compiled
+inside a function body, which is what gives narrowing somewhere to happen and keeps one probe's names
+out of the next one's scope. `declare const x: T` is illegal there and fails with TS1184, which used
+to make the surrounding `rejects` check pass for the wrong reason.
+
+**`satisfies` cannot be observed by a check, so do not design a rep around proving one is present.**
+It never changes the resulting type: either the value conforms, and the type is what `as const` alone
+would have given, or it does not, and the submission simply fails to compile. A rep can still teach
+it by what the *alternatives* cost, which is what `ts-as-const-satisfies` does — the annotation
+answer fails all three checks and `satisfies` without `as const` fails two.
+
+**Write a `rejects` check that could only fail for the reason you mean.** The grader refuses a
+rejection whose diagnostic is "cannot find name", because that means the answer never declared the
+thing the check refers to and the snippet was refused for not existing rather than for being wrong.
+Pinning `errorCode` is the sharper version of the same discipline and is worth doing anyway.
+
 ### The rest of a problem
 
 `prompt` is markdown and states the task. `solution` is the canonical answer as a user would type
@@ -265,6 +281,13 @@ tests/checkpoints/*.test.ts  one suite per checkpoint, hidden from the editor
 solution/                    the reference implementation of the editable files
 ```
 
+`pnpm workout <slug> [--stack node|express|nestjs|react] [--file <name>] [--requires <need>]
+[checkpoint …]` emits that skeleton, so the parts every workout shares are right before you start:
+the numbering that has to match manifest order, the `solution/` that has to mirror `editable`, and
+the supertest binding that has bitten twice. It templates nothing that varies, because a guessed
+`db.ts` reads as a decision somebody made. **A fresh scaffold fails its own spec until you write it**, and that is deliberate:
+its solution is its starter, so the safety net says so rather than going quiet on an empty workout.
+
 The manifest carries `slug`, `title`, `kind` (`feature`, `bug-hunt` or `refactor`), `minutes`,
 `difficulty`, `relevance`, `summary`, `focus`, `editable`, `checkpoints`, and a free-text `stack`
 (`server`, `orm`, `database`, `client`). Stack is free text on purpose: the same brief can ship
@@ -295,6 +318,13 @@ needs it and cannot get there by writing assertions more carefully. Spell the zo
 `TZ` matches the zone database as spelled where `Intl` does not, so `America/New_york` produces a
 fixed offset with no DST transition and quietly deletes the boundary. The loader refuses that
 spelling rather than let it through.
+
+**Check the pin is load-bearing before you trust it.** Nothing tells you whether a declared zone is
+doing anything: a workout can name one, pass everywhere, and be declaring it for nothing, because a
+suite written to be fully zone-explicit does not care either way. The check is manual and takes a
+minute. Strip the field, set `TZ` to somewhere far away in your own shell, and run the suites. If
+they still pass, the pin was decoration and the workout is not about a zone. `booking-times-node`
+was the first workout to use this, and stripping the field there fails three checkpoints of four.
 
 **`setupFile`** names one file under the workout's own `tests/`, run before every suite in both
 projects. It is for registering a global the environment does not have: `ResizeObserver`,
@@ -364,8 +394,95 @@ distinguishes an index that exists from an index the planner chooses. Anything t
 fake clock the real dependency does not have, not vitest's fake timers, which fight supertest's
 sockets and `userEvent`.
 
-Nothing reaches the network, ever. Fixtures, in-repo fakes with the real surface and the awkward
-semantics kept, and WASM databases. The awkward semantics are usually the lesson.
+Nothing reaches the network, ever. No live API, no key, nothing fetched at attempt time. Fixtures,
+in-repo fakes with the real surface and the awkward semantics kept, and WASM databases. The awkward
+semantics are usually the lesson.
+
+**A local process is not the network.** Seven workouts bind `app.listen(0)` and drive it with
+supertest, and a workout may require a binary this repo does not ship when the lesson needs one: a
+real Postgres for two connections and a lock somebody can wait on, a document store, a queue. That is
+a decision rather than a reflex, the same as any dependency, and the bar is that the lesson cannot be
+taught without it. **Declare it, and it degrades rather than fails.** Reach for a fake first, because
+a fake you drive is more deterministic than a daemon you wait for, and the awkward semantics you
+would have to keep are usually the lesson anyway.
+
+### Requiring something this repo does not ship
+
+A workout that needs one declares it in the manifest, as `requires`:
+
+```json
+"requires": [
+  {
+    "port": 5432,
+    "install": "brew install postgresql@17 && brew services start postgresql@17",
+    "reason": "Two connections and a row lock one of them waits on."
+  }
+]
+```
+
+**A requirement names a `binary`, a `port`, or both, and the loader refuses one naming neither.**
+Which of the three is a question about the dependency rather than about taste. A command line tool
+you shell out to is a binary. **A daemon you connect to is a port**, and usually only a port: what a
+workout reaching Postgres over TCP needs is something speaking the protocol on 5432, and `postgres`
+on `PATH` is neither necessary nor sufficient, since Postgres.app and a container both serve the port
+without it. Name both only when the workout genuinely uses both, because both are then checked and
+either one missing skips the workout.
+
+**`binary`** is a bare name looked up on `PATH`, never a path: a path would resolve against the repo
+and declare a requirement that is met whatever the machine has. **`port`** is checked on `127.0.0.1`,
+and it is also the port the suites are handed, which is the next section. **`install`** is the line
+the reader runs, and it covers starting the thing as well as installing it. **`reason`** is what the
+workout does with it that a fake could not, which is the bar the requirement had to clear in the
+first place.
+
+Three states, three sentences, because a reader can only act on the one they are in: not on `PATH`
+("install it"), on `PATH` with nothing answering the port ("start it"), and a port nothing answers
+where no binary was named. The third says nothing about `PATH`, deliberately: telling somebody whose
+Postgres runs in a container to install it would send them after a second copy of what they are
+already running.
+
+`pnpm workout --requires postgres:5432` scaffolds the block, and `--requires 5432` or
+`--requires postgres` scaffold the one-sided versions. The flag is opt-in and the field is emitted
+only when it is passed, because unlike `kind` or `minutes` the usual answer here is "nothing", and
+leaving the field out is how a manifest says that. `install` and `reason` come out as TODOs.
+
+Absence is not failure anywhere. The runner returns before vitest is spawned, with every checkpoint
+not-run and a `skipped` line naming what is missing; `GET /api/workouts/<slug>` carries the same
+thing as `unmet`, so the page says what to install instead of offering a clock; starting a workout
+that cannot run is a 409, so no attempt row and no workspace are created; and `workouts.spec.ts`
+skips that workout's two tests with the missing thing named, rather than turning `pnpm verify` red on
+a laptop with no Postgres.
+
+None of that can hide a failure. What is skipped is decided by what the machine has, not by anything
+the workout says at run time, so a requirement that is met leaves the safety net exactly as strict as
+it was. A requirement that is not met skips the workout everywhere, including for whoever wrote it,
+and the workout cannot be practised either: a declaration nobody can satisfy buys a workout nobody
+can do, not a suite nobody checks.
+
+**Nothing expresses a minimum version**, deliberately: the check answers "could this run", not "will
+it work". So **say the version in the brief**. `orders-migration-postgres` is about 17 specifically
+and its harness needs 14 or newer, and on 12 it would skip nothing and fail confusingly.
+
+### The port you declared is the port your suites connect to
+
+A workout that reads `PGPORT` for itself gets checked on one port and connects to another, and the
+failure that follows looks like the exercise rather than like the environment. So the runner puts
+every declared port on the spawned process, in declaration order, as `HONE_REQUIRED_PORTS`, and a
+workout that needs one reads it there:
+
+```ts
+const [declared] = (process.env.HONE_REQUIRED_PORTS ?? '').split(',');
+```
+
+It is written on every run and empty for the workouts that declare nothing, so a stray value in
+somebody's shell cannot reach a workout that never asked for one. The runner knows nothing about what
+is on the other end: a port is a number the manifest declared, and turning it into a Postgres
+connection happens in `orders-migration-postgres/files/server/db.ts`, where the workout is. The host
+is not a question either, because presence is checked on loopback and only on loopback: reaching
+another machine would be the network.
+
+What the environment still answers is who you connect as, which no requirement speaks to. That
+workout keeps `PGUSER`, `PGDATABASE` and `PGPASSWORD`, and pins the host and the port.
 
 ### What the suite enforces
 
@@ -374,6 +491,13 @@ one, and that every checkpoint has a distinct id and an existing suite. That is 
 content as safe to edit as problem content. `test-run.spec.ts` covers the manifest's `testRun`: a
 fixture workspace gets its declared zone and its declared setup file, the same fixture declaring
 neither is untouched, and a zone or a setup file that would fail quietly is refused at load.
+`requirements.spec.ts` covers `requires` from every side, and depends on nothing being installed:
+the present case is a stub executable on a `PATH` the test prepends to and a socket the test opens,
+the absent case is a name nothing answers to, and the skip is proved by running against a workspace
+that does not exist, where a spawned vitest would crash. It also proves the port handoff the only
+way it can be proved, with a fixture suite that reads `HONE_REQUIRED_PORTS` inside the spawned run:
+once for the port its workout declared, and once for a workout declaring nothing while the parent
+process holds a value of its own.
 
 ## The essentials path
 
