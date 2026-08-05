@@ -24,6 +24,8 @@ export const CATEGORIES = [
   'logic',
   'node',
   'sql-performance',
+  'orm',
+  'dependencies',
   'dsa-patterns',
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -129,6 +131,8 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   logic: 'Logic',
   node: 'Node Runtime',
   'sql-performance': 'SQL Performance',
+  orm: 'ORMs',
+  dependencies: 'Dependencies',
   'dsa-patterns': 'DSA Patterns',
 };
 

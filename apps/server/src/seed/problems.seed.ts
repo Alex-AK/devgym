@@ -6,6 +6,7 @@ import { codingProblems } from './problems/coding';
 import { cssProblems } from './problems/css';
 import { dateProblems } from './problems/dates';
 import { debuggingProblems } from './problems/debugging';
+import { dependencyProblems } from './problems/dependencies';
 import { domProblems } from './problems/dom';
 import { dsaPatternProblems } from './problems/dsa-patterns';
 import { formProblems } from './problems/forms';
@@ -14,6 +15,7 @@ import { httpProblems } from './problems/http';
 import { jsApiProblems } from './problems/js-apis';
 import { logicProblems } from './problems/logic';
 import { nodeProblems } from './problems/node';
+import { ormProblems } from './problems/orm';
 import { queryParamProblems } from './problems/query-params';
 import { reactProblems } from './problems/react';
 import { securityProblems } from './problems/security';
@@ -47,6 +49,8 @@ const drafts: ProblemDraft[] = [
   ...aiEngineeringProblems,
   ...logicProblems,
   ...nodeProblems,
+  ...ormProblems,
+  ...dependencyProblems,
   ...sqlPerformanceProblems,
   ...dsaPatternProblems,
 ];
