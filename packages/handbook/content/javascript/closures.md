@@ -3,6 +3,7 @@ title: Closures, and the value that went stale
 question: My callback is using a value that is several updates old. Where did it get it?
 order: 8
 practise:
+  - js-closure-per-call
   - js-closure-var
   - react-stale-closure
   - code-once

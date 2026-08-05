@@ -3,6 +3,7 @@ title: Conditional requests and ranges
 question: The download died at 80% and starts from zero every time. How do I ask for just the rest?
 order: 7
 practise:
+  - http-range-next-chunk
   - conditional-requests-express
   - http-etag-conditional
   - http-sse-resume

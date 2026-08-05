@@ -568,6 +568,55 @@ export const httpProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'http-range-next-chunk',
+    title: 'Asking for the rest of it',
+    category: 'http',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      'A download of a 40,000-byte file dropped. You have the first 1024 bytes on disk and want the next 512 in one request.',
+      '',
+      'Write the `Range` header.'
+    ),
+    graderConfig: {
+      accept: [
+        'range: bytes=1024-1535',
+        'bytes=1024-1535',
+        'range bytes=1024-1535',
+        'bytes 1024-1535',
+      ],
+      acceptPatterns: ['bytes\\s*=?\\s*1024\\s*-\\s*1535'],
+      nearMisses: {
+        'bytes=1024-1536':
+          'Both ends of a range are inclusive, so `1024-1536` is 513 bytes. The last byte you want is 1535.',
+        'range: bytes=1024-1536':
+          'Both ends of a range are inclusive, so `1024-1536` is 513 bytes. The last byte you want is 1535.',
+        'bytes=1025-1536':
+          'Offsets are zero-based, so byte 1024 is the first one you are missing rather than the last one you have.',
+        'bytes=-512':
+          'That is the suffix form, and it asks for the last 512 bytes of the file. You want 512 bytes at an offset.',
+        'bytes=1024-':
+          'That asks for everything from 1024 to the end, which is 38,976 bytes rather than 512.',
+        'bytes=1024,512': 'A range is a first and a last offset, not an offset and a length.',
+      },
+      hints: [
+        'Offsets are zero-based, so the first byte you do not have is 1024.',
+        'The form is `bytes=first-last`, and both ends are inclusive.',
+        '512 bytes starting at 1024 ends at 1024 + 512 - 1.',
+      ],
+    },
+    canonicalAnswer: 'Range: bytes=1024-1535',
+    solution: md(
+      code('text', 'Range: bytes=1024-1535'),
+      '',
+      'A satisfied request answers `206` with `Content-Range: bytes 1024-1535/40000` and a `Content-Length` of 512. Branch on the status: a `200` means the server ignored the range and you should discard what you had.'
+    ),
+    explanation:
+      'Both ends of `bytes=first-last` are inclusive and offsets are zero-based, so N bytes from offset X end at X + N - 1 and an off-by-one duplicates or drops a byte at the seam. That is the damage worth noticing: it scales with how many times the connection dropped rather than showing up on the first attempt, so a resumed download can be quietly corrupt while every response in the trace was a `206`. The other two forms are not this one. `bytes=1024-` is everything from that offset to the end, and `bytes=-512` is a suffix, meaning the last 512 bytes rather than everything except them. Resuming safely also wants an `If-Range` carrying a strong validator, so the server sends the whole file instead of a range if the representation changed while you were gone.',
+  },
+
+  {
     slug: 'http-etag-conditional',
     title: 'Not sending a body you already have',
     category: 'http',

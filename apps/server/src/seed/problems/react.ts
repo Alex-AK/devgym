@@ -1105,6 +1105,88 @@ export const reactProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'react-transition-not-for-input',
+    title: 'The transition that made typing worse',
+    category: 'react',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A search box filters a long list. Typing stutters, so both state updates go into a transition:',
+      '',
+      code(
+        'jsx',
+        'function onChange(event) {',
+        '  startTransition(() => {',
+        '    setQuery(event.target.value); // the input reads this',
+        '    setApplied(event.target.value); // the list reads this',
+        '  });',
+        '}'
+      ),
+      '',
+      'Typing is now worse than before: characters appear late, and sometimes out of order.',
+      '',
+      'Say which of the two updates does not belong in the transition, and why.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'setquery',
+            'the input',
+            "the input's",
+            'the value the input',
+            'the controlled value',
+            'query',
+            'first one',
+            'the urgent one',
+          ],
+          missingFeedback:
+            'Two updates went in. Name the one whose result the user is waiting to see on the very next frame.',
+        },
+        {
+          synonyms: [
+            'urgent',
+            'interruptible',
+            'can be interrupted',
+            'abandoned',
+            'delayed',
+            'deferred',
+            'lower priority',
+            'not immediate',
+            'has to paint',
+            'must paint',
+            'cannot control',
+            'text input',
+          ],
+          missingFeedback:
+            'Say what a transition does to an update, and why that is wrong for the value an input displays.',
+        },
+      ],
+      hints: [
+        'A transition does not make work faster. It makes an update interruptible.',
+        'An interruptible update can be abandoned and restarted, so the value it sets may not paint on the next frame.',
+        'The input displays `query`, so that update has to stay urgent. Only the derived one goes in the transition.',
+      ],
+    },
+    canonicalAnswer:
+      'setQuery does not belong there. It is the value the input displays, so it has to be urgent and paint on the next frame. A transition marks an update interruptible, meaning React may abandon and redo it, which is why the characters lag and reorder. Keep setQuery outside and put only setApplied, which the list derives from, inside startTransition.',
+    solution: md(
+      code(
+        'jsx',
+        'function onChange(event) {',
+        '  setQuery(event.target.value); // urgent: the input has to paint',
+        '  startTransition(() => setApplied(event.target.value)); // interruptible: the results',
+        '}'
+      ),
+      '',
+      'react.dev states the limit directly: "Transition updates can\'t be used to control text inputs." `useDeferredValue` is the shorter way to say the same thing when one value does the deriving.'
+    ),
+    explanation:
+      'A transition buys interruptibility, not speed: React gets permission to abandon a render in progress when something more urgent arrives and to run it again afterwards, so the total work can go up while the urgent part paints on time. That is exactly wrong for the value a controlled input displays, because the thing the user is waiting for is that character appearing, and an update that can be deferred and redone shows it late or out of order. The split is the point of the API rather than a detail of it: the input owns an urgent piece of state, and everything derived from it goes in the transition. Reach for `useDeferredValue` when there is a single value doing the deriving, since it expresses the same split without a callback.',
+  },
+
+  {
     slug: 'react-transition-pending',
     title: 'Keeping the UI responsive during a slow update',
     category: 'react',

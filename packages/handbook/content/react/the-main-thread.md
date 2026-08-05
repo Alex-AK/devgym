@@ -3,6 +3,7 @@ title: The main thread
 question: What is actually blocking the interface while this update runs?
 order: 8
 practise:
+  - react-transition-not-for-input
   - react-transition-pending
   - react-slow-render
   - react-derive-write-time
