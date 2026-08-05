@@ -10,16 +10,28 @@ morning session, and content is never picked to complete a set. Why something wa
 
 ## 1. The rest of the decks
 
-Two decks suggest themselves and cannot be written, both for the same reason: `page` is mandatory and
-neither has one. No page owns the redirect codes, 301 against 302 against 307 against 308. Time
-formats are a module rather than a page, because there was no model there to write down. A deck is
-not on its own a reason to write a page, so both wait until something else asks for one.
+Four suggest themselves. Two can be written now and two cannot, and the difference is only whether a
+page owns the contrast set.
+
+**Two arrived with the pages written this week.** *Three promises that sound alike*: JSON mode says
+the output will parse, structured outputs say it will match your schema, `strict: true` says the same
+about a tool's arguments, and none of the three survives an output cap or a refusal. Every card is
+checkable against `ai-engineering/structured-output.md`. *Embed or reference* is the six scenarios
+each way that `databases/rows-or-one-document.md` quotes: has-a, queried together, updated together
+on one side; high cardinality, growth with no bound, written at different times on the other. Both
+are distinctions rather than definitions, which is the bar in [content.md](./content.md).
+
+**Two are still blocked, both for the same reason:** `page` is mandatory and neither has one. No page
+owns the redirect codes, 301 against 302 against 307 against 308. Time formats are a module rather
+than a page, because there was no model there to write down. A deck is not on its own a reason to
+write a page, so both wait until something else asks for one.
 
 **That wait is how a deck is meant to arrive, and `four-ways-to-run-it-later` is the worked example.**
 It could not be written yesterday and needed no argument today, because a page about `nextTick` and
 `setImmediate` was written for reps that wanted it, and the contrast set was sitting inside the page
-once it existed. So the rule holds in both directions: a deck does not justify a page, and a new page
-is worth re-reading for the contrast set it just made checkable.
+once it existed. The two writable rows above are the same story with the ink still wet. So the rule
+holds in both directions: a deck does not justify a page, and a new page is worth re-reading for the
+contrast set it just made checkable.
 
 `packages/decks/content/` is the inventory, and a deck named there and not on disk is a name that
 changed, not a deck that is missing.
@@ -37,8 +49,8 @@ you and what it does not; what a container is made of, which is namespaces and c
 everything still shares; where a virtual machine draws the line instead, and what that costs; microVMs,
 and why the people running other people's code ended up there; and running code a model wrote, which
 is the case a web engineer now actually meets. That last one is a gap inside a section that already
-ships, since the AI engineering pages cover the code around a generative dependency and say nothing
-about executing its output. Distinct from production below, which owns the image as a packaging and
+ships: the AI engineering pages now cover running what a model asked for and treating what comes back
+as untrusted, and still say nothing about running code it wrote. Distinct from production below, which owns the image as a packaging and
 deploy concern: this section owns isolation as a security property. Credits: the Docker and Firecracker
 docs, the Linux man pages, `node:vm`'s own documented warning.
 
