@@ -3,6 +3,7 @@ title: Dependency injection
 question: Why is my injected service undefined when the file plainly imports it?
 order: 5
 practise:
+  - node-interface-is-not-a-di-token
   - auth-guard-nestjs
 sources:
   - author: NestJS

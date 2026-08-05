@@ -3,6 +3,7 @@ title: Backpressure
 question: The export streams fine on my machine and eats the heap in production. Where did the rows go?
 order: 3
 practise:
+  - node-flowing-mode-ignores-async
   - node-write-returned-false
   - node-backpressure-drain-loop
   - node-pipeline-over-pipe

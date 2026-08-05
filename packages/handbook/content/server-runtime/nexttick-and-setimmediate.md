@@ -3,6 +3,7 @@ title: nextTick, microtasks and setImmediate
 question: Two callbacks are both scheduled for "soon". Which one actually runs first?
 order: 2
 practise:
+  - node-esm-flips-tick-order
   - node-nexttick-before-promise
   - node-nexttick-starves-the-loop
   - node-immediate-before-timeout-in-io

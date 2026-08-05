@@ -71,6 +71,236 @@ export const nodeProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'node-esm-flips-tick-order',
+    title: 'The same four lines, a different order',
+    category: 'node',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A file is renamed from `.cjs` to `.mjs` during a move to ES modules. Nothing else changes:',
+      '',
+      code(
+        'js',
+        "setTimeout(() => console.log('timeout'));",
+        "Promise.resolve().then(() => console.log('promise'));",
+        "process.nextTick(() => console.log('tick'));",
+        "console.log('sync');"
+      ),
+      '',
+      'On Node 24.16.0 the CommonJS file logs `sync tick promise timeout`. The ES module logs `sync promise tick timeout`.',
+      '',
+      'Say why the two middle lines swapped, and what that should tell you about relying on the order.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'microtask',
+            'microtasks',
+            'microtask queue',
+            'already draining',
+            'already in',
+            'part of the microtask',
+            'evaluated as a microtask',
+            'module evaluation',
+            'esm is a microtask',
+            'inside the drain',
+          ],
+          missingFeedback:
+            'An ES module is not evaluated the way a CommonJS file is. Ask what queue the evaluation itself is running in.',
+        },
+        {
+          synonyms: [
+            'do not rely',
+            'not rely',
+            'do not depend',
+            'not depend',
+            'should not depend',
+            'rewrite',
+            'rewritten',
+            'not guaranteed',
+            'fragile',
+            'avoid depending',
+            'stop depending',
+          ],
+          missingFeedback:
+            'The order changed under a rename. Say what that means for code whose correctness rests on it.',
+        },
+      ],
+      hints: [
+        'Both queues still drain the same way. What changed is where the four lines are running from.',
+        'ESM evaluation is itself processed as part of the microtask queue, so a `.then` scheduled there is already in the queue being drained.',
+        'A `nextTick` scheduled during module evaluation lands behind the promise callbacks rather than ahead of them.',
+      ],
+    },
+    canonicalAnswer:
+      'An ES module is evaluated as part of the microtask queue, so the promise callback scheduled during evaluation is already in the queue Node is draining and runs before the nextTick queue gets its turn. In CommonJS the module is an ordinary job, so the nextTick queue drains first. Both are correct, which is the point: code should not depend on tick-against-promise order, and anything that does is code to rewrite rather than code to port.',
+    solution: md(
+      'Node documents it: "in CJS modules `process.nextTick()` callbacks are always run before `queueMicrotask()` ones. However since ESM modules are processed already as part of the microtask queue, there `queueMicrotask()` callbacks are always executed before `process.nextTick()` ones."',
+      '',
+      'Module evaluation is the only place this happens. Inside a timer or an I/O callback both file types log `tick promise`.'
+    ),
+    explanation:
+      'Nothing about the two queues changed: the nextTick queue still drains before the microtask queue. What changed is that ESM evaluation is itself running inside a microtask drain, so a `.then` registered there joins the drain already in progress while the `nextTick` waits for the next one. It is the sharpest available demonstration that this ordering is a property of where your code was called from rather than a rule about the two functions, which is why the useful lesson is not the new order but that a rename could change it at all. `process.nextTick` has been legacy since Node 22.7.0 and 20.18.0 anyway, with `queueMicrotask()` recommended in its place.',
+  },
+
+  {
+    slug: 'node-flowing-mode-ignores-async',
+    title: 'Fifty chunks, all at once',
+    category: 'node',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'An import endpoint writes each chunk to a slow downstream service:',
+      '',
+      code('js', "readable.on('data', async (chunk) => {", '  await sendDownstream(chunk);', '});'),
+      '',
+      'The handler is `async` and it is awaited inside, so it looks like one chunk at a time. Measured against a 50-chunk source on Node 24.16.0, the peak number of handlers running at once was 50. Rewritten as `for await (const chunk of readable)`, the peak was 1.',
+      '',
+      'Say why the `async` handler bought nothing, and what makes the second version wait.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'flowing',
+            'flowing mode',
+            'does not wait',
+            'not wait',
+            'ignores the return',
+            'ignores what it returns',
+            'return value',
+            'promise is ignored',
+            'nothing awaits',
+            'emits regardless',
+            'pushes',
+            'keeps emitting',
+          ],
+          missingFeedback: 'The handler returns a promise. Ask what the stream does with it.',
+        },
+        {
+          synonyms: [
+            'for await',
+            'pulls',
+            'pull',
+            'asks for the next',
+            'waits for the body',
+            'awaits the body',
+            'one at a time',
+            'backpressure',
+            'paused',
+            'iterator',
+          ],
+          missingFeedback:
+            'Name what the `for await` loop does differently with each chunk before it takes the next one.',
+        },
+      ],
+      hints: [
+        'Attaching a `data` listener switches the readable into flowing mode.',
+        'A flowing readable emits the next chunk when it has one, and nothing looks at what your handler returned.',
+        '`for await` pulls: it does not ask for the next chunk until its own body has finished.',
+      ],
+    },
+    canonicalAnswer:
+      'Attaching a data handler puts the readable into flowing mode, where it emits chunks as fast as it can read them and ignores the promise the async handler returns, so all 50 start at once and the source sets the concurrency. for await consumes the stream as an async iterator and does not request the next chunk until its body has finished, so the loop applies real backpressure.',
+    solution: md(
+      code('js', 'for await (const chunk of readable) {', '  await sendDownstream(chunk);', '}'),
+      '',
+      'Or `pipeline` into a `Writable` whose callback you call when the send resolves.'
+    ),
+    explanation:
+      'Flowing mode is push, and nothing in the push path has anywhere to put a promise, so marking the handler `async` changes when your own code finishes and nothing about when the next chunk arrives. The concurrency you end up with is the size of the source, which is why this passes every test with a small fixture and takes the downstream service down on a real file. `for await` inverts it into pull: the loop asks for a chunk, runs its body to completion, and only then asks for another. This is the reading-side mirror of ignoring what `write()` returns, and it is harder to spot because nothing returns `false` to tell you.',
+  },
+
+  {
+    slug: 'node-interface-is-not-a-di-token',
+    title: 'The dependency the container could not name',
+    category: 'node',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A service is written against an interface so it can be faked in tests:',
+      '',
+      code(
+        'ts',
+        'export interface PaymentGateway {',
+        '  charge(cents: number): Promise<string>;',
+        '}',
+        '',
+        '@Injectable()',
+        'export class CheckoutService {',
+        '  constructor(private readonly gateway: PaymentGateway) {}',
+        '}'
+      ),
+      '',
+      'It compiles. Nest fails at startup with "Nest can\'t resolve dependencies of the CheckoutService (?)".',
+      '',
+      'Say why the container cannot find it, and what to register and inject instead.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'erased',
+            'erasure',
+            'compiled away',
+            'does not exist at runtime',
+            'no runtime',
+            'not a value',
+            'only a type',
+            'types are gone',
+            'nothing to look up',
+            'no token',
+          ],
+          missingFeedback:
+            'The container reads the constructor parameter types at runtime. Ask what is left of an interface by then.',
+        },
+        {
+          synonyms: [
+            'string',
+            'symbol',
+            'token',
+            'inject',
+            '@inject',
+            'custom provider',
+            'provide',
+            'abstract class',
+            'class instead',
+          ],
+          missingFeedback:
+            'Something that survives compilation has to stand in for the interface. Name it, and how the constructor asks for it.',
+        },
+      ],
+      hints: [
+        'Nest injects by looking each constructor parameter type up as a token.',
+        'TypeScript interfaces are erased at compile time, so there is no value left for the container to use as a key.',
+        'Register the provider under a string or `Symbol` token and ask for it with `@Inject(TOKEN)`.',
+      ],
+    },
+    canonicalAnswer:
+      'An interface is erased at compile time, so nothing about it survives into the emitted metadata and the container has no token to look up, which is what the (?) in the message is. Register the implementation under a string or Symbol token with a custom provider, and ask for it with @Inject(PAYMENT_GATEWAY) in the constructor. An abstract class works too, because a class is still a value at runtime.',
+    solution: md(
+      code(
+        'ts',
+        "export const PAYMENT_GATEWAY = Symbol('PaymentGateway');",
+        '',
+        '// module',
+        'providers: [{ provide: PAYMENT_GATEWAY, useClass: StripeGateway }]',
+        '',
+        '// consumer',
+        'constructor(@Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGateway) {}'
+      ),
+      '',
+      'The interface still types the property. It just is not what the container is looking up.'
+    ),
+    explanation:
+      "Nest injects by reading `design:paramtypes`, the array of constructor parameter classes the compiler emits, and looking each entry up among the module's providers. An interface leaves nothing in that array because it never existed at runtime, so the container reports a parameter it cannot name and prints `(?)` where the token would go. The fix separates the two jobs the type was doing: a `Symbol` or string token identifies the provider, and the interface goes on carrying the shape for the type checker. This is the same erasure that makes the whole DI mechanism depend on `emitDecoratorMetadata` in the first place, so a build that drops that metadata produces a related but quieter failure, where the parameter is simply `undefined`.",
+  },
+
+  {
     slug: 'node-await-does-not-yield',
     title: 'It is async and it still blocks',
     category: 'node',
