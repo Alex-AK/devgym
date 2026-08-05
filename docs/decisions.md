@@ -736,6 +736,18 @@ Correcting a fact inside an entry is an edit; changing the decision is a new rec
   against `append` and the plus-sign space trap are the edges of one API met one at a time, not a
   mental model to explain. A model is a page; an API is a module.
 
+- **ADR-0150 — Structured output and the tool-call loop are two pages, and the tool reps stay where they are.**
+  The roadmap left the split open to be decided while writing, and the traps section decided it.
+  Turning a reply into data fails at the parse, at a schema the provider will not compile, and at a
+  stop condition that ended the response early. A tool call fails at a promise the model made before
+  anything ran, at a loop with no ceiling, and at an instruction that arrived inside a tool result.
+  Neither list is a subset of the other, and one page carrying both would have run half again longer
+  than anything else in the section. What did not follow is the move the same roadmap entry
+  suggested: `ai-tool-schema-is-the-contract` and `ai-tool-authorization-boundary` are cited by the
+  new page **and** stay on `mcp-servers.md`, because pairing was never 1:1 and moving them would have
+  thinned the MCP page without making the tool page truer. The MCP page keeps the protocol; the tool
+  page owns the mechanism underneath it.
+
 ## The essentials path
 
 - **ADR-0087 — It is a second entrance, not a setting on the daily session.** Everything else here is judged

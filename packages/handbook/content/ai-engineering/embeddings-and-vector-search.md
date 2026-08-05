@@ -1,7 +1,7 @@
 ---
 title: Embeddings and vector search
 question: What does "the five nearest chunks" actually promise me?
-order: 3
+order: 5
 practise:
   - ai-nearest-neighbour-always-returns
   - ai-embedding-model-mismatch

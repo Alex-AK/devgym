@@ -843,4 +843,251 @@ export const aiEngineeringProblems: ProblemDraft[] = [
     explanation:
       'You cannot assert on text a model generates, but almost everything you actually need from it is structural: it parsed, it filled the fields, it cited something, and everything it cited exists. Those hold on every run, so they make a test rather than a vibe. This is what turns "the output looked fine" into a suite you can run on every prompt change, and the invariant that catches the most real bugs is the last one: a citation to a document that was never in the context is the cleanest signal you have that the answer was invented.',
   }),
+
+  codeProblem({
+    slug: 'ai-json-came-wrapped',
+    title: 'The JSON came wrapped',
+    category: 'ai-engineering',
+    difficulty: 'easy',
+    relevance: 'daily',
+    prompt: md(
+      'A model was asked to reply with a JSON object and nothing else. Most of the time it does. Sometimes it puts the object inside a fenced code block, and sometimes it writes a sentence of introduction first.',
+      '',
+      'Write `readJson(reply)`, which returns the parsed object, or `null` when the reply holds nothing that parses. It never throws.'
+    ),
+    starter: 'function readJson(reply) {\n  \n}',
+    tests: [
+      {
+        name: 'parses a reply that is only the object',
+        expression: 'readJson(\'{"total":42}\')',
+        expected: { total: 42 },
+      },
+      {
+        name: 'finds the object under a sentence and a code fence',
+        expression:
+          'readJson(\'Here you go:\\n```json\\n{"total":42}\\n```\\nLet me know if you need more.\')',
+        expected: { total: 42 },
+      },
+      {
+        name: 'returns null for a reply with no object in it',
+        expression: "readJson('I could not find that order.')",
+        expected: null,
+      },
+      {
+        name: 'returns null when the object was cut off',
+        expression: 'readJson(\'{"total":4\')',
+        expected: null,
+      },
+    ],
+    reference: md(
+      'function readJson(reply) {',
+      "  const start = reply.indexOf('{');",
+      "  const end = reply.lastIndexOf('}');",
+      '  if (start === -1 || end < start) return null;',
+      '',
+      '  try {',
+      '    return JSON.parse(reply.slice(start, end + 1));',
+      '  } catch {',
+      '    return null;',
+      '  }',
+      '}'
+    ),
+    hints: [
+      'The caller wants a value it can branch on, so `JSON.parse` cannot be the outermost thing here.',
+      'Everything outside the object is prose. Find where the object starts and where it ends.',
+    ],
+    explanation:
+      'The reply is text until you turn it into data, and the code that turns it into data is the only place that knows the shape you asked for. A parse that throws there takes the request down over a formatting habit, so it returns a value the caller can branch on instead. Digging the object out of the prose is a heuristic and stays one: it is what you have when the provider cannot constrain the output, and it is the reason to turn constrained decoding on wherever it exists.',
+  }),
+
+  {
+    slug: 'ai-structured-output-stopped-early',
+    title: 'Valid schema, invalid JSON',
+    category: 'ai-engineering',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'short-text',
+    prompt: md(
+      "Your extraction endpoint uses the provider's structured-output mode and the provider accepted the schema. Almost every response parses. About one in fifty arrives as JSON that ends in the middle of a string, and `JSON.parse` throws on it. The call returned 200 and set no error.",
+      '',
+      'Which field of the response says why the model stopped?'
+    ),
+    graderConfig: {
+      accept: ['stop_reason', 'stop reason', 'the stop reason', 'finish_reason', 'finish reason'],
+      acceptPatterns: ['(stop|finish)[ _-]?reason'],
+      nearMisses: {
+        refusal: 'That is one of the values it can carry. Name the field you read to find it.',
+        usage: 'That tells you what the call cost, not why it ended.',
+        error: 'There is no error. It returned 200 and stopped early anyway.',
+      },
+      hints: [
+        'The call succeeded. Something else decided the response was over.',
+        'Every provider names the stop condition in a field of its own, next to the content.',
+      ],
+    },
+    canonicalAnswer: 'stop_reason',
+    solution: md(
+      '`stop_reason` on Claude, `finish_reason` on OpenAI.',
+      '',
+      'Two stop conditions end a response early and both come back as a 200: the output token cap, and a refusal. Neither is obliged to leave you a document that matches the schema.'
+    ),
+    explanation:
+      "Constrained decoding restricts what the model may emit next, so the document is well formed while it is being written. It cannot make the writing finish. Hitting the output cap truncates it mid-token, and a refusal is not obliged to follow your schema at all, so a schema the provider accepted is still not a promise that today's response parses. Read the stop condition before you read the content, and treat an early stop as a failed call rather than as data.",
+  },
+
+  {
+    slug: 'ai-tool-call-has-not-run',
+    title: 'The refund that has not happened',
+    category: 'ai-engineering',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'A support assistant is given a `refund_order` tool. The response comes back with a stop reason of `tool_use` and one block naming `refund_order` with `{ "order_id": "A-1187" }`.',
+      '',
+      "Say what has happened to the customer's money at this point, and what has to happen for the refund to exist."
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'nothing',
+            'not been refunded',
+            'no refund',
+            'has not run',
+            'hasnt run',
+            'not run',
+            'not executed',
+            'has not been called',
+            'not called',
+            'no money has moved',
+            'nothing has happened',
+          ],
+          missingFeedback: 'Say what the model is able to execute on its own.',
+        },
+        {
+          synonyms: [
+            'your code',
+            'you run',
+            'your handler',
+            'your application',
+            'your app',
+            'your server',
+            'run the tool',
+            'execute it',
+            'call it yourself',
+            'you have to call',
+          ],
+          missingFeedback: 'Somebody still has to move the money. Who?',
+        },
+      ],
+      hints: [
+        'A tool call is something the model wrote, not something it did.',
+        'Ask which process in this system is able to reach the payment provider.',
+      ],
+    },
+    canonicalAnswer:
+      'Nothing has happened to the money. The model emitted a request to call `refund_order` and cannot execute anything itself. Your code has to run the refund and send the outcome back as a tool result before the model can say a word about it.',
+    solution: md(
+      'Nothing. The turn stopped with a request, and requests do not move money.',
+      '',
+      '- Your code reads the block, checks it, and runs the refund.',
+      '- The outcome goes back as a tool result carrying the same id, and the model takes another turn.',
+      '',
+      'Until that happens the customer has been promised nothing and charged nothing.'
+    ),
+    explanation:
+      'The model produces a request to call something, and the only thing that has happened when it arrives is that a request exists. Running it is your loop: your code executes the call, sends the outcome back as a tool result, and lets the model take the next turn. Reading the block as a completed action is how an assistant ends up telling a customer their refund is on the way when nothing was refunded, and it is the same mistake as trusting any other input that arrived over the network.',
+  },
+
+  codeProblem({
+    slug: 'ai-tool-results-one-message',
+    title: 'Two calls, one turn',
+    category: 'ai-engineering',
+    difficulty: 'medium',
+    relevance: 'daily',
+    prompt: md(
+      'One turn came back asking for two tool calls at once, as blocks of `{ id, name, input }`. You have `run(name, input)`, which returns a string or throws.',
+      '',
+      'Write `toolResults(blocks, run)`, which runs each call and returns the one message to send back: `{ role: "user", content }`, with an entry per block in the order they arrived.',
+      '',
+      'Each entry is `{ type: "tool_result", tool_use_id, content }`, and an entry whose call threw carries `is_error: true` with the thrown message as its `content`.'
+    ),
+    starter: 'function toolResults(blocks, run) {\n  \n}',
+    tests: [
+      {
+        name: 'returns one message holding a result per call',
+        expression:
+          "toolResults([{ id: 't1', name: 'get_total', input: {} }, { id: 't2', name: 'get_status', input: {} }], (name) => 'ran:' + name)",
+        expected: {
+          role: 'user',
+          content: [
+            { type: 'tool_result', tool_use_id: 't1', content: 'ran:get_total' },
+            { type: 'tool_result', tool_use_id: 't2', content: 'ran:get_status' },
+          ],
+        },
+      },
+      {
+        name: 'marks a call that threw instead of dropping it',
+        expression:
+          "toolResults([{ id: 't1', name: 'ok', input: {} }, { id: 't2', name: 'boom', input: {} }], (name) => { if (name === 'boom') throw new Error('upstream timed out'); return 'fine'; })",
+        expected: {
+          role: 'user',
+          content: [
+            { type: 'tool_result', tool_use_id: 't1', content: 'fine' },
+            {
+              type: 'tool_result',
+              tool_use_id: 't2',
+              content: 'upstream timed out',
+              is_error: true,
+            },
+          ],
+        },
+      },
+      {
+        name: 'hands each call its own input',
+        expression:
+          "toolResults([{ id: 't1', name: 'get_total', input: { orderId: 'A-1' } }], (name, input) => input.orderId)",
+        expected: {
+          role: 'user',
+          content: [{ type: 'tool_result', tool_use_id: 't1', content: 'A-1' }],
+        },
+      },
+      {
+        name: 'keeps both results in the same message',
+        expression:
+          "toolResults([{ id: 't1', name: 'a', input: {} }, { id: 't2', name: 'b', input: {} }], () => 'x').content.length",
+        expected: 2,
+      },
+    ],
+    reference: md(
+      'function toolResults(blocks, run) {',
+      '  const content = blocks.map((block) => {',
+      '    try {',
+      '      return {',
+      "        type: 'tool_result',",
+      '        tool_use_id: block.id,',
+      '        content: run(block.name, block.input),',
+      '      };',
+      '    } catch (err) {',
+      '      return {',
+      "        type: 'tool_result',",
+      '        tool_use_id: block.id,',
+      '        content: err.message,',
+      '        is_error: true,',
+      '      };',
+      '    }',
+      '  });',
+      '',
+      "  return { role: 'user', content };",
+      '}'
+    ),
+    hints: [
+      'Nothing has run when the blocks arrive. `run` is the only thing here that executes anything.',
+      'A call that threw is still an answer the model is waiting for.',
+      '`tool_use_id` is the only thing tying a result back to the call that asked for it.',
+    ],
+    explanation:
+      'Every call the turn asked for is answered together in the next message, and that is a rule rather than a preference: a `tool_use` block left without a result is a malformed conversation, and the API says so. A call that failed is still a result, so it goes back marked as an error with a message worth reading, where the model can adapt to it. Letting it throw instead ends the conversation rather than the call, and a call you decided not to run needs a result too, saying that.',
+  }),
 ];

@@ -8,46 +8,28 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. The on-ramp into a section
+## 1. The on-ramp, and what is left of it
 
-Seventeen of the 133 handbook pages cite no easy rep, and 66 lead with a medium or hard one.
-[content.md](./content.md) already names this as the half of pairing nothing enforces, and it says
-why "has an easy problem" would be the wrong check: writing a definition passes it, and teaches that
-the definition was the point. So this is an audit with four different answers rather than a count to
-drive to zero.
+Six of the 136 handbook pages cite no easy rep, and five of those are `systems`.
+[content.md](./content.md) names this as the half of pairing nothing enforces, and says why "has an
+easy problem" would be the wrong check: writing a definition passes it, and teaches that the
+definition was the point. So this is an audit with different answers rather than a count to drive to
+zero.
 
-**Four places want easy reps rather than pages.** `orms` is the worst in the library: three of its
-four pages have none, and all four lean on workouts, which is a twenty-minute commitment as the first
-thing a reader tries after reading. Then `server-runtime` in three places, `nexttick-and-setimmediate`,
-`backpressure` and `dependency-injection`, the last citing a single workout and nothing else. Then
-four singletons: `javascript/closures`, `react/the-main-thread`,
-`headers/conditional-requests-and-ranges` and `dependencies/peer-dependencies`.
+**`systems` is the refusal.** Service discovery, sharding, consistent hashing, CAP and
+back-of-envelope would each get an easy rep reading "what is this called", which content.md routes to
+a deck card entered on purpose rather than a rep dealt to a morning. Leave them, and do not let the
+number in this paragraph pull them back onto the queue.
 
-**`systems` is the refusal, and it is the reason this section is an audit.** It looks like the
-largest gap, five pages of thirteen, and four of those cite exactly one rep of any difficulty:
-service discovery, sharding, consistent hashing, back-of-envelope. The easy rep for each would be
-"what is this called", which content.md routes to a deck card entered on purpose rather than a rep
-dealt to a morning. Leave it, and do not let the count in this paragraph pull it back onto the queue.
+**The ordering half of this section is gone**, and not because pages were edited: a practise list is
+sorted easiest-first by the app now, so a page whose author happened to name a hard rep first no
+longer leads with it. What is left for an audit to find is a page with no way in at all.
 
-## 2. Getting structured output out of a model
+**One of those is left, and it is a rep to write.** `ai-engineering/evals-as-tests` cites three reps
+and all of them are medium. The easy version there is real work rather than a definition, which
+invariant a suite can assert when the wording changes every run, so this one is not a refusal.
 
-The clearest hole in the library, and it sits in the half of the subject that is still growing. You
-ask for JSON and it arrives inside a code fence, or with a trailing comma, or carrying a field you
-never defined. A schema handed to a provider is a request rather than a guarantee, and the validation
-is yours no matter which provider claims otherwise, which is the model to write down.
-
-**The tool-call loop is the same page or the one after it.** Two reps already exist,
-`ai-tool-schema-is-the-contract` and `ai-tool-authorization-boundary`, and they currently hang off
-`mcp-servers.md`, which teaches the protocol and not the mechanism underneath it. What no page says
-is that the model emits a request to call something and nothing has been called yet, that running it
-and feeding the result back is a loop you own, and that the tool boundary is a trust boundary because
-the arguments arrived from a model that was reading someone's input. Whether that separates from the
-parsing page cleanly is worth deciding while writing rather than now.
-
-Both want an easy rep each, and unlike the `systems` pages in section 1 the easy version here is real
-feature work rather than a definition: what to do with a response that parsed but failed the schema.
-
-## 3. Modelling for a document store
+## 2. Modelling for a document store
 
 The distributed half is already written: `systems/` covers replication, CAP, sharding and consistent
 hashing, and names document stores in all four. What no page covers is **modelling** — the decision a
@@ -64,7 +46,7 @@ is deferred until a brief needs one, and that bar is unchanged by these pages ex
 pages need is a rep or two to cite, and the honest candidates are in `sql` or `databases` rather than
 a new category, because the decision is a database decision and not a Mongo decision.
 
-## 4. The rest of the decks
+## 3. The rest of the decks
 
 Two decks suggest themselves and cannot be written, both for the same reason: `page` is mandatory and
 neither has one. No page owns the redirect codes, 301 against 302 against 307 against 308. Time
@@ -80,7 +62,7 @@ is worth re-reading for the contrast set it just made checkable.
 `packages/decks/content/` is the inventory, and a deck named there and not on disk is a name that
 changed, not a deck that is missing.
 
-## 5. Sections with no practice behind them yet
+## 4. Sections with no practice behind them yet
 
 These are last because nothing in the problem set is waiting on them.
 
@@ -135,23 +117,23 @@ page, Will Larson's migrations essay, the listed books.
 
 ## The last pass, and what finishing means
 
-The five sections above are the whole content queue, and it is meant to run out. An empty roadmap is
+The four sections above are the whole content queue, and it is meant to run out. An empty roadmap is
 the intended end of this project rather than a failure to think of more work: the subject is
 practical knowledge for web engineering and AI engineering judged against a 15-minute morning, and
 that is a finite thing to cover. Everything past it is maintenance, which is a page going stale or a
 new API worth knowing, and neither is a queue.
 
 **One pass is deliberately held until then: reading every page's practise list against the whole
-problem set at once.** Thirty-one easy reps are currently cited by no page, and some of them close a
-gap in section 1 for free, `js-closure-per-call` sitting in `js-apis` while `javascript/closures`
-cites four reps of which none are easy. It is tempting to do that pass now and it would be the wrong
+problem set at once.** Twenty-nine easy reps are cited by no page. Six of them are `query-params`
+reps, which is the case that produced a module rather than a page and is a reminder that "uncited"
+is not the same as "missing something". It is tempting to do that pass now and it would be the wrong
 order, because every section still to be written arrives with its own reps and moves the answer.
 Doing it once at the end costs less than doing it three times.
 
-What that pass is, when it comes: every uncited rep offered to the pages it actually serves, every
-page read for whether its first link is a way in, each section's `order` re-read now that the section
-is whole, and the pairing rule checked in the direction nothing enforces, which is practice volume
-with no page behind it. It is one sitting over finished content, not a rolling chore.
+What that pass is, when it comes: every uncited rep offered to the pages it actually serves, each
+section's `order` re-read now that the section is whole, and the pairing rule checked in the
+direction nothing enforces, which is practice volume with no page behind it. It is one sitting over
+finished content, not a rolling chore.
 
 ## Platform
 

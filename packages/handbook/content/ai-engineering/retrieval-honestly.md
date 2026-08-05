@@ -1,7 +1,7 @@
 ---
 title: Retrieval, honestly
 question: The answer is confidently wrong. Is that the model, or is it what I handed it?
-order: 4
+order: 6
 practise:
   - ai-chunk-overlap-boundary
   - ai-nearest-neighbour-always-returns
