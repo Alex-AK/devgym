@@ -8,28 +8,7 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. The on-ramp, and what is left of it
-
-Six of the 136 handbook pages cite no easy rep, and five of those are `systems`.
-[content.md](./content.md) names this as the half of pairing nothing enforces, and says why "has an
-easy problem" would be the wrong check: writing a definition passes it, and teaches that the
-definition was the point. So this is an audit with different answers rather than a count to drive to
-zero.
-
-**`systems` is the refusal.** Service discovery, sharding, consistent hashing, CAP and
-back-of-envelope would each get an easy rep reading "what is this called", which content.md routes to
-a deck card entered on purpose rather than a rep dealt to a morning. Leave them, and do not let the
-number in this paragraph pull them back onto the queue.
-
-**The ordering half of this section is gone**, and not because pages were edited: a practise list is
-sorted easiest-first by the app now, so a page whose author happened to name a hard rep first no
-longer leads with it. What is left for an audit to find is a page with no way in at all.
-
-**One of those is left, and it is a rep to write.** `ai-engineering/evals-as-tests` cites three reps
-and all of them are medium. The easy version there is real work rather than a definition, which
-invariant a suite can assert when the wording changes every run, so this one is not a refusal.
-
-## 2. Modelling for a document store
+## 1. Modelling for a document store
 
 The distributed half is already written: `systems/` covers replication, CAP, sharding and consistent
 hashing, and names document stores in all four. What no page covers is **modelling** — the decision a
@@ -46,7 +25,7 @@ is deferred until a brief needs one, and that bar is unchanged by these pages ex
 pages need is a rep or two to cite, and the honest candidates are in `sql` or `databases` rather than
 a new category, because the decision is a database decision and not a Mongo decision.
 
-## 3. The rest of the decks
+## 2. The rest of the decks
 
 Two decks suggest themselves and cannot be written, both for the same reason: `page` is mandatory and
 neither has one. No page owns the redirect codes, 301 against 302 against 307 against 308. Time
@@ -62,7 +41,7 @@ is worth re-reading for the contrast set it just made checkable.
 `packages/decks/content/` is the inventory, and a deck named there and not on disk is a name that
 changed, not a deck that is missing.
 
-## 4. Sections with no practice behind them yet
+## 3. Sections with no practice behind them yet
 
 These are last because nothing in the problem set is waiting on them.
 
@@ -117,7 +96,7 @@ page, Will Larson's migrations essay, the listed books.
 
 ## The last pass, and what finishing means
 
-The four sections above are the whole content queue, and it is meant to run out. An empty roadmap is
+The three sections above are the whole content queue, and it is meant to run out. An empty roadmap is
 the intended end of this project rather than a failure to think of more work: the subject is
 practical knowledge for web engineering and AI engineering judged against a 15-minute morning, and
 that is a finite thing to cover. Everything past it is maintenance, which is a page going stale or a

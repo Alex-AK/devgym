@@ -748,6 +748,18 @@ Correcting a fact inside an entry is an edit; changing the decision is a new rec
   thinned the MCP page without making the tool page truer. The MCP page keeps the protocol; the tool
   page owns the mechanism underneath it.
 
+- **ADR-0151 — Five `systems` pages get no easy rep, and the on-ramp audit closes on that.** Service
+  discovery, sharding, consistent hashing, CAP and back-of-envelope cite only medium and hard reps,
+  and after the rest of the audit shipped they are the whole of what is left: every other page in the
+  library now names a way in. They stay as they are. The easy rep for each would be "what is this
+  called", which `content.md` rules out in as many words, since writing it teaches that the
+  definition was the point; where a definition is worth knowing cold the route is a deck card, which
+  is entered on purpose rather than dealt to a morning. The audit itself also lost half its subject
+  along the way: a practise list is sorted easiest-first by the app, so a page whose author named a
+  hard rep first no longer leads with it, and only "cites no easy rep at all" was ever findable.
+  **The rule to carry forward: a page with no easy rep is a finding rather than a defect, and closing
+  it sometimes means writing down that it stays open.**
+
 ## The essentials path
 
 - **ADR-0087 — It is a second entrance, not a setting on the daily session.** Everything else here is judged

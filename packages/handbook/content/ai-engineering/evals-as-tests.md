@@ -3,6 +3,7 @@ title: Evals as tests
 question: How do I test something that answers differently every time I run it?
 order: 8
 practise:
+  - ai-eval-exact-match-reword
   - ai-eval-assert-invariants
   - testing-implementation-details
   - testing-what-to-mock

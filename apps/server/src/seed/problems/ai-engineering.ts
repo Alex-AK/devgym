@@ -844,6 +844,71 @@ export const aiEngineeringProblems: ProblemDraft[] = [
       'You cannot assert on text a model generates, but almost everything you actually need from it is structural: it parsed, it filled the fields, it cited something, and everything it cited exists. Those hold on every run, so they make a test rather than a vibe. This is what turns "the output looked fine" into a suite you can run on every prompt change, and the invariant that catches the most real bugs is the last one: a citation to a document that was never in the context is the cleanest signal you have that the answer was invented.',
   }),
 
+  {
+    slug: 'ai-eval-exact-match-reword',
+    title: 'The suite went red and the answers are right',
+    category: 'ai-engineering',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'An eval for a support bot asserts that the answer equals "You can return an item within 30 days of delivery." Somebody reworded the system prompt this morning, and every case in the suite is now red while every answer is still correct.',
+      '',
+      'Say what the assertion should check instead, and what it has to stop checking.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'contains',
+            'includes',
+            '30 days',
+            'the number',
+            'the fact',
+            'substring',
+            'invariant',
+            'structure',
+            'shape',
+            'key fact',
+          ],
+          missingFeedback: 'Name the part of that sentence a correct answer has to keep.',
+        },
+        {
+          synonyms: [
+            'exact',
+            'exact string',
+            'exact match',
+            'wording',
+            'phrasing',
+            'word for word',
+            'verbatim',
+            'equality',
+            'equals',
+            'whole sentence',
+            'full sentence',
+          ],
+          missingFeedback: 'Something in the current assertion cannot survive a reword. Name it.',
+        },
+      ],
+      hints: [
+        'The answers that came back this morning are right, so the test is asserting something other than correctness.',
+        'Ask what a correct answer has to contain, and how much of the rest you actually care about.',
+      ],
+    },
+    canonicalAnswer:
+      'Assert that the answer contains the fact that matters, the 30 days, and let the rest of the sentence vary. It has to stop asserting the exact string, because wording changes on every prompt edit and every model upgrade without the answer being wrong.',
+    solution: md(
+      'Assert on what a correct answer has to carry, which here is `30 days`, and let the wording move.',
+      '',
+      '- **Stop asserting** the exact string. It fails on a comma, on a prompt edit and on a model upgrade.',
+      '- **Start asserting** the fact, plus whatever structure you rely on: it parsed, the fields are there, the number is in it.',
+      '',
+      'A test that fails while the system is right teaches the team to stop reading the test.'
+    ),
+    explanation:
+      'An exact-match assertion on prose tests the wording of an answer, which is the one property that is allowed to change: a reworded prompt, a model upgrade or an added comma all break it while the system is behaving exactly as intended. What survives is the fact the answer has to carry, which is why the cheap rungs of an eval suite are a containment check and a structural one rather than equality. The cost of getting this wrong is not a red build. It is a suite nobody reads, and a suite nobody reads is not a safety net.',
+  },
+
   codeProblem({
     slug: 'ai-json-came-wrapped',
     title: 'The JSON came wrapped',
