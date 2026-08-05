@@ -67,6 +67,9 @@ function judgeCompiles(test: TypeTestSpec, probe: CheckedProbe): CodeTestResult 
   return { name: test.name, passed: false, detail: explain(first) };
 }
 
+/** TS2304 cannot find name, TS2552 cannot find name, did you mean. */
+const MISSING_NAME = new Set([2304, 2552]);
+
 /**
  * The snippet has to be rejected, which is how a rep proves a type is actually
  * load-bearing. An answer that widens to `any` compiles everything, so without
@@ -78,6 +81,19 @@ function judgeRejects(test: TypeTestSpec, probe: CheckedProbe): CodeTestResult {
       name: test.name,
       passed: false,
       detail: 'the checker accepted this, and it should have refused it',
+    };
+  }
+  // A rejection has to be the one the rep is about. "Cannot find name" means the
+  // answer never declared the thing the check refers to, so the snippet was
+  // refused for not existing rather than for being wrong, and no rep can
+  // legitimately be asking for that. Without this an empty answer passes every
+  // unpinned `rejects` in the library.
+  const missing = probe.diagnostics.find((diagnostic) => MISSING_NAME.has(diagnostic.code));
+  if (missing) {
+    return {
+      name: test.name,
+      passed: false,
+      detail: `this was refused because the answer does not define it: ${missing.message}`,
     };
   }
   if (test.errorCode !== undefined) {

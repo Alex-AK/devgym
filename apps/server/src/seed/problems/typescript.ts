@@ -2131,4 +2131,613 @@ export const typescriptProblems: ProblemDraft[] = [
     explanation:
       'A template literal type in the pattern position matches structurally, and `infer` captures the segment it lines up with, which is what makes typed route params possible without a code generator. `${string}` before the colon is the wildcard, and `${infer Prefix}` there would work identically while giving the discarded half a name. Two edges to know. Matching is not greedy in the regex sense: with two colons the first one wins, so a real router type recurses on the rest. And an unbounded `string` in the argument gets you nothing useful, because `ParamOf<string>` cannot resolve to one literal, which is the reason these types are paired with `as const` route tables.',
   }),
+
+  typeProblem({
+    slug: 'ts-event-payload-generic',
+    title: 'The listener that lost its payload',
+    difficulty: 'medium',
+    relevance: 'daily',
+    prompt: md(
+      'Every listener is handed `unknown`, so every one of them starts with a cast:',
+      '',
+      code(
+        'ts',
+        "on('order:created', (payload) => {",
+        '  ship((payload as { orderId: string }).orderId);',
+        '});'
+      ),
+      '',
+      'Rewrite the signature so the payload type follows the event name, and an event that does not exist is a compile error.'
+    ),
+    setup: md(
+      'type EventMap = {',
+      "  'order:created': { orderId: string };",
+      "  'user:renamed': { userId: string; name: string };",
+      '};'
+    ),
+    starter: 'function on(event: string, handler: (payload: unknown) => void): void {}',
+    tests: [
+      {
+        name: 'the handler gets the payload for that event',
+        compiles: md(
+          "on('order:created', (payload) => {",
+          '  const id: string = payload.orderId;',
+          '});'
+        ),
+      },
+      {
+        name: 'a field from another event is refused',
+        rejects: md(
+          "on('order:created', (payload) => {",
+          '  const who: string = payload.userId;',
+          '});'
+        ),
+        errorCode: 2339,
+      },
+      {
+        name: 'an event name that does not exist is refused',
+        rejects: "on('order:deleted', () => {});",
+        errorCode: 2345,
+      },
+    ],
+    reference:
+      'function on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): void {}',
+    hints: [
+      'The event name and the payload are related, and the signature says nothing about that.',
+      'Make the event name a type parameter constrained to the keys of the map, then read the payload back off it.',
+      '`function on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void)`',
+    ],
+    explanation:
+      'Constraining the type parameter to `keyof EventMap` makes the event name the thing that selects the payload, and the indexed access `EventMap[K]` reads it back at the call site, so `payload` is typed without the caller annotating anything. Typing the payload as `any` removes the same errors and removes the checking with them: the misspelled field and the event that does not exist both compile, which is what the two refusal checks measure. Widening `event` to `keyof EventMap` rather than making it a parameter is the other near miss, and it hands every handler the union of all payloads, so no field is readable until you narrow.',
+  }),
+
+  typeProblem({
+    slug: 'ts-distributive-omit',
+    title: 'Omit flattened the union',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    prompt: md(
+      'Removing one key from a union leaves a type with no payload fields and nothing to narrow on:',
+      '',
+      code(
+        'ts',
+        "type WithoutId = Omit<LoadState, 'id'>;",
+        "// { kind: 'loaded' | 'failed' }, and state.rows is gone"
+      ),
+      '',
+      'Write `DropKey<T, K>`: the same removal, applied to each member of a union separately.'
+    ),
+    setup: md(
+      'type LoadState =',
+      "  | { kind: 'loaded'; id: string; rows: string[] }",
+      "  | { kind: 'failed'; id: string; error: string };"
+    ),
+    starter: 'type DropKey<T, K extends PropertyKey> = Omit<T, K>;',
+    tests: [
+      {
+        name: 'each member of the union keeps its own fields',
+        type: "DropKey<LoadState, 'id'>",
+        equals: "{ kind: 'loaded'; rows: string[] } | { kind: 'failed'; error: string }",
+      },
+      {
+        name: 'a plain object type still loses the key',
+        type: "DropKey<{ a: number; b: string }, 'b'>",
+        equals: '{ a: number }',
+      },
+      {
+        name: 'the result still narrows on the tag',
+        compiles: md(
+          "const state: DropKey<LoadState, 'id'> = { kind: 'loaded', rows: [] };",
+          "if (state.kind === 'loaded') {",
+          '  const rows: string[] = state.rows;',
+          '}'
+        ),
+      },
+    ],
+    reference: 'type DropKey<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;',
+    hints: [
+      '`Omit` is not distributive: it sees the union as one type, and one type has only the keys every member has.',
+      'Something has to make the removal run once per member and put the results back together. It is the behaviour `Exclude` is built on.',
+      '`T extends unknown ? Omit<T, K> : never`',
+    ],
+    explanation:
+      '`Omit<T, K>` is `Pick<T, Exclude<keyof T, K>>`, and `keyof` over a union gives only the keys every member shares, which is why both payload fields vanish and the tag collapses into `kind: "loaded" | "failed"`. Wrapping the call in a conditional whose left side is a bare type parameter switches distribution on, so it runs once per member and unions the results. The cost of the naive version is worse than the missing fields: the result is no longer a discriminated union, so `if (state.kind === "loaded")` narrows to nothing and every read after it is an error.',
+  }),
+
+  typeProblem({
+    slug: 'ts-handler-variance',
+    title: 'The handler that promised too little',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    prompt: md(
+      'A `Listener` is called with any `Animal`, and the compiler accepts one that only copes with dogs:',
+      '',
+      code(
+        'ts',
+        'const dogsOnly: Listener = {',
+        '  handle: (value: Dog) => log(value.breed.toUpperCase()),',
+        '};',
+        '',
+        '// no error, and breed is undefined for every other animal'
+      ),
+      '',
+      'Rewrite `Listener` so the compiler refuses that. `handle` still takes one `Animal` and returns nothing.'
+    ),
+    setup: md('type Animal = { name: string };', 'type Dog = { name: string; breed: string };'),
+    starter: md('type Listener = {', '  handle(value: Animal): void;', '};'),
+    tests: [
+      {
+        name: 'a handler that only accepts dogs is refused',
+        rejects: md(
+          'const dogsOnly: Listener = {',
+          '  handle: (value: Dog) => {',
+          '    const breed: string = value.breed;',
+          '  },',
+          '};'
+        ),
+        errorCode: 2322,
+      },
+      {
+        name: 'a handler that accepts any animal is fine',
+        compiles: md(
+          'const ok: Listener = {',
+          '  handle: (value: Animal) => {',
+          '    const name: string = value.name;',
+          '  },',
+          '};'
+        ),
+      },
+      {
+        name: 'a handler that accepts more than an animal is fine too',
+        compiles: 'const loose: Listener = { handle: (value: unknown) => {} };',
+      },
+    ],
+    reference: md('type Listener = {', '  handle: (value: Animal) => void;', '};'),
+    hints: [
+      '`strictFunctionTypes` is on, and it is not being applied to this member.',
+      'The flag checks function-typed properties strictly and exempts one other way of declaring the same member.',
+      'Declare it as a property rather than a method: `handle: (value: Animal) => void`.',
+    ],
+    explanation:
+      'Method shorthand is bivariant on purpose. `strictFunctionTypes` exempts members written as methods so that `Array<Dog>` stays assignable to `Array<Animal>`, which most code depends on, and the exemption follows the syntax rather than the type. A function-typed property gets the strict check instead: a parameter narrower than the one the type promises is refused, and a wider one is still accepted, which is what the third check shows. Leaving it as a method costs exactly the crash in the prompt, because nothing in the type system stops a listener assuming more about its argument than the caller guarantees.',
+  }),
+
+  typeProblem({
+    slug: 'ts-as-const-satisfies',
+    title: 'The route table that forgot its keys',
+    difficulty: 'medium',
+    relevance: 'daily',
+    prompt: md(
+      'The annotation checks the table and then throws away everything it knew about it:',
+      '',
+      code(
+        'ts',
+        "routes.home.path; // string, not '/'",
+        'routes.dashboard; // no error, and there is no such route'
+      ),
+      '',
+      'Rewrite the declaration so the table is still checked against `Record<string, Route>` and still keeps its exact keys and literal values.'
+    ),
+    setup: 'type Route = { path: string; auth: boolean };',
+    starter: md(
+      'const routes: Record<string, Route> = {',
+      "  home: { path: '/', auth: false },",
+      "  admin: { path: '/admin', auth: true },",
+      '};'
+    ),
+    tests: [
+      { name: 'the key names survive', type: 'keyof typeof routes', equals: "'home' | 'admin'" },
+      {
+        name: 'a path stays the literal it was written as',
+        compiles: "const home: '/' = routes.home.path;",
+      },
+      {
+        name: 'the table cannot be edited afterwards',
+        rejects: "routes.home.path = '/elsewhere';",
+        errorCode: 2540,
+      },
+    ],
+    reference: md(
+      'const routes = {',
+      "  home: { path: '/', auth: false },",
+      "  admin: { path: '/admin', auth: true },",
+      '} as const satisfies Record<string, Route>;'
+    ),
+    hints: [
+      'An annotation is a ceiling: the value is checked against it and then treated as it.',
+      'One operator checks conformance without replacing what was inferred, and one assertion stops the literals widening. This wants both.',
+      '`} as const satisfies Record<string, Route>;`',
+    ],
+    explanation:
+      'An annotation is a downcast: the literal is checked against `Record<string, Route>` and then is that type, so the keys widen to `string`, every path widens with them, and `routes.dashboard` stops being a typo. `satisfies` runs the same check and leaves the inferred type alone, and `as const` on top of it keeps the literals and makes the table readonly, which is what the third check measures. Dropping the `satisfies` half costs you the error at the declaration: a route missing `auth`, or carrying a number where a path belongs, would then be found by whatever reads the table, if anything ever does.',
+  }),
+
+  typeProblem({
+    slug: 'ts-snake-to-camel',
+    title: 'Column names that stop at the first underscore',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    prompt: md(
+      'The database returns snake_case, the app reads camelCase, and the mapping between them is maintained by hand.',
+      '',
+      "Write `CamelCase<S>`: `'created_at'` becomes `'createdAt'`, and every underscore goes, not only the first."
+    ),
+    starter: 'type CamelCase<S extends string> = S;',
+    tests: [
+      { name: 'one underscore', type: "CamelCase<'created_at'>", equals: "'createdAt'" },
+      {
+        name: 'more than one underscore',
+        type: "CamelCase<'user_first_name'>",
+        equals: "'userFirstName'",
+      },
+      { name: 'a name with no underscore is unchanged', type: "CamelCase<'id'>", equals: "'id'" },
+      {
+        name: 'every segment after the first is capitalised',
+        type: "CamelCase<'a_b_c'>",
+        equals: "'aBC'",
+      },
+    ],
+    reference: md(
+      'type CamelCase<S extends string> = S extends `${infer Head}_${infer Rest}`',
+      '  ? `${Head}${Capitalize<CamelCase<Rest>>}`',
+      '  : S;'
+    ),
+    hints: [
+      'A string literal type can be matched as a pattern, the same way a route type reads a parameter name off a path.',
+      'Capture the part before the first underscore and the part after it, and remember that the second half may still contain underscores.',
+      '``S extends `${infer Head}_${infer Rest}` ? `${Head}${Capitalize<CamelCase<Rest>>}` : S``',
+    ],
+    explanation:
+      'A template literal type in the pattern position matches structurally and `infer` binds each segment, and `Capitalize<S>` is one of the four string types the compiler implements natively rather than in the lib. The recursion is the exercise: matching once handles `created_at` and turns `user_first_name` into `userFirst_name`, a wrong answer that passes half the checks and looks right in whichever case you happened to test. Recursing on the tail is what makes every later segment capitalise. The compiler caps how deep a type may recurse, so this is fine over a schema and not over arbitrary text.',
+  }),
+
+  typeProblem({
+    slug: 'ts-never-distributes',
+    title: 'The coverage check that answered never',
+    difficulty: 'hard',
+    relevance: 'foundational',
+    prompt: md(
+      'A compile-time coverage check asks whether anything was left unhandled, and the answer comes back as neither `true` nor `false`:',
+      '',
+      code(
+        'ts',
+        'type Unhandled = Exclude<Role, HandledRoles>;',
+        'type Done = NothingLeft<Unhandled>; // never'
+      ),
+      '',
+      'Write `NothingLeft<T>`: `true` when `T` is `never`, and `false` for anything else.'
+    ),
+    starter: 'type NothingLeft<T> = T;',
+    tests: [
+      { name: 'true when nothing is left over', type: 'NothingLeft<never>', equals: 'true' },
+      { name: 'false for a single leftover role', type: "NothingLeft<'viewer'>", equals: 'false' },
+      {
+        name: 'false when several are left over',
+        type: "NothingLeft<'editor' | 'viewer'>",
+        equals: 'false',
+      },
+    ],
+    reference: 'type NothingLeft<T> = [T] extends [never] ? true : false;',
+    hints: [
+      '`T extends never ? true : false` reaches neither branch when `T` is `never`. Ask why not.',
+      'A conditional distributes over a union only while its left side is a bare type parameter. Stop it being bare and the type is matched whole.',
+      '`[T] extends [never] ? true : false`',
+    ],
+    explanation:
+      'A conditional whose left side is a bare type parameter distributes: it runs once per member of the union and unions the results. `never` is the union with no members, so there is nothing to run it over and the answer is `never`, which is neither branch and reads as a broken check rather than a failing one. Wrapping both sides in a one-element tuple makes the left side no longer bare, switching distribution off so the whole type is compared at once. This is the idiom for asking whether something is `never`, and the same mechanism explains the rest of the family: `Exclude` and `NonNullable` are built on distribution, which is why both hand back `never` for an input that was already `never`.',
+  }),
+
+  typeProblem({
+    slug: 'ts-const-type-param',
+    title: 'The tab list that widened to string[]',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'The helper is generic and the call site still loses the names:',
+      '',
+      code(
+        'ts',
+        "const nav = tabs(['home', 'settings']);",
+        'nav[0]; // string | undefined',
+        "nav.push('anything'); // allowed"
+      ),
+      '',
+      'Change the signature so the argument keeps its literal readonly tuple type. The call sites are not yours to edit.'
+    ),
+    starter: md(
+      'function tabs<T extends readonly string[]>(names: T): T {',
+      '  return names;',
+      '}'
+    ),
+    tests: [
+      {
+        name: 'the first tab is a known name, not a maybe-string',
+        compiles: md("const nav = tabs(['home', 'settings']);", "const first: 'home' = nav[0];"),
+      },
+      {
+        name: 'it works for any list, not one hard-coded one',
+        compiles: md(
+          "const themes = tabs(['light', 'dark']);",
+          "const first: 'light' = themes[0];"
+        ),
+      },
+      {
+        name: 'the list it hands back cannot be pushed to',
+        rejects: md("const nav = tabs(['home', 'settings']);", "nav.push('extra');"),
+        errorCode: 2339,
+      },
+    ],
+    reference: md(
+      'function tabs<const T extends readonly string[]>(names: T): T {',
+      '  return names;',
+      '}'
+    ),
+    hints: [
+      'An array literal argument infers as a mutable array of the widened element type unless something asks for more.',
+      'The caller could write `as const` at every call site. There is a modifier on the type parameter that does it for them.',
+      '`function tabs<const T extends readonly string[]>(names: T): T`',
+    ],
+    explanation:
+      'A `const` type parameter, added in TypeScript 5.0, infers the argument as if the caller had written `as const`, so an array literal arrives as a readonly tuple of literals instead of `string[]`. The constraint has to permit that, which is why it is `readonly string[]`: a mutable constraint quietly cancels the whole thing, because the inference has nowhere to land. Without it the call site loses two things at once, since `nav[0]` is `string | undefined` under `noUncheckedIndexedAccess` and nothing stops a caller mutating the list it was handed back. The alternative is `as const` at every call site, which works and has to be remembered every time.',
+  }),
+
+  typeProblem({
+    slug: 'ts-deep-readonly',
+    title: 'The readonly that stopped one level down',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    prompt: md(
+      '`Readonly<Settings>` protects the top level, and the nested write still compiles:',
+      '',
+      code(
+        'ts',
+        'const frozen: Readonly<Settings> = load();',
+        "frozen.theme = 'light';      // error, as it should be",
+        "frozen.editor.fontSize = 14; // no error, and the caller's config just changed"
+      ),
+      '',
+      'Write `DeepReadonly<T>`: `readonly` all the way down.'
+    ),
+    setup: md(
+      'interface Settings {',
+      '  theme: string;',
+      '  editor: { fontSize: number; wrap: boolean };',
+      '}'
+    ),
+    starter: 'type DeepReadonly<T> = T;',
+    tests: [
+      {
+        name: 'every level carries readonly',
+        type: 'DeepReadonly<Settings>',
+        equals:
+          '{ readonly theme: string; readonly editor: { readonly fontSize: number; readonly wrap: boolean } }',
+      },
+      {
+        name: 'the top level cannot be written to',
+        rejects: md(
+          "const s: DeepReadonly<Settings> = { theme: 'dark', editor: { fontSize: 12, wrap: true } };",
+          "s.theme = 'light';"
+        ),
+        errorCode: 2540,
+      },
+      {
+        name: 'the nested object cannot be written to either',
+        rejects: md(
+          "const s: DeepReadonly<Settings> = { theme: 'dark', editor: { fontSize: 12, wrap: true } };",
+          's.editor.fontSize = 14;'
+        ),
+        errorCode: 2540,
+      },
+    ],
+    reference: md(
+      'type DeepReadonly<T> = {',
+      '  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];',
+      '};'
+    ),
+    hints: [
+      '`Readonly<T>` is a mapped type one level deep, and it copies each value type across untouched.',
+      'The value type needs the same treatment, which means the type has to call itself, and only where the value has properties at all.',
+      '`{ readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K] }`',
+    ],
+    explanation:
+      '`Readonly<T>` maps the keys once and copies each value type unchanged, so the nested object stays exactly as mutable as it was. Recursing on the value type is what carries the modifier to the bottom, and the `extends object` branch is what stops it trying to map over a `string`. Answering `Readonly<T>` is worth an amber verdict rather than a red one, because the two types are assignable to each other in both directions: assignability ignores `readonly` on properties, so nothing complains until the line that writes to the nested field. That is why the checks here ask what the type is rather than what it accepts.',
+  }),
+
+  typeProblem({
+    slug: 'ts-event-by-tag',
+    title: 'One member out of a tagged union',
+    difficulty: 'medium',
+    relevance: 'daily',
+    prompt: md(
+      'Every helper that handles a single event restates that event by hand:',
+      '',
+      code('ts', "function onClick(event: { type: 'click'; x: number; y: number }) {}"),
+      '',
+      'Write `EventOf<K>`: the member of `AppEvent` whose `type` is `K`, and both members when `K` is two tags.'
+    ),
+    setup: md(
+      'type AppEvent =',
+      "  | { type: 'click'; x: number; y: number }",
+      "  | { type: 'key'; key: string }",
+      "  | { type: 'scroll'; offset: number };"
+    ),
+    starter: "type EventOf<K extends AppEvent['type']> = AppEvent;",
+    tests: [
+      {
+        name: 'one tag gives one member',
+        type: "EventOf<'key'>",
+        equals: "{ type: 'key'; key: string }",
+      },
+      {
+        name: 'two tags give both members',
+        type: "EventOf<'click' | 'scroll'>",
+        equals: "{ type: 'click'; x: number; y: number } | { type: 'scroll'; offset: number }",
+      },
+      {
+        name: 'the fields of the chosen member are readable',
+        compiles: md(
+          "const event: EventOf<'click'> = { type: 'click', x: 1, y: 2 };",
+          'const x: number = event.x;'
+        ),
+      },
+    ],
+    reference: "type EventOf<K extends AppEvent['type']> = Extract<AppEvent, { type: K }>;",
+    hints: [
+      'The union already holds the answer. Something has to select from it by the tag.',
+      'There is a built-in for keeping the members of a union that match a shape. Its opposite is `Exclude`.',
+      '`Extract<AppEvent, { type: K }>`',
+    ],
+    explanation:
+      '`Extract<T, U>` keeps the members of `T` assignable to `U`, which for a discriminated union means matching on the tag, and it distributes, so two tags give both members back. The intersection `AppEvent & { type: K }` looks equivalent and is not: it produces an intersection that is mutually assignable with the member without being it, so it prints back as `{ type: "key"; key: string } & { type: "key" }` and drags that shape through every signature that touches it. Writing the conditional by hand is the other trap, because `AppEvent extends { type: K }` has a concrete union on its left rather than a bare type parameter, so it does not distribute and the whole thing collapses to `never`.',
+  }),
+
+  typeProblem({
+    slug: 'ts-non-empty-tuple',
+    title: 'The list that has to have something in it',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'This is only ever called with a list that has something in it, and neither of those facts is written down:',
+      '',
+      code(
+        'ts',
+        'render([]);             // compiles',
+        'const first = items[0]; // string | undefined'
+      ),
+      '',
+      'Write `NonEmpty<T>`: an array with at least one element.'
+    ),
+    starter: 'type NonEmpty<T> = T[];',
+    tests: [
+      {
+        name: 'an empty array is refused',
+        rejects: 'const none: NonEmpty<string> = [];',
+        errorCode: 2322,
+      },
+      { name: 'one element is enough', compiles: "const one: NonEmpty<string> = ['a'];" },
+      {
+        name: 'the first element is not possibly undefined',
+        compiles: md(
+          "const names: NonEmpty<string> = ['a', 'b'];",
+          'const first: string = names[0];'
+        ),
+      },
+      {
+        name: 'it is a tuple with a rest element',
+        type: 'NonEmpty<number>',
+        equals: '[number, ...number[]]',
+      },
+    ],
+    reference: 'type NonEmpty<T> = [T, ...T[]];',
+    hints: [
+      'A tuple type fixes what sits at each position. You want the first position fixed and the rest left open.',
+      'A rest element after the fixed one lets the tuple keep growing.',
+      '`[T, ...T[]]`',
+    ],
+    explanation:
+      'A tuple with a rest element says what the prompt says: one of these, then any number more. The compiler then knows index 0 exists, so `noUncheckedIndexedAccess` stops adding `| undefined` there and the guard you would have written for the empty case goes with it. `readonly [T, ...T[]]` makes the same guarantee and is a different type, since a caller holding one cannot pass it where a mutable array is wanted, and the identity check says so rather than waving it through. The rest element may also come first, so `[...T[], T]` is how you promise a last element instead of a first.',
+  }),
+
+  typeProblem({
+    slug: 'ts-no-infer',
+    title: 'The typo that joined the union',
+    difficulty: 'hard',
+    relevance: 'occasional',
+    prompt: md(
+      'The fallback is meant to be one of the options, and a misspelled one widens the union instead of failing:',
+      '',
+      code(
+        'ts',
+        "pick(['red', 'green'], 'gren');",
+        "// compiles, and T is now 'red' | 'green' | 'gren'"
+      ),
+      '',
+      'Fix the signature so only the options decide `T`.'
+    ),
+    starter: md(
+      'function pick<T extends string>(options: T[], fallback: T): T {',
+      '  return fallback;',
+      '}'
+    ),
+    tests: [
+      {
+        name: 'a fallback that is not one of the options is refused',
+        rejects: "pick(['red', 'green'], 'blu');",
+        errorCode: 2345,
+      },
+      {
+        name: 'a fallback that is one of them is fine',
+        compiles: "pick(['red', 'green'], 'red');",
+      },
+      {
+        name: 'the result is still the union of the options',
+        compiles: "const chosen: 'red' | 'green' = pick(['red', 'green'], 'green');",
+      },
+    ],
+    reference: md(
+      'function pick<T extends string>(options: T[], fallback: NoInfer<T>): T {',
+      '  return fallback;',
+      '}'
+    ),
+    hints: [
+      'Both parameters mention `T`, so the compiler collects a candidate from each of them.',
+      'One of the two should be checked against `T` without contributing to it. There is a utility type that marks a position that way.',
+      '`fallback: NoInfer<T>`',
+    ],
+    explanation:
+      'Every parameter that mentions `T` is an inference site, and the compiler takes the union of what it finds, so the misspelled fallback does not fail: it joins the union and makes itself legal. `NoInfer<T>`, added in TypeScript 5.4, marks a position as check-only, so `T` comes from the options alone and the fallback is measured against it. Before it existed this was written as `[T][T extends unknown ? 0 : never]`, which works by making the position too complex for the compiler to infer through. Leaving the signature as it is costs you a function that accepts everything and a bug that surfaces wherever the value is finally used.',
+  }),
+
+  typeProblem({
+    slug: 'ts-key-filter-never',
+    title: 'The wire shape with a method on it',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    prompt: md(
+      'The model carries a method, and the type describing the JSON response carries it too:',
+      '',
+      code('ts', 'send(order); // the type says refresh is part of the payload'),
+      '',
+      'Write `DataOnly<T>`: the same type with every callable property removed.'
+    ),
+    setup: md(
+      'interface Order {',
+      '  id: string;',
+      '  total: number;',
+      '  refresh: () => Promise<void>;',
+      '}'
+    ),
+    starter: 'type DataOnly<T> = { [K in keyof T]: T[K] };',
+    tests: [
+      {
+        name: 'the callable property is gone',
+        type: 'DataOnly<Order>',
+        equals: '{ id: string; total: number }',
+      },
+      {
+        name: 'an optional property stays optional',
+        type: 'DataOnly<{ label?: string; onSave: () => void }>',
+        equals: '{ label?: string }',
+      },
+      {
+        name: 'what is left is a complete object on its own',
+        compiles: md(
+          "const wire: DataOnly<Order> = { id: 'o1', total: 10 };",
+          'const n: number = wire.total;'
+        ),
+      },
+    ],
+    reference: md(
+      'type DataOnly<T> = {',
+      '  [K in keyof T as T[K] extends (...args: never[]) => unknown ? never : K]: T[K];',
+      '};'
+    ),
+    hints: [
+      'Copying every key is the problem. The type has to decide, key by key, whether to keep it.',
+      'A mapped type can rename a key with an `as` clause, and a key renamed to `never` is dropped entirely.',
+      '`[K in keyof T as T[K] extends (...args: never[]) => unknown ? never : K]: T[K]`',
+    ],
+    explanation:
+      'Key remapping runs a conditional per key and uses the result as the new name, and `never` as a name means the key does not appear, which is how a mapped type filters an object rather than renames one. Setting the value to `never` instead is the wrong answer that looks close: the key survives, its type becomes uninhabitable, and every object that has to satisfy the type becomes impossible to write. Listing the method names in an `Omit` works once and stops working the next time somebody adds one, which is what the second check is there to catch. `(...args: never[]) => unknown` is the safe spelling of "any function" here, because parameters are checked contravariantly, so `never` accepts every parameter list.',
+  }),
 ];
