@@ -1760,4 +1760,143 @@ export const sqlProblems: ProblemDraft[] = [
     explanation:
       'An empty `IN` list is a hole in the SQL grammar rather than a filter that matches nothing, and the two engines this project uses disagree about it in the worst way: Postgres 18 rejects `IN ()` with `syntax error at or near ")"`, while SQLite accepts it and returns zero rows. So the same builder is a 500 on one engine and a silently empty page on the other, and neither is what "nothing is ticked" usually means, which is either every row or none by intent rather than by accident. Decide that case in the application, before any SQL is built. `= ANY($1)` avoids the whole shape by passing one array parameter instead of a generated list, and it matches nothing for an empty array without a syntax error.',
   },
+
+  // Storing a thing rather than querying it. Neither rep below is about a
+  // particular database: a copied column and an embedded list are the same two
+  // decisions whether the row is a row or a document.
+
+  {
+    slug: 'sql-copied-column-drift',
+    title: 'The name that stayed behind',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'daily',
+    type: 'explain',
+    prompt: md(
+      'The orders table carries a `customer_name` column, copied from `customers` at checkout so the orders list needs no join. A customer changes their surname. The customer page shows the new name and every order they have ever placed still shows the old one.',
+      '',
+      'Say what has to be decided before you can call that a bug, and what each answer costs you.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'at the time',
+            'point in time',
+            'historical',
+            'snapshot',
+            'as it was',
+            'record of',
+            'deliberate',
+            'depends',
+            'intended',
+            'cache',
+            'copy of the current',
+          ],
+          missingFeedback:
+            'There are two different things that column could be. Name the one that makes the old orders correct.',
+        },
+        {
+          synonyms: [
+            'update',
+            'keep them in sync',
+            'sync',
+            'rewrite',
+            'backfill',
+            'every order',
+            'every copy',
+            'rename',
+            'name it',
+            'join',
+          ],
+          missingFeedback: 'Say what the other answer commits you to doing on every name change.',
+        },
+      ],
+      hints: [
+        'An invoice printed last year is not wrong because somebody changed their name since.',
+        'One of the two answers turns every customer update into a write across the orders table.',
+      ],
+    },
+    canonicalAnswer:
+      'Decide whether that column is the name as it was at the time of the order or a cache of the current name. As a snapshot it is correct and the column should say so, so nothing has to change except the name of the column. As a cache it is stale, and keeping it right means every write that changes a customer name has to update every order that copied it, which is the cost you took on when you removed the join.',
+    solution: md(
+      'Two different columns wear the same name here.',
+      '',
+      '- **A snapshot**: the name as it was at checkout, which is what an invoice needs. It is correct, and calling it `customer_name_at_order` stops the next reader filing this as a bug.',
+      '- **A cache**: a copy of the current name, kept to avoid a join. Then it is stale, and every name change owes a write to every order that copied it.',
+      '',
+      'The copy is not the mistake. Not deciding which one it is, is.'
+    ),
+    explanation:
+      'Copying a value out of one table into another buys a read that needs no join, and the price is that the value now exists in two places and something has to keep them agreeing. That price is the deal rather than a defect, but it is only worth paying deliberately: a copy nobody decided about drifts, and then nobody can say whether the old value is a stale cache or the historical record. The question that settles it is whether the copy is meant to change when the original does. Where the answer is no, say so in the column name, because the only thing worse than a denormalised column is one whose meaning has to be reverse-engineered from a bug report.',
+  },
+
+  {
+    slug: 'sql-embedded-list-grows',
+    title: 'One row, forty thousand reviews',
+    category: 'sql',
+    difficulty: 'medium',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A product carries its reviews as a JSON array in one column, so the product page is a single read with no join. A year in, the busiest product holds 40,000 reviews in that array, the page shows ten of them, and it is slow.',
+      '',
+      'Say why one row got slow, and what the fix has to change about the shape.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'whole',
+            'entire',
+            'all of it',
+            'all of them',
+            'every review',
+            'reads it all',
+            'rewrite',
+            'rewrites',
+            'the full array',
+            'all 40,000',
+            'all 40000',
+            'megabytes',
+          ],
+          missingFeedback:
+            'The row is the unit the database reads and writes. Say what that means for a page showing ten reviews.',
+        },
+        {
+          synonyms: [
+            'own table',
+            'separate table',
+            'their own rows',
+            'own rows',
+            'separate rows',
+            'child table',
+            'move them out',
+            'out of the row',
+            'paginate',
+            'bounded',
+            'bound',
+            'limit',
+          ],
+          missingFeedback: 'What has to stop living inside the product?',
+        },
+      ],
+      hints: [
+        'Ask what the database has to read to hand you that one row, and what it has to write when one review is edited.',
+        'Ten reviews are wanted and 40,000 are paid for. The shape decides that, not the query.',
+      ],
+    },
+    canonicalAnswer:
+      'The row is the unit, so reading the product reads all 40,000 reviews to display ten, and editing one review rewrites the whole array. The fix is to stop keeping an unbounded list inside the thing it hangs off: reviews get their own rows, the page asks for the ten it wants, and anything the product genuinely needs at hand stays as a bounded summary like a count and an average.',
+    solution: md(
+      'Because a row is read and written whole, so the page pays for 40,000 reviews to show ten, and one edit rewrites the array.',
+      '',
+      '- **Reviews get their own rows**, keyed by product, ordered and paged like anything else.',
+      '- **The product keeps a bounded summary**: a count, an average, maybe the latest three.',
+      '',
+      'Embedding is for a list with a ceiling. This one never had one.'
+    ),
+    explanation:
+      'Embedding a list inside the thing it belongs to buys one read and charges for the whole list on every read and every write, which is a good trade exactly while the list is small and bounded. Nothing warns you when it stops being either, because the query still touches one row and the plan still looks perfect: the cost is in the size of that row rather than in the number of them. The question to ask when choosing the shape is not how big this list is today, it is whether anything stops it growing. Where the answer is nothing, it wants its own rows, and the parent keeps a summary that does have a ceiling.',
+  },
 ];

@@ -8,24 +8,7 @@ target is practical knowledge for web engineering and AI engineering, judged aga
 morning session, and content is never picked to complete a set. Why something was deferred lives in
 [decisions.md](./decisions.md); how to write any of it lives in [content.md](./content.md).
 
-## 1. Modelling for a document store
-
-The distributed half is already written: `systems/` covers replication, CAP, sharding and consistent
-hashing, and names document stores in all four. What no page covers is **modelling** — the decision a
-web engineer actually makes, which is whether the thing they are storing wants rows and joins or one
-document read whole.
-
-One or two pages in `databases/`, not a section and not a category. The territory: modelling for the
-access pattern rather than for the entities, which is the inversion people arrive unable to make;
-denormalisation, and that the write amplification it buys is the price rather than a mistake; and
-that "schemaless" means the schema moved into your code, unversioned, where nothing checks it.
-
-**This is a page before it is a workout, and a workout is not required to follow.** A document store
-is deferred until a brief needs one, and that bar is unchanged by these pages existing. What the
-pages need is a rep or two to cite, and the honest candidates are in `sql` or `databases` rather than
-a new category, because the decision is a database decision and not a Mongo decision.
-
-## 2. The rest of the decks
+## 1. The rest of the decks
 
 Two decks suggest themselves and cannot be written, both for the same reason: `page` is mandatory and
 neither has one. No page owns the redirect codes, 301 against 302 against 307 against 308. Time
@@ -41,7 +24,7 @@ is worth re-reading for the contrast set it just made checkable.
 `packages/decks/content/` is the inventory, and a deck named there and not on disk is a name that
 changed, not a deck that is missing.
 
-## 3. Sections with no practice behind them yet
+## 2. Sections with no practice behind them yet
 
 These are last because nothing in the problem set is waiting on them.
 
@@ -96,7 +79,7 @@ page, Will Larson's migrations essay, the listed books.
 
 ## The last pass, and what finishing means
 
-The three sections above are the whole content queue, and it is meant to run out. An empty roadmap is
+The two sections above are the whole content queue, and it is meant to run out. An empty roadmap is
 the intended end of this project rather than a failure to think of more work: the subject is
 practical knowledge for web engineering and AI engineering judged against a 15-minute morning, and
 that is a finite thing to cover. Everything past it is maintenance, which is a page going stale or a

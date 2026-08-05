@@ -760,6 +760,18 @@ Correcting a fact inside an entry is an edit; changing the decision is a new rec
   **The rule to carry forward: a page with no easy rep is a finding rather than a defect, and closing
   it sometimes means writing down that it stays open.**
 
+- **ADR-0152 — Document-store modelling is one page in `databases/`, and its reps are `sql` reps.** The
+  queue allowed one or two pages and one was enough: access-pattern-first modelling, denormalisation
+  and its write amplification, and what "schemaless" moves into your code are three claims about the
+  same decision rather than three subjects. Two things were rejected on the way. A category of its
+  own, because the decision is which shape a thing is stored in, which a relational engine asks you
+  every bit as much as Mongo does; the two new reps are a copied column that drifted and an embedded
+  list with no ceiling, and neither names a product. And a Mongo-shaped page, because the page a
+  reader needs is the one that ends with them choosing, not the one that teaches an API this repo
+  ships no practice for. `jsonb` is named in the worked example for the same reason: it is where most
+  readers will actually meet the trade. **Mongo and Mongoose stay deferred** and this page does not
+  move that bar, which is unchanged since ADR-0054 — a brief has to need a document store.
+
 ## The essentials path
 
 - **ADR-0087 — It is a second entrance, not a setting on the daily session.** Everything else here is judged
