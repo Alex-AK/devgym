@@ -1,7 +1,7 @@
 ---
 title: Reading EXPLAIN
 question: The query is slow. What is the plan actually telling me?
-order: 3
+order: 4
 practise:
   - sqlperf-plan-scan-vs-search
   - sqlperf-plan-covering-index

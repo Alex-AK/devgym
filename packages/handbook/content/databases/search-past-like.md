@@ -1,7 +1,7 @@
 ---
 title: Search, past LIKE
 question: The search box misses rows that plainly contain the word. What should be doing this instead of LIKE?
-order: 6
+order: 7
 practise:
   - sql-search-stemmed-lexemes
   - sql-search-tsvector-tsquery

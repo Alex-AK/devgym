@@ -1,11 +1,12 @@
 ---
 title: N+1, and how to see it
 question: The page takes four seconds and every query in the log is fast. Where is the time going?
-order: 4
+order: 5
 practise:
   - sql-batch-related-rows
   - orders-report-typeorm
   - slow-list-endpoint-kysely
+  - help-board-graphql
   - sql-orders-per-customer
 sources:
   - author: Markus Winand

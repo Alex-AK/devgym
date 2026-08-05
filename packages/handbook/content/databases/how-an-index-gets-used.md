@@ -1,7 +1,7 @@
 ---
 title: How an index actually gets used
 question: I added the index and the query is still slow. Why is the planner ignoring it?
-order: 1
+order: 2
 practise:
   - slow-list-endpoint-kysely
   - product-search-drizzle

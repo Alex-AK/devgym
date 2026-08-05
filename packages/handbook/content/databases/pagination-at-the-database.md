@@ -1,7 +1,7 @@
 ---
 title: Pagination at the database
 question: The second page repeats a row I already saw. What is wrong with OFFSET?
-order: 5
+order: 6
 practise:
   - http-offset-cost
   - http-pagination-cursor

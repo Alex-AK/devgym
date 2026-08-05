@@ -1,7 +1,7 @@
 ---
 title: Partial and expression indexes
 question: I only ever query one slice of this table, or a value computed from a column. How do I index that?
-order: 9
+order: 10
 practise:
   - sql-index-lower-email
   - slow-list-endpoint-kysely

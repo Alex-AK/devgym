@@ -1083,6 +1083,84 @@ export const sqlProblems: ProblemDraft[] = [
   },
 
   {
+    slug: 'sql-index-unused-cost',
+    title: 'The index nobody searched',
+    category: 'sql',
+    difficulty: 'easy',
+    relevance: 'occasional',
+    type: 'explain',
+    prompt: md(
+      'A cleanup ticket says to drop the indexes nothing uses. On the `users` table in Postgres:',
+      '',
+      code(
+        'text',
+        'indexrelname       idx_scan',
+        'users_email_key           0',
+        'users_last_seen_idx       0'
+      ),
+      '',
+      '`users_email_key` is the index behind `email text NOT NULL UNIQUE`. `users_last_seen_idx` was added for a dashboard that shipped a year ago.',
+      '',
+      'Say what an unused index is costing while it sits there, and why these two zeroes do not mean the same thing.'
+    ),
+    graderConfig: {
+      groups: [
+        {
+          synonyms: [
+            'every write',
+            'every insert',
+            'on insert',
+            'writes',
+            'write time',
+            'disk',
+            'storage',
+            'space',
+            'maintained',
+            'kept up to date',
+            'backup',
+          ],
+          missingFeedback:
+            'The database keeps an index correct whether or not anything reads it. What does that cost, on the write side and on disk?',
+        },
+        {
+          synonyms: [
+            'unique',
+            'uniqueness',
+            'constraint',
+            'enforces',
+            'enforcing',
+            'duplicate',
+            'duplicates',
+            'not counted',
+            'does not count',
+            'only counts',
+            'searches',
+            'queries',
+          ],
+          missingFeedback:
+            'One of those two is doing a job that `idx_scan` never counts. What is `users_email_key` there for?',
+        },
+      ],
+      hints: [
+        'An index is a second copy of the column. Nothing stops maintaining it just because no query reads it.',
+        '`idx_scan` counts times a query searched the index.',
+        'One of these two indexes is the `UNIQUE` constraint. Dropping it drops the rule.',
+      ],
+    },
+    canonicalAnswer:
+      'An unused index still costs: an entry written into it on every insert, an entry removed on every delete, disk to store it and bytes in every backup. So dropping a genuinely unused one is worth doing. But idx_scan only counts queries that searched the index, and it never counts constraint enforcement, so users_email_key reads zero while still rejecting every duplicate email on write. Dropping it would drop the UNIQUE constraint. users_last_seen_idx has no such job and is the one to drop.',
+    solution: md(
+      'Drop `users_last_seen_idx`. Keep `users_email_key`.',
+      '',
+      'An index costs a write on every insert and delete, a write on every update to the column it covers, disk, and space in every backup. It pays that whether or not a query ever reads it.',
+      '',
+      '`idx_scan` counts index searches by queries. Enforcing a `UNIQUE` constraint is not one, so the index behind a unique constraint sits at zero however many duplicates it has rejected.'
+    ),
+    explanation:
+      'An unused index is pure cost, so the cleanup instinct is right. What is wrong is the number it is being applied to: `idx_scan` counts queries that searched the index, and a unique constraint is enforced by a different path that never touches that counter. An index at `idx_scan = 0` that backs a `UNIQUE` or a primary key is doing its job silently, and dropping it removes the rule rather than the overhead. Check what an index is attached to before trusting the zero.',
+  },
+
+  {
     slug: 'sql-index-lower-email',
     title: 'The query that got slower by getting correct',
     category: 'sql',

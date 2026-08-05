@@ -1,7 +1,7 @@
 ---
 title: Composite indexes and column order
 question: The index covers both columns. Why does one query use it and the other one doesn't?
-order: 2
+order: 3
 practise:
   - slow-list-endpoint-kysely
   - sql-top-recent
